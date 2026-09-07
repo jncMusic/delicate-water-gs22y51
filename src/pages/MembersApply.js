@@ -299,9 +299,11 @@ function StepDone() {
       </h2>
       <p className="mt-4 text-sm leading-relaxed text-slate-600">
         사무국에서 신청 내용을 확인한 뒤 기재해 주신 연락처로 안내드리겠습니다.
-        승인 이후 아래 계좌로 연회비를 납부하시면 가입이 완료됩니다.
+        승인 이후 안내드리는 계좌로 연회비를 납부하시면 가입이 완료됩니다.
       </p>
-      <p className="mt-5 rounded-lg bg-slate-50 px-4 py-3 text-sm text-brand-900">{org.bank}</p>
+      <p className="mt-5 rounded-lg bg-slate-50 px-4 py-3 text-sm text-brand-900">
+        {org.bank || `회비 문의 ${org.phone}`}
+      </p>
       <div className="mt-8 flex justify-center gap-2">
         <Link
           to="/"

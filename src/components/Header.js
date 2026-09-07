@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Menu, X, Music4, Lock } from "lucide-react";
+import { Menu, X, Lock } from "lucide-react";
 import { Link } from "../lib/router";
 import { menus, menuHome, org } from "../data/site";
 
@@ -122,18 +122,12 @@ export default function Header({ path }) {
     <header className="sticky top-0 z-40 bg-white shadow-sm">
       <div className="border-b border-slate-200">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
-          <Link to="/" className="flex shrink-0 items-center gap-2.5">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-900 text-accent-400">
-              <Music4 size={19} />
-            </span>
-            <span className="leading-tight">
-              <span className="block font-serif text-base font-bold text-brand-900">
-                {org.fullName}
-              </span>
-              <span className="block font-display text-[9px] font-semibold uppercase tracking-[0.15em] text-slate-400">
-                {org.nameEn}
-              </span>
-            </span>
+          <Link to="/" className="flex shrink-0 items-center" aria-label={`${org.name} 홈`}>
+            <img
+              src={`${process.env.PUBLIC_URL || ""}/logo-kba-wide.svg`}
+              alt={org.name}
+              className="h-9 w-auto sm:h-10"
+            />
           </Link>
 
           <nav

@@ -1,11 +1,14 @@
-import { pastChairs } from "../data/site";
+import { chairTitleNote, pastChairs } from "../data/site";
 import { Container, PageHeader } from "../components/ui";
 
 export default function AboutChairs() {
   return (
     <>
-      <PageHeader subtitle="역대 회장 명단입니다. 현 대표 직함은 이사장입니다." />
+      <PageHeader subtitle="협회를 대표해 온 역대 명단입니다." />
       <Container className="pt-10">
+        <p className="mb-6 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          {chairTitleNote}
+        </p>
         <table className="w-full border-t-2 border-brand-800 text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-slate-500">
@@ -24,7 +27,7 @@ export default function AboutChairs() {
                   {chair.order}
                   {chair.current && (
                     <span className="ml-2 rounded-full bg-brand-700 px-2 py-0.5 text-[10px] text-white">
-                      현직
+                      현 {chair.title || "대표"}
                     </span>
                   )}
                 </td>

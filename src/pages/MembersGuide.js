@@ -64,7 +64,9 @@ export default function MembersGuide() {
                 <Wallet size={17} className="text-accent-600" />
                 납부 계좌
               </h3>
-              <p className="mt-3 text-sm font-medium text-brand-900">{org.bank}</p>
+              <p className="mt-3 text-sm font-medium text-brand-900">
+                {org.bank || "계좌는 사무국으로 문의해 주세요."}
+              </p>
               <dl className="mt-4 space-y-2 border-t border-slate-200 pt-4 text-sm">
                 {memberTypes.map((member) => (
                   <div key={member.type} className="flex justify-between gap-3">
@@ -87,7 +89,7 @@ export default function MembersGuide() {
                 ))}
               </ul>
               <p className="mt-4 border-t border-slate-100 pt-4 text-xs text-slate-500">
-                회비 관련 문의 {org.phone} · {org.email}
+                회비 관련 문의 {org.phone}{org.email && ` · ${org.email}`}
               </p>
             </Card>
           </div>

@@ -137,13 +137,13 @@ export function Privacy() {
             title: "4. 정보주체의 권리",
             paragraphs: [
               "이용자는 언제든지 본인의 개인정보에 대한 열람, 정정, 삭제, 처리정지를 요구할 수 있습니다.",
-              `요청은 사무국(${org.email}, ${org.phone})으로 접수하실 수 있으며, 협회는 지체 없이 조치합니다.`,
+              `요청은 사무국(${[org.phone, org.email].filter(Boolean).join(", ")})으로 접수하실 수 있으며, 협회는 지체 없이 조치합니다.`,
             ],
           },
           {
             title: "5. 개인정보 보호책임자",
             paragraphs: [
-              `개인정보 보호책임자: 사무국장 (${org.email} / ${org.phone})`,
+              `개인정보 보호책임자: 사무국장 (${[org.phone, org.email].filter(Boolean).join(" / ")})`,
               "협회는 개인정보 처리와 관련한 문의·불만을 신속하게 처리하고 있습니다.",
             ],
           },

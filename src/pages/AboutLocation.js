@@ -2,7 +2,7 @@ import { Building2, Bus, Car, Clock, Mail, MapPin, Phone, Printer, TrainFront, W
 import { directions, org } from "../data/site";
 import { Card, Container, PageHeader, SectionTitle } from "../components/ui";
 
-const rows = [
+const allRows = [
   { icon: MapPin, label: "주소", value: org.address },
   { icon: Phone, label: "대표전화", value: org.phone },
   { icon: Printer, label: "팩스", value: org.fax },
@@ -10,6 +10,9 @@ const rows = [
   { icon: Clock, label: "업무시간", value: org.hours },
   { icon: Wallet, label: "회비 계좌", value: org.bank },
 ];
+
+// 아직 확인되지 않은 항목은 화면에 내지 않는다.
+const rows = allRows.filter((row) => row.value);
 
 const ICONS = { 지하철: TrainFront, 버스: Bus, 자가용: Car };
 
@@ -72,7 +75,7 @@ export default function AboutLocation() {
           </div>
           <p className="mt-5 text-xs text-slate-500">
             방문 전 사무국({org.phone})으로 연락 주시면 담당자를 안내해 드립니다.
-            업무시간은 {org.hours} 입니다.
+            {org.hours && ` 업무시간은 ${org.hours} 입니다.`}
           </p>
         </div>
       </Container>

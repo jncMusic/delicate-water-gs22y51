@@ -1,4 +1,3 @@
-import { Music4 } from "lucide-react";
 import { Link } from "../lib/router";
 import { memberSideMenu, menus, org } from "../data/site";
 
@@ -22,14 +21,18 @@ export default function Footer() {
       <div className="mx-auto max-w-6xl px-5 py-12">
         <div className="grid gap-10 lg:grid-cols-[1.3fr_2fr]">
           <div>
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-800 text-accent-400">
-                <Music4 size={17} />
-              </span>
-              <span className="font-serif text-base font-bold text-white">{org.fullName}</span>
-            </div>
+            {/* CI 는 감청색 단색이라 어두운 배경에서는 흰 판 위에 얹는다. */}
+            <span className="inline-block rounded-lg bg-white px-3 py-2">
+              <img
+                src={`${process.env.PUBLIC_URL || ""}/logo-kba-wide.svg`}
+                alt={org.name}
+                className="h-8 w-auto"
+              />
+            </span>
             <p className="mt-4 text-sm leading-relaxed">{org.description}</p>
-            <p className="mt-4 text-xs text-brand-400">{org.registration}</p>
+            {org.registration && (
+              <p className="mt-4 text-xs text-brand-400">{org.registration}</p>
+            )}
           </div>
 
           <div className="grid gap-8 sm:grid-cols-[1.2fr_1fr]">
@@ -45,23 +48,29 @@ export default function Footer() {
                     <dt className="sr-only">전화</dt>
                     <dd>T. {org.phone}</dd>
                   </div>
+                  {org.fax && (
+                    <div>
+                      <dt className="sr-only">팩스</dt>
+                      <dd>F. {org.fax}</dd>
+                    </div>
+                  )}
+                </div>
+                {org.email && (
                   <div>
-                    <dt className="sr-only">팩스</dt>
-                    <dd>F. {org.fax}</dd>
+                    <dt className="sr-only">이메일</dt>
+                    <dd>
+                      <a href={`mailto:${org.email}`} className="hover:text-white">
+                        {org.email}
+                      </a>
+                    </dd>
                   </div>
-                </div>
-                <div>
-                  <dt className="sr-only">이메일</dt>
-                  <dd>
-                    <a href={`mailto:${org.email}`} className="hover:text-white">
-                      {org.email}
-                    </a>
-                  </dd>
-                </div>
-                <div>
-                  <dt className="sr-only">업무시간</dt>
-                  <dd className="text-brand-300">{org.hours}</dd>
-                </div>
+                )}
+                {org.hours && (
+                  <div>
+                    <dt className="sr-only">업무시간</dt>
+                    <dd className="text-brand-300">{org.hours}</dd>
+                  </div>
+                )}
               </dl>
             </div>
 

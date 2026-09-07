@@ -4,9 +4,9 @@ import { org } from "../data/site";
 import { Card, Container, PageHeader, SectionTitle } from "../components/ui";
 
 const COLORS = [
-  { name: "차콜 잉크", hex: "#2B303A", usage: "심볼과 제호에 쓰는 기본 색" },
-  { name: "코퍼", hex: "#C2703D", usage: "심볼의 음표와 강조 요소" },
-  { name: "딥 잉크", hex: "#1A1D24", usage: "어두운 배경과 푸터" },
+  { name: "KBA 감청", hex: "#063B88", usage: "심볼과 제호에 쓰는 기본 색" },
+  { name: "오렌지 (그라디언트 시작)", hex: "#FF9027", usage: "심볼 B 자 배경의 밝은 쪽" },
+  { name: "오렌지 (그라디언트 끝)", hex: "#FF422E", usage: "심볼 B 자 배경의 짙은 쪽" },
 ];
 
 const RULES = [
@@ -27,26 +27,26 @@ export default function AboutCI() {
       <Container className="pt-10">
         <div className="flex flex-col items-center gap-6 rounded-2xl border border-slate-200 bg-slate-50 px-6 py-14">
           <img
-            src={`${process.env.PUBLIC_URL || ""}/ci-logo.svg`}
-            alt={`${org.fullName} 심볼과 제호`}
-            className="w-full max-w-md"
+            src={`${process.env.PUBLIC_URL || ""}/logo-kba.svg`}
+            alt={`${org.name} 심볼과 제호`}
+            className="w-full max-w-xs"
           />
           <div className="flex flex-wrap justify-center gap-2">
             <button
               type="button"
-              onClick={() => download("/ci-logo.svg", "한국관악협회_CI.svg")}
+              onClick={() => download("/logo-kba.svg", "한국관악협회_CI_세로형.svg")}
               className="inline-flex items-center gap-1.5 rounded-lg bg-brand-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-800"
             >
               <Download size={15} />
-              가로형 CI (SVG)
+              세로형 CI (SVG)
             </button>
             <button
               type="button"
-              onClick={() => download("/favicon.svg", "한국관악협회_심볼.svg")}
+              onClick={() => download("/logo-kba-wide.svg", "한국관악협회_CI_가로형.svg")}
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-brand-800 hover:bg-slate-50"
             >
               <Download size={15} />
-              심볼 단독 (SVG)
+              가로형 CI (SVG)
             </button>
           </div>
           <p className="text-xs text-slate-500">

@@ -7,20 +7,21 @@
 export const org = {
   name: "한국관악협회",
   fullName: "한국관악협회",
-  nameEn: "Korea Band Association",
+  nameEn: "KOREAN BAND ASSOCIATION",
   abbr: "KBA",
   slogan: "전문 관악인 양성과 국제 음악문화 교류",
   founded: "1973년",
   description:
     "한국관악협회는 한국음악의 발전을 도모하고, 전문 관악인 양성과 국제적인 음악문화 교류를 통해 관악인의 지위 향상과 권익 신장을 목적으로 하는 단체입니다.",
-  // 아래 항목은 아직 받지 못했습니다. 사무국 정보로 채워 주세요.
-  address: "서울특별시 ○○구 ○○로 00, 0층 (우 00000)",
-  phone: "02-000-0000",
-  fax: "02-000-0001",
-  email: "office@example.or.kr",
-  hours: "평일 09:00 - 18:00 (점심 12:00 - 13:00 / 주말·공휴일 휴무)",
-  bank: "○○은행 000-000000-00-000 (예금주: 한국관악협회)",
-  registration: "고유번호 000-00-00000",
+  address: "서울특별시 동작구 사당로 287, 5층",
+  phone: "02-2655-0520",
+  // 아직 확인되지 않은 항목입니다. 빈 값이면 화면에 표시되지 않습니다.
+  fax: "",
+  email: "",
+  hours: "",
+  bank: "",
+  // 사단법인 등록 전이라 비워 둡니다. 등록 후 고유번호·주무관청을 넣어 주세요.
+  registration: "",
 };
 export const menus = [
   {
@@ -113,7 +114,7 @@ export const overview = {
   purpose:
     "한국음악의 발전을 도모하고 전문 관악인 양성과 국제적인 음악문화 교류를 통한 관악인의 지위 향상과 권익 신장을 목적으로 한다.",
   facts: [
-    { label: "명칭", value: "한국관악협회 (Korea Band Association, KBA)" },
+    { label: "명칭", value: "한국관악협회 (KOREAN BAND ASSOCIATION, KBA)" },
     { label: "창설", value: "1973년" },
     { label: "지회", value: "총 17개 (서울 2 · 광역시 6 · 특별자치시 2 · 도 6 · 해외 1)" },
     { label: "지부", value: "시 단위 7개" },
@@ -140,6 +141,7 @@ export const history = [
   {
     period: "2020년대",
     items: [
+      { year: "2025", text: "대표 직함을 회장에서 이사장으로 변경" },
       { year: "2024", text: "제11대 김동수 회장 취임" },
       { year: "2019", text: "제10대 박병학 회장 취임" },
     ],
@@ -158,9 +160,15 @@ export const history = [
     ],
   },
 ];
-/** 역대 회장(현 대표 직함은 이사장). 재임 기간이 비어 있는 대수는 확인 후 채워 주세요. */
+/**
+ * 역대 대표. 2025년부터 직함이 회장에서 이사장으로 바뀌었습니다.
+ * 재임 기간이 비어 있는 대수는 확인 후 채워 주세요.
+ */
+export const chairTitleNote =
+  "협회 대표의 직함은 창설 이후 회장이었으며, 2025년부터 이사장으로 바뀌었습니다.";
+
 export const pastChairs = [
-  { order: "제11대", name: "김동수", term: "2024 - 현재", current: true },
+  { order: "제11대", name: "김동수", term: "2024 - 현재", title: "이사장", current: true },
   { order: "제10대", name: "박병학", term: "2019 - 2023" },
   { order: "제9대", name: "배일환", term: "2014 - 2018" },
   { order: "제8대", name: "노덕일", term: "1999 - 2013" },
@@ -176,7 +184,7 @@ export const pastChairs = [
 export const executives = [
   {
     group: "이사장",
-    people: [{ role: "이사장", name: "김동수", affiliation: "제11대 (2024 - 현재)" }],
+    people: [{ role: "이사장", name: "김동수", affiliation: "제11대 (2024년 회장 취임, 2025년부터 이사장)" }],
   },
   {
     group: "부이사장",
