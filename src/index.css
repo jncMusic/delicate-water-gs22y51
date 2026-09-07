@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+    @apply bg-white font-sans text-brand-950;
+  }
+
+  /* 한글은 어절 단위로 끊어야 읽기 좋다. */
+  body,
+  button,
+  input,
+  select,
+  textarea {
+    word-break: keep-all;
+  }
+}
