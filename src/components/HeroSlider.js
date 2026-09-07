@@ -2,12 +2,15 @@ import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Pause, Play } from "lucide-react";
 import { navigate } from "../lib/router";
 
-/** 이미지가 없는 배너에 쓰는 배경. 관리자가 고른 색조에 따라 달라진다. */
+/**
+ * 이미지가 없는 배너에 쓰는 배경. 관리자가 고른 색조에 따라 달라진다.
+ * 협회 색상 안에서만 조합해서, 팔레트를 바꾸면 배너도 함께 따라간다.
+ */
 const TONES = {
-  blue: "from-sky-500 via-brand-600 to-brand-950",
-  gold: "from-gold-500 via-amber-700 to-brand-950",
-  navy: "from-brand-600 via-brand-800 to-brand-950",
-  rose: "from-rose-500 via-brand-700 to-brand-950",
+  light: "from-brand-500 via-brand-700 to-brand-950",
+  deep: "from-brand-700 via-brand-900 to-brand-950",
+  gold: "from-gold-400 via-gold-600 to-brand-900",
+  duo: "from-gold-500 via-brand-700 to-brand-950",
 };
 
 const AUTOPLAY_MS = 6000;
@@ -39,7 +42,7 @@ export default function HeroSlider({ banners }) {
     <section aria-label="주요 안내 배너" className="relative">
       <div
         className={`relative h-[320px] overflow-hidden bg-gradient-to-br sm:h-[420px] ${
-          TONES[current.tone] || TONES.navy
+          TONES[current.tone] || TONES.deep
         }`}
       >
         {current.image && (

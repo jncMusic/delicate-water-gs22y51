@@ -2,6 +2,9 @@
    망 사정과 무관하게 항상 같은 글꼴로 보인다.
    가변 폰트를 자모 단위로 쪼갠 판이라 화면에 쓰인 글자의 조각만 내려받는다. */
 @import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
+/* 제목용 명조. 제목은 모두 굵은 한 종류라 700 한 벌만 담는다. */
+@import "@fontsource/nanum-myeongjo/latin-700.css";
+@import "@fontsource/nanum-myeongjo/korean-700.css";
 
 @tailwind base;
 @tailwind components;

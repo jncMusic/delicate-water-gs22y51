@@ -23,10 +23,10 @@ import {
 } from "../../components/ui";
 
 const TONES = [
-  { value: "blue", label: "파랑" },
-  { value: "gold", label: "금색" },
-  { value: "navy", label: "네이비" },
-  { value: "rose", label: "붉은색" },
+  { value: "deep", label: "짙은 톤" },
+  { value: "light", label: "밝은 톤" },
+  { value: "gold", label: "금색 톤" },
+  { value: "duo", label: "금색 + 짙은 톤" },
 ];
 
 const EMPTY = {
@@ -34,7 +34,7 @@ const EMPTY = {
   subtitle: "",
   caption: "",
   linkPath: "",
-  tone: "navy",
+  tone: "deep",
   order: 1,
   image: null,
   imagePath: null,

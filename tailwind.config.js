@@ -4,10 +4,10 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        // 본문과 제목 모두 Pretendard 를 쓴다(참고 사이트도 제목이 고딕 계열).
-        // font-serif 는 기존 코드가 제목에 쓰던 이름이라 그대로 두고 같은 글꼴을 가리킨다.
+        // 본문은 Pretendard, 제목(font-serif)은 나눔명조.
+        // 명조가 아직 안 받아졌을 때도 어색하지 않도록 Pretendard 를 다음 순위에 둔다.
         sans: ['"Pretendard Variable"', "Pretendard", "system-ui", "-apple-system", "sans-serif"],
-        serif: ['"Pretendard Variable"', "Pretendard", "system-ui", "-apple-system", "sans-serif"],
+        serif: ['"Nanum Myeongjo"', '"Pretendard Variable"', "Pretendard", "serif"],
       },
       colors: {
         brand: {
