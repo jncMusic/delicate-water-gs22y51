@@ -130,7 +130,7 @@ export default function Header({ path }) {
               <span className="block font-serif text-base font-bold text-brand-900">
                 {org.fullName}
               </span>
-              <span className="block text-[9px] uppercase tracking-[0.15em] text-slate-400">
+              <span className="block font-display text-[9px] font-semibold uppercase tracking-[0.15em] text-slate-400">
                 {org.nameEn}
               </span>
             </span>

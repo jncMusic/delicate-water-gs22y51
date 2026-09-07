@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { X, ChevronLeft, ChevronRight, Home, Inbox, Loader2 } from "lucide-react";
 import { Link, useRoute } from "../lib/router";
-import { findMenu } from "../data/site";
+import { findMenu, org } from "../data/site";
 
 /* ---------- 표시 형식 도우미 ---------- */
 
@@ -134,9 +134,12 @@ export function PageHeader({ title, subtitle }) {
       <div className="mx-auto max-w-6xl px-5 pt-8">
         <Breadcrumb group={group} child={child} />
         <div className="mt-6 text-center">
+          <p className="font-display text-[11px] font-semibold uppercase tracking-[0.3em] text-accent-500">
+            {org.abbr}
+          </p>
+          <span aria-hidden="true" className="mx-auto my-4 block h-px w-8 bg-slate-300" />
           <h1 className="font-serif text-2xl font-bold text-brand-900 sm:text-3xl">{heading}</h1>
           {subtitle && <p className="mt-3 text-sm text-slate-600">{subtitle}</p>}
-          <span aria-hidden="true" className="mx-auto mt-5 block h-0.5 w-16 bg-brand-700" />
         </div>
       </div>
     </>

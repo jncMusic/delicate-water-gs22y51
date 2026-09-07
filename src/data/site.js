@@ -8,6 +8,8 @@ export const org = {
   name: "한국관악협회",
   fullName: "사단법인 한국관악협회",
   nameEn: "The Wind Music Association of Korea",
+  abbr: "KWAK",  // 서브페이지 제목 위에 붙는 영문 약칭
+
   slogan: "관악으로 이어지는 사람과 무대",
   founded: "1982년",
   description:

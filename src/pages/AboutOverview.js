@@ -7,7 +7,7 @@ export default function AboutOverview() {
       <PageHeader subtitle={org.slogan} />
       <Container className="pt-10">
         <div className="rounded-2xl bg-gradient-to-br from-brand-900 to-brand-700 px-8 py-12 text-center text-white">
-          <p className="text-xs uppercase tracking-[0.25em] text-accent-400">{org.nameEn}</p>
+          <p className="font-display text-xs font-semibold uppercase tracking-[0.25em] text-accent-400">{org.nameEn}</p>
           <h2 className="mt-4 font-serif text-2xl font-bold leading-relaxed sm:text-3xl">
             {overview.purpose}
           </h2>

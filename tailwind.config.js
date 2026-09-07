@@ -8,6 +8,8 @@ module.exports = {
         // 명조가 아직 안 받아졌을 때도 어색하지 않도록 Pretendard 를 다음 순위에 둔다.
         sans: ['"Pretendard Variable"', "Pretendard", "system-ui", "-apple-system", "sans-serif"],
         serif: ['"Nanum Myeongjo"', '"Pretendard Variable"', "Pretendard", "serif"],
+        // 영문 전용 자리에만 쓴다. 한글 글리프가 없으므로 한글에는 쓰지 않는다.
+        display: ["Montserrat", '"Pretendard Variable"', "sans-serif"],
       },
       colors: {
         // 차콜 잉크 — 본문 바탕과 어두운 띠에 쓴다.

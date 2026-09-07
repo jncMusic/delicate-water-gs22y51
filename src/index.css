@@ -5,6 +5,9 @@
 /* 제목용 명조. 제목은 모두 굵은 한 종류라 700 한 벌만 담는다. */
 @import "@fontsource/nanum-myeongjo/latin-700.css";
 @import "@fontsource/nanum-myeongjo/korean-700.css";
+/* 영문 전용 자리(협회 영문명·라벨)에 쓰는 디스플레이 서체. 라틴 두 굵기만 담는다. */
+@import "@fontsource/montserrat/latin-600.css";
+@import "@fontsource/montserrat/latin-800.css";
 
 @tailwind base;
 @tailwind components;

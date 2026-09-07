@@ -198,8 +198,13 @@ CI 파일은 `public/ci-logo.svg`(가로형)와 `public/favicon.svg`(심볼)입�
 
 | | 글꼴 | 첫 방문 내려받기 |
 | --- | --- | --- |
-| 본문·UI | Pretendard Variable | 약 250KB (쓰인 글자의 조각만) |
-| 제목 | 나눔명조 700 | 약 560KB (한글 한 벌) |
+| 본문·UI (`font-sans`) | Pretendard Variable | 약 250KB (쓰인 글자의 조각만) |
+| 제목 (`font-serif`) | 나눔명조 700 | 약 560KB (한글 한 벌) |
+| 영문 전용 (`font-display`) | Montserrat 600·800 | 약 20KB (라틴만) |
+
+`font-display` 는 협회 영문명과 서브페이지 제목 위 영문 약칭처럼 **영문만 들어가는 자리**에
+씁니다. 한글 글리프가 없으므로 한글에는 쓰지 마세요. 약칭은 `src/data/site.js` 의
+`org.abbr` 이며 지금은 예시값입니다.
 
 Pretendard 는 가변 폰트를 자모 단위로 쪼갠 판이라 화면에 실제로 쓰인 글자의
 조각만 내려받습니다. 나눔명조는 쪼갠 판이 없어 한글 한 벌을 통째로 받습니다.
