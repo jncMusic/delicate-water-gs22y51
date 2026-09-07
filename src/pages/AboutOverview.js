@@ -16,7 +16,7 @@ export default function AboutOverview() {
 
         <div className="mt-16 grid gap-10 lg:grid-cols-2">
           <div>
-            <SectionTitle>법인 개요</SectionTitle>
+            <SectionTitle>협회 개요</SectionTitle>
             <dl className="divide-y divide-slate-100 border-t-2 border-brand-800">
               {overview.facts.map((fact) => (
                 <div key={fact.label} className="flex gap-4 py-3.5">
@@ -44,6 +44,12 @@ export default function AboutOverview() {
             </Card>
           </div>
         </div>
+
+        {overview.plan && (
+          <p className="mt-10 rounded-xl border border-accent-500/30 bg-accent-500/5 px-6 py-5 text-sm leading-relaxed text-brand-900">
+            <strong className="font-bold">향후 계획</strong> — {overview.plan}
+          </p>
+        )}
       </Container>
     </>
   );

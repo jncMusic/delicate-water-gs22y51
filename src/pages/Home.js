@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { ArrowRight, CalendarDays, Phone } from "lucide-react";
+import { ArrowRight, CalendarDays } from "lucide-react";
 import { Link } from "../lib/router";
 import { useCollection } from "../lib/useCollection";
 import HeroSlider from "../components/HeroSlider";
 import { boards } from "../data/boards";
-import { affiliates, branches, missions, org } from "../data/site";
+import { affiliateTypes, branchSummary, branchTotals, missions } from "../data/site";
 import { Badge, EmptyState, SectionTitle, formatDate } from "../components/ui";
 
 /** 참고 사이트처럼 탭으로 두 목록을 번갈아 보여주는 홈 카드. */
@@ -74,34 +74,6 @@ function PostList({ board }) {
   );
 }
 
-/** 지회·지부 / 산하단체를 카드 한 장씩 넘겨 보는 패널. */
-function GroupSlider({ items, render }) {
-  const [at, setAt] = useState(0);
-  const current = items[Math.min(at, items.length - 1)];
-
-  return (
-    <div>
-      {render(current)}
-      <div className="mt-5 flex justify-center gap-1.5">
-        {items.slice(0, 8).map((item, index) => (
-          <button
-            key={item.name}
-            type="button"
-            onClick={() => setAt(index)}
-            aria-label={`${item.name} 보기`}
-            aria-current={index === Math.min(at, items.length - 1) ? "true" : undefined}
-            className={`h-1.5 rounded-full transition-all ${
-              index === Math.min(at, items.length - 1)
-                ? "w-6 bg-brand-700"
-                : "w-1.5 bg-slate-300 hover:bg-slate-400"
-            }`}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export default function Home() {
   const { rows: banners } = useCollection("banners");
   const { rows: events } = useCollection("events");
@@ -138,62 +110,61 @@ export default function Home() {
           <TabCard
             tabs={[
               { key: "branch", label: "지회·지부" },
-              { key: "affiliate", label: "산하단체" },
+              { key: "affiliate", label: "회원단체" },
             ]}
             active={rightTab}
             onChange={setRightTab}
             moreTo={rightTab === "branch" ? "/members/branches" : "/members/affiliates"}
           >
             {rightTab === "branch" ? (
-              <GroupSlider
-                items={branches}
-                render={(branch) => (
-                  <div className="flex items-center gap-5">
-                    <span className="flex h-24 w-24 shrink-0 flex-col items-center justify-center rounded-lg bg-brand-900 text-white">
-                      <span className="font-serif text-2xl font-bold">{branch.region}</span>
-                      <span className="mt-1 text-[10px] tracking-widest text-brand-300">BRANCH</span>
-                    </span>
-                    <div className="min-w-0">
-                      <h3 className="font-serif text-lg font-bold text-brand-900">{branch.name}</h3>
-                      <p className="mt-2 text-sm text-slate-600">지회장 {branch.head}</p>
-                      <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-600">
-                        <Phone size={13} className="text-slate-400" />
-                        {branch.phone}
-                      </p>
-                      <Link
-                        to="/members/branches"
-                        className="mt-3 inline-block rounded-full border border-slate-300 px-4 py-1.5 text-xs text-brand-800 hover:bg-slate-50"
-                      >
-                        자세히 보기
-                      </Link>
-                    </div>
+              <div>
+                <div className="flex items-center gap-5">
+                  <span className="flex h-24 w-24 shrink-0 flex-col items-center justify-center rounded-lg bg-brand-900 text-white">
+                    <span className="font-serif text-3xl font-bold">{branchTotals.branches}</span>
+                    <span className="mt-0.5 text-[10px] tracking-widest text-brand-300">지회</span>
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm leading-relaxed text-slate-600">
+                      국내외 {branchTotals.branches}개 지회와 {branchTotals.chapters}개 지부를 두고
+                      있습니다.
+                    </p>
+                    <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                      {branchSummary.map((row) => (
+                        <li key={row.area}>
+                          {row.area} <strong className="text-brand-800">{row.count}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                    <Link
+                      to="/members/branches"
+                      className="mt-3 inline-block rounded-full border border-slate-300 px-4 py-1.5 text-xs text-brand-800 hover:bg-slate-50"
+                    >
+                      자세히 보기
+                    </Link>
                   </div>
-                )}
-              />
+                </div>
+              </div>
             ) : (
-              <GroupSlider
-                items={affiliates}
-                render={(group) => (
-                  <div className="flex items-center gap-5">
-                    <span className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg bg-accent-500/15 px-2 text-center font-serif text-sm font-bold leading-snug text-accent-600">
-                      {group.name.slice(0, 6)}
+              <ul className="space-y-3">
+                {affiliateTypes.map((type) => (
+                  <li key={type.name} className="flex items-start gap-4">
+                    <span className="mt-0.5 shrink-0 rounded-full bg-accent-500/15 px-3 py-1 text-xs font-bold text-accent-600">
+                      {type.name}
                     </span>
-                    <div className="min-w-0">
-                      <h3 className="font-serif text-lg font-bold text-brand-900">{group.name}</h3>
-                      <p className="mt-1 text-xs text-accent-600">{group.since}</p>
-                      <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-600">
-                        {group.summary}
-                      </p>
-                      <Link
-                        to="/members/affiliates"
-                        className="mt-3 inline-block rounded-full border border-slate-300 px-4 py-1.5 text-xs text-brand-800 hover:bg-slate-50"
-                      >
-                        자세히 보기
-                      </Link>
-                    </div>
-                  </div>
-                )}
-              />
+                    <span className="min-w-0 text-sm leading-relaxed text-slate-600">
+                      {type.summary}
+                    </span>
+                  </li>
+                ))}
+                <li className="pt-1">
+                  <Link
+                    to="/members/affiliates"
+                    className="inline-block rounded-full border border-slate-300 px-4 py-1.5 text-xs text-brand-800 hover:bg-slate-50"
+                  >
+                    자세히 보기
+                  </Link>
+                </li>
+              </ul>
             )}
           </TabCard>
         </div>
@@ -253,10 +224,10 @@ export default function Home() {
         <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-5 py-14 sm:flex-row sm:items-center">
           <div>
             <h2 className="font-serif text-2xl font-bold text-white">
-              관악을 함께 만들어 갈 회원을 기다립니다
+              회원 가입 안내
             </h2>
             <p className="mt-2 text-sm text-brand-200">
-              {org.description}
+              연주자, 지도자, 학생과 관악 단체가 정회원·준회원·단체회원으로 가입할 수 있습니다.
             </p>
           </div>
           <Link

@@ -17,12 +17,15 @@ export default function Programs() {
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <h2 className="mt-1 font-serif text-xl font-bold text-brand-900">{program.name}</h2>
-                <p className="mt-2 inline-block rounded-full bg-accent-500/15 px-3 py-1 text-xs font-medium text-accent-600">
-                  {program.period}
-                </p>
+                {program.period && (
+                  <p className="mt-2 inline-block rounded-full bg-accent-500/15 px-3 py-1 text-xs font-medium text-accent-600">
+                    {program.period}
+                  </p>
+                )}
               </div>
               <div>
                 <p className="text-[15px] leading-7 text-slate-700">{program.summary}</p>
+                {program.details.length > 0 && (
                 <ul className="mt-4 space-y-1.5 border-t border-slate-100 pt-4">
                   {program.details.map((detail) => (
                     <li key={detail} className="flex gap-2 text-sm text-slate-600">
@@ -34,6 +37,7 @@ export default function Programs() {
                     </li>
                   ))}
                 </ul>
+                )}
               </div>
             </article>
           ))}

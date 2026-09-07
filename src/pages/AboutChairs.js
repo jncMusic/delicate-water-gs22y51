@@ -4,7 +4,7 @@ import { Container, PageHeader } from "../components/ui";
 export default function AboutChairs() {
   return (
     <>
-      <PageHeader subtitle="협회를 이끌어 온 역대 이사장입니다." />
+      <PageHeader subtitle="역대 회장 명단입니다. 현 대표 직함은 이사장입니다." />
       <Container className="pt-10">
         <table className="w-full border-t-2 border-brand-800 text-sm">
           <thead>

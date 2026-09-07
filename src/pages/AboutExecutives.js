@@ -4,7 +4,7 @@ import { Container, PageHeader, SectionTitle } from "../components/ui";
 export default function AboutExecutives() {
   return (
     <>
-      <PageHeader subtitle="협회 운영을 맡고 있는 임원진입니다." />
+      <PageHeader subtitle="협회 임원 명단입니다." />
       <Container className="pt-10">
         <div className="space-y-12">
           {executives.map((block) => (

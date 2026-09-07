@@ -1,5 +1,5 @@
-import { Building2, Clock, Mail, MapPin, Phone, Printer, Wallet } from "lucide-react";
-import { org } from "../data/site";
+import { Building2, Bus, Car, Clock, Mail, MapPin, Phone, Printer, TrainFront, Wallet } from "lucide-react";
+import { directions, org } from "../data/site";
 import { Card, Container, PageHeader, SectionTitle } from "../components/ui";
 
 const rows = [
@@ -10,6 +10,8 @@ const rows = [
   { icon: Clock, label: "업무시간", value: org.hours },
   { icon: Wallet, label: "회비 계좌", value: org.bank },
 ];
+
+const ICONS = { 지하철: TrainFront, 버스: Bus, 자가용: Car };
 
 export default function AboutLocation() {
   return (
@@ -40,6 +42,38 @@ export default function AboutLocation() {
               ))}
             </dl>
           </Card>
+        </div>
+
+        <div className="mt-16">
+          <SectionTitle description="사무국 방문 시 참고해 주세요.">교통 안내</SectionTitle>
+          <div className="grid gap-5 sm:grid-cols-3">
+            {directions.map((way) => {
+              const Icon = ICONS[way.type] || Bus;
+              return (
+                <div key={way.type} className="rounded-xl border border-slate-200 bg-white p-6">
+                  <h3 className="flex items-center gap-2 font-bold text-brand-900">
+                    <Icon size={17} className="text-accent-600" />
+                    {way.type}
+                  </h3>
+                  <ul className="mt-3 space-y-2">
+                    {way.items.map((item) => (
+                      <li key={item} className="flex gap-2 text-sm leading-relaxed text-slate-600">
+                        <span
+                          aria-hidden="true"
+                          className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent-500"
+                        />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-5 text-xs text-slate-500">
+            방문 전 사무국({org.phone})으로 연락 주시면 담당자를 안내해 드립니다.
+            업무시간은 {org.hours} 입니다.
+          </p>
         </div>
       </Container>
     </>
