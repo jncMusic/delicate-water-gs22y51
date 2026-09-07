@@ -4,11 +4,7 @@ import { Container, PageHeader } from "../components/ui";
 export default function Programs() {
   return (
     <>
-      <PageHeader
-        title="주요 사업"
-        subtitle="협회가 연중 운영하는 사업을 안내합니다."
-        breadcrumb={["사업안내", "주요 사업"]}
-      />
+      <PageHeader subtitle="협회가 연중 운영하는 사업을 안내합니다." />
       <Container>
         <div className="space-y-6">
           {programs.map((program, index) => (

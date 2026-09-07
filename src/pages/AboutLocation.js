@@ -14,11 +14,7 @@ const rows = [
 export default function AboutLocation() {
   return (
     <>
-      <PageHeader
-        title="오시는 길"
-        subtitle="협회 사무국 위치와 연락처를 안내합니다."
-        breadcrumb={["협회소개", "오시는 길"]}
-      />
+      <PageHeader subtitle="협회 사무국 위치와 연락처를 안내합니다." />
       <Container>
         <div className="grid gap-8 lg:grid-cols-[1.3fr_1fr]">
           {/* 지도 자리. 실제 운영 시 카카오/네이버 지도 스크립트로 교체하세요. */}

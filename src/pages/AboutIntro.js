@@ -4,11 +4,7 @@ import { Card, Container, PageHeader, SectionTitle } from "../components/ui";
 export default function AboutIntro() {
   return (
     <>
-      <PageHeader
-        title="인사말"
-        subtitle={org.slogan}
-        breadcrumb={["협회소개", "인사말"]}
-      />
+      <PageHeader subtitle={org.slogan} />
       <Container>
         <div className="grid gap-12 lg:grid-cols-[1fr_1.6fr]">
           <div>
@@ -32,7 +28,7 @@ export default function AboutIntro() {
           </div>
 
           <div>
-            <SectionTitle>{greeting.title}</SectionTitle>
+            <SectionTitle>인사말</SectionTitle>
             <div className="space-y-5 text-[15px] leading-8 text-slate-700">
               {greeting.paragraphs.map((paragraph) => (
                 <p key={paragraph.slice(0, 20)}>{paragraph}</p>

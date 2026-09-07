@@ -3,7 +3,6 @@ import { Search } from "lucide-react";
 import { Link, navigate } from "../lib/router";
 import { useCollection } from "../lib/useCollection";
 import { bumpCounter } from "../lib/store";
-import { noticeCategories } from "../data/site";
 import {
   Badge,
   Container,
@@ -18,20 +17,26 @@ import {
 
 const PER_PAGE = 10;
 
-export default function Notices() {
-  const { rows, loading } = useCollection("notices");
+/** 게시판 목록. boards.js 의 정의를 받아 어느 게시판이든 같은 화면으로 그린다. */
+export default function Board({ board }) {
+  const { rows, loading } = useCollection(board.collection);
   const [keyword, setKeyword] = useState("");
   const [category, setCategory] = useState("전체");
   const [page, setPage] = useState(1);
+
+  // 게시판이 바뀌면 검색 조건을 초기화한다.
+  useEffect(() => {
+    setKeyword("");
+    setCategory("전체");
+    setPage(1);
+  }, [board.key]);
 
   const filtered = useMemo(() => {
     const needle = keyword.trim().toLowerCase();
     return rows
       .filter((row) => category === "전체" || row.category === category)
       .filter(
-        (row) =>
-          !needle ||
-          `${row.title} ${row.body || ""}`.toLowerCase().includes(needle)
+        (row) => !needle || `${row.title} ${row.body || ""}`.toLowerCase().includes(needle)
       )
       .sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)));
   }, [rows, keyword, category]);
@@ -40,19 +45,10 @@ export default function Notices() {
   const safePage = Math.min(page, pageCount);
   const visible = filtered.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
 
-  const resetPage = (fn) => (value) => {
-    fn(value);
-    setPage(1);
-  };
-
   return (
     <>
-      <PageHeader
-        title="공지사항"
-        subtitle="협회의 소식과 안내 사항을 전해 드립니다."
-        breadcrumb={["협회소식", "공지사항"]}
-      />
-      <Container>
+      <PageHeader title={board.label} subtitle={board.description} />
+      <Container className="pt-10">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-slate-500">
             전체 <strong className="text-brand-800">{filtered.length}</strong>건
@@ -61,11 +57,14 @@ export default function Notices() {
             <div className="w-32">
               <Select
                 value={category}
-                onChange={(e) => resetPage(setCategory)(e.target.value)}
+                onChange={(e) => {
+                  setCategory(e.target.value);
+                  setPage(1);
+                }}
                 aria-label="분류 선택"
               >
                 <option value="전체">전체 분류</option>
-                {noticeCategories.map((item) => (
+                {board.categories.map((item) => (
                   <option key={item} value={item}>
                     {item}
                   </option>
@@ -79,9 +78,12 @@ export default function Notices() {
               />
               <Input
                 value={keyword}
-                onChange={(e) => resetPage(setKeyword)(e.target.value)}
+                onChange={(e) => {
+                  setKeyword(e.target.value);
+                  setPage(1);
+                }}
                 placeholder="제목·내용 검색"
-                aria-label="공지사항 검색"
+                aria-label={`${board.label} 검색`}
                 className="pl-9"
               />
             </div>
@@ -91,7 +93,7 @@ export default function Notices() {
         {loading ? (
           <Loading />
         ) : visible.length === 0 ? (
-          <EmptyState message="조건에 맞는 공지가 없습니다." />
+          <EmptyState message="조건에 맞는 글이 없습니다." />
         ) : (
           <>
             {/* 데스크톱: 표 형태 */}
@@ -106,24 +108,24 @@ export default function Notices() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {visible.map((notice) => (
-                  <tr key={notice.id} className="hover:bg-slate-50">
+                {visible.map((post) => (
+                  <tr key={post.id} className="hover:bg-slate-50">
                     <td className="py-3.5 text-center">
-                      <Badge>{notice.pinned ? "중요" : notice.category}</Badge>
+                      <Badge>{post.pinned ? "중요" : post.category}</Badge>
                     </td>
                     <td className="py-3.5">
                       <Link
-                        to={`/news/notice/${notice.id}`}
+                        to={`${board.path}/${post.id}`}
                         className="font-medium text-slate-800 hover:text-brand-700"
                       >
-                        {notice.title}
+                        {post.title}
                       </Link>
                     </td>
-                    <td className="py-3.5 text-center text-slate-500">{notice.author || "-"}</td>
+                    <td className="py-3.5 text-center text-slate-500">{post.author || "-"}</td>
                     <td className="py-3.5 text-center text-slate-500">
-                      {formatDate(notice.createdAt)}
+                      {formatDate(post.createdAt)}
                     </td>
-                    <td className="py-3.5 text-center text-slate-400">{notice.views || 0}</td>
+                    <td className="py-3.5 text-center text-slate-400">{post.views || 0}</td>
                   </tr>
                 ))}
               </tbody>
@@ -131,16 +133,14 @@ export default function Notices() {
 
             {/* 모바일: 카드 형태 */}
             <ul className="divide-y divide-slate-100 border-t-2 border-brand-800 sm:hidden">
-              {visible.map((notice) => (
-                <li key={notice.id}>
-                  <Link to={`/news/notice/${notice.id}`} className="block py-4">
+              {visible.map((post) => (
+                <li key={post.id}>
+                  <Link to={`${board.path}/${post.id}`} className="block py-4">
                     <span className="flex items-center gap-2">
-                      <Badge>{notice.pinned ? "중요" : notice.category}</Badge>
-                      <span className="text-xs text-slate-400">
-                        {formatDate(notice.createdAt)}
-                      </span>
+                      <Badge>{post.pinned ? "중요" : post.category}</Badge>
+                      <span className="text-xs text-slate-400">{formatDate(post.createdAt)}</span>
                     </span>
-                    <span className="mt-1.5 block font-medium text-slate-800">{notice.title}</span>
+                    <span className="mt-1.5 block font-medium text-slate-800">{post.title}</span>
                   </Link>
                 </li>
               ))}
@@ -154,39 +154,40 @@ export default function Notices() {
   );
 }
 
-export function NoticeDetail({ id }) {
-  const { rows, loading } = useCollection("notices");
+/** 게시글 상세. */
+export function BoardDetail({ board, id }) {
+  const { rows, loading } = useCollection(board.collection);
   const counted = useRef(null);
 
   const index = rows.findIndex((row) => row.id === id);
-  const notice = index >= 0 ? rows[index] : null;
+  const post = index >= 0 ? rows[index] : null;
 
   // 글을 처음 열 때만 조회수를 올린다(같은 글을 다시 그려도 중복되지 않음).
   useEffect(() => {
-    if (!notice || counted.current === id) return;
+    if (!post || counted.current === id) return;
     counted.current = id;
-    bumpCounter("notices", id, "views", notice.views);
-  }, [id, notice]);
+    bumpCounter(board.collection, id, "views", post.views);
+  }, [board.collection, id, post]);
 
   if (loading) {
     return (
       <>
-        <PageHeader title="공지사항" breadcrumb={["협회소식", "공지사항"]} />
-        <Container>
+        <PageHeader title={board.label} />
+        <Container className="pt-10">
           <Loading />
         </Container>
       </>
     );
   }
 
-  if (!notice) {
+  if (!post) {
     return (
       <>
-        <PageHeader title="공지사항" breadcrumb={["협회소식", "공지사항"]} />
-        <Container>
+        <PageHeader title={board.label} />
+        <Container className="pt-10">
           <EmptyState message="요청하신 글을 찾을 수 없습니다." />
           <div className="mt-6 text-center">
-            <Link to="/news/notice" className="text-sm text-brand-700 hover:underline">
+            <Link to={board.path} className="text-sm text-brand-700 hover:underline">
               목록으로 돌아가기
             </Link>
           </div>
@@ -201,26 +202,26 @@ export function NoticeDetail({ id }) {
 
   return (
     <>
-      <PageHeader title="공지사항" breadcrumb={["협회소식", "공지사항"]} />
-      <Container>
+      <PageHeader title={board.label} />
+      <Container className="pt-10">
         <article>
           <header className="border-b border-slate-200 pb-5">
             <div className="mb-3 flex items-center gap-2">
-              <Badge>{notice.category}</Badge>
-              {notice.pinned && <Badge>중요</Badge>}
+              <Badge>{post.category}</Badge>
+              {post.pinned && <Badge>중요</Badge>}
             </div>
-            <h1 className="font-serif text-2xl font-bold leading-snug text-brand-900">
-              {notice.title}
-            </h1>
+            <h2 className="font-serif text-2xl font-bold leading-snug text-brand-900">
+              {post.title}
+            </h2>
             <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-500">
-              <span>작성 {notice.author || "사무국"}</span>
-              <span>등록일 {formatDate(notice.createdAt)}</span>
-              <span>조회 {notice.views || 0}</span>
+              <span>작성 {post.author || "사무국"}</span>
+              <span>등록일 {formatDate(post.createdAt)}</span>
+              <span>조회 {post.views || 0}</span>
             </p>
           </header>
 
           <div className="whitespace-pre-line py-10 text-[15px] leading-8 text-slate-700">
-            {notice.body}
+            {post.body}
           </div>
         </article>
 
@@ -233,7 +234,7 @@ export function NoticeDetail({ id }) {
               <span className="w-16 shrink-0 text-xs text-slate-400">{label}</span>
               {item ? (
                 <Link
-                  to={`/news/notice/${item.id}`}
+                  to={`${board.path}/${item.id}`}
                   className="truncate text-slate-700 hover:text-brand-700"
                 >
                   {item.title}
@@ -248,7 +249,7 @@ export function NoticeDetail({ id }) {
         <div className="mt-8 text-center">
           <button
             type="button"
-            onClick={() => navigate("/news/notice")}
+            onClick={() => navigate(board.path)}
             className="rounded-lg border border-slate-300 px-6 py-2.5 text-sm font-medium text-brand-800 hover:bg-slate-50"
           >
             목록

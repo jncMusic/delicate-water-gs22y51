@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pencil, Pin, Plus, Trash2 } from "lucide-react";
 import { useCollection } from "../../lib/useCollection";
 import { createDoc, removeDoc, saveDoc } from "../../lib/store";
-import { noticeCategories } from "../../data/site";
+import { boardList } from "../../data/boards";
 import {
   Badge,
   Button,
@@ -16,19 +16,26 @@ import {
   formatDate,
 } from "../../components/ui";
 
-const EMPTY = {
+const emptyPost = (board) => ({
   title: "",
-  category: "공지",
+  category: board.categories[0],
   author: "사무국",
   body: "",
   pinned: false,
-};
+});
 
-export default function AdminNotices() {
-  const { rows, loading } = useCollection("notices");
+/** 공지사항·보도자료 등 모든 게시판을 한 화면에서 관리한다. */
+export default function AdminBoards() {
+  const [boardKey, setBoardKey] = useState(boardList[0].key);
+  const board = boardList.find((item) => item.key === boardKey);
+  const { rows, loading } = useCollection(board.collection);
+
   const [draft, setDraft] = useState(null);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  // 게시판을 바꾸면 열려 있던 작성창을 닫는다.
+  useEffect(() => setDraft(null), [boardKey]);
 
   const set = (key) => (e) =>
     setDraft((prev) => ({
@@ -46,9 +53,9 @@ export default function AdminNotices() {
     try {
       if (draft.id) {
         const { id, createdAt, ...patch } = draft;
-        await saveDoc("notices", id, patch);
+        await saveDoc(board.collection, id, patch);
       } else {
-        await createDoc("notices", { ...draft, views: 0 });
+        await createDoc(board.collection, { ...draft, views: 0 });
       }
       setDraft(null);
     } catch (err) {
@@ -59,35 +66,53 @@ export default function AdminNotices() {
     }
   };
 
-  const remove = async (notice) => {
-    if (!window.confirm(`'${notice.title}' 글을 삭제할까요?`)) return;
-    await removeDoc("notices", notice.id);
+  const remove = async (post) => {
+    if (!window.confirm(`'${post.title}' 글을 삭제할까요?`)) return;
+    await removeDoc(board.collection, post.id);
   };
 
-  const togglePin = (notice) => saveDoc("notices", notice.id, { pinned: !notice.pinned });
-
-  if (loading) return <Loading />;
+  const togglePin = (post) => saveDoc(board.collection, post.id, { pinned: !post.pinned });
 
   return (
     <div>
+      <div className="mb-5 flex flex-wrap gap-2">
+        {boardList.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => setBoardKey(item.key)}
+            aria-current={item.key === boardKey ? "true" : undefined}
+            className={`rounded-full border px-4 py-1.5 text-sm transition-colors ${
+              item.key === boardKey
+                ? "border-brand-700 bg-brand-700 font-medium text-white"
+                : "border-slate-300 text-slate-600 hover:bg-slate-50"
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
       <div className="mb-4 flex items-center justify-between gap-3">
         <p className="text-sm text-slate-500">
-          전체 <strong className="text-brand-800">{rows.length}</strong>건
+          {board.label} 전체 <strong className="text-brand-800">{rows.length}</strong>건
         </p>
-        <Button onClick={() => setDraft({ ...EMPTY })}>
+        <Button onClick={() => setDraft(emptyPost(board))}>
           <Plus size={15} />
           새 글 작성
         </Button>
       </div>
 
-      {rows.length === 0 ? (
-        <EmptyState message="등록된 공지가 없습니다." />
+      {loading ? (
+        <Loading />
+      ) : rows.length === 0 ? (
+        <EmptyState message="등록된 글이 없습니다." />
       ) : (
         <div className="overflow-x-auto rounded-lg border border-slate-200">
           <table className="w-full min-w-[720px] text-sm">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
-                <th scope="col" className="w-20 px-3 py-3 font-medium">분류</th>
+                <th scope="col" className="w-24 px-3 py-3 font-medium">분류</th>
                 <th scope="col" className="px-3 py-3 text-left font-medium">제목</th>
                 <th scope="col" className="w-24 px-3 py-3 font-medium">작성</th>
                 <th scope="col" className="w-28 px-3 py-3 font-medium">등록일</th>
@@ -96,37 +121,37 @@ export default function AdminNotices() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {rows.map((notice) => (
-                <tr key={notice.id} className="hover:bg-slate-50">
+              {rows.map((post) => (
+                <tr key={post.id} className="hover:bg-slate-50">
                   <td className="px-3 py-3 text-center">
-                    <Badge>{notice.category}</Badge>
+                    <Badge>{post.category}</Badge>
                   </td>
                   <td className="px-3 py-3">
                     <span className="flex items-center gap-1.5 font-medium text-brand-900">
-                      {notice.pinned && <Pin size={13} className="text-gold-600" />}
-                      {notice.title}
+                      {post.pinned && <Pin size={13} className="shrink-0 text-gold-600" />}
+                      {post.title}
                     </span>
                   </td>
-                  <td className="px-3 py-3 text-center text-slate-600">{notice.author}</td>
+                  <td className="px-3 py-3 text-center text-slate-600">{post.author}</td>
                   <td className="px-3 py-3 text-center text-slate-500">
-                    {formatDate(notice.createdAt)}
+                    {formatDate(post.createdAt)}
                   </td>
-                  <td className="px-3 py-3 text-center text-slate-400">{notice.views || 0}</td>
+                  <td className="px-3 py-3 text-center text-slate-400">{post.views || 0}</td>
                   <td className="px-3 py-3">
                     <div className="flex justify-center gap-1">
                       <button
                         type="button"
-                        onClick={() => togglePin(notice)}
-                        aria-label={notice.pinned ? "상단 고정 해제" : "상단 고정"}
+                        onClick={() => togglePin(post)}
+                        aria-label={post.pinned ? "상단 고정 해제" : "상단 고정"}
                         className={`rounded p-1.5 hover:bg-slate-100 ${
-                          notice.pinned ? "text-gold-600" : "text-slate-400"
+                          post.pinned ? "text-gold-600" : "text-slate-400"
                         }`}
                       >
                         <Pin size={15} />
                       </button>
                       <button
                         type="button"
-                        onClick={() => setDraft({ ...notice })}
+                        onClick={() => setDraft({ ...post })}
                         aria-label="수정"
                         className="rounded p-1.5 text-slate-500 hover:bg-brand-50 hover:text-brand-700"
                       >
@@ -134,7 +159,7 @@ export default function AdminNotices() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => remove(notice)}
+                        onClick={() => remove(post)}
                         aria-label="삭제"
                         className="rounded p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600"
                       >
@@ -151,7 +176,7 @@ export default function AdminNotices() {
 
       <Modal
         open={Boolean(draft)}
-        title={draft?.id ? "공지 수정" : "새 공지 작성"}
+        title={`${board.label} — ${draft?.id ? "글 수정" : "새 글 작성"}`}
         onClose={() => setDraft(null)}
         wide
         footer={
@@ -169,7 +194,7 @@ export default function AdminNotices() {
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="분류">
                 <Select value={draft.category} onChange={set("category")}>
-                  {noticeCategories.map((item) => (
+                  {board.categories.map((item) => (
                     <option key={item} value={item}>{item}</option>
                   ))}
                 </Select>

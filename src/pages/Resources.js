@@ -60,11 +60,7 @@ export default function Resources() {
 
   return (
     <>
-      <PageHeader
-        title="자료실"
-        subtitle="대회 요강, 협회 서식, 교육 자료를 내려받으실 수 있습니다."
-        breadcrumb={["자료실", "자료 목록"]}
-      />
+      <PageHeader subtitle="대회 요강, 협회 서식, 교육 자료를 내려받으실 수 있습니다." />
       <Container>
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-slate-500">

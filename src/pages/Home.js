@@ -1,57 +1,42 @@
-import { ArrowRight, CalendarDays, FileDown, Megaphone } from "lucide-react";
+import { useState } from "react";
+import { ArrowRight, CalendarDays, Phone } from "lucide-react";
 import { Link } from "../lib/router";
 import { useCollection } from "../lib/useCollection";
-import { missions, org } from "../data/site";
-import { Badge, EmptyState, SectionTitle, formatDate, formatBytes } from "../components/ui";
+import HeroSlider from "../components/HeroSlider";
+import { boards } from "../data/boards";
+import { affiliates, branches, missions, org } from "../data/site";
+import { Badge, EmptyState, SectionTitle, formatDate } from "../components/ui";
 
-function Hero() {
-  return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-brand-950 via-brand-900 to-brand-700 text-white">
-      {/* 배경 장식 */}
-      <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-gold-500/10 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-32 left-1/4 h-80 w-80 rounded-full bg-brand-400/20 blur-3xl" />
-
-      <div className="relative mx-auto max-w-6xl px-5 py-24 sm:py-32">
-        <p className="mb-4 text-xs font-medium uppercase tracking-[0.25em] text-gold-400">
-          {org.nameEn}
-        </p>
-        <h1 className="font-serif text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
-          {org.slogan}
-        </h1>
-        <p className="mt-6 max-w-xl text-base leading-relaxed text-brand-100 sm:text-lg">
-          {org.description}
-        </p>
-        <div className="mt-9 flex flex-wrap gap-3">
-          <Link
-            to="/members/guide"
-            className="inline-flex items-center gap-2 rounded-lg bg-gold-500 px-6 py-3 text-sm font-bold text-brand-950 transition-colors hover:bg-gold-400"
-          >
-            회원 가입 안내
-            <ArrowRight size={16} />
-          </Link>
-          <Link
-            to="/about/intro"
-            className="inline-flex items-center gap-2 rounded-lg border border-white/30 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-white/10"
-          >
-            협회 소개
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/** 홈에 얹는 목록 카드(공지 / 행사 / 자료 공통 껍데기). */
-function Panel({ icon: Icon, title, to, children }) {
+/** 참고 사이트처럼 탭으로 두 목록을 번갈아 보여주는 홈 카드. */
+function TabCard({ tabs, active, onChange, moreTo, children }) {
   return (
     <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h3 className="flex items-center gap-2 font-serif text-lg font-bold text-brand-900">
-          <Icon size={18} className="text-gold-600" />
-          {title}
-        </h3>
-        <Link to={to} className="text-xs text-slate-500 hover:text-brand-700">
-          더보기 +
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          {tabs.map((tab, index) => (
+            <span key={tab.key} className="flex items-center gap-3">
+              {index > 0 && <span aria-hidden="true" className="text-slate-300">·</span>}
+              <button
+                type="button"
+                onClick={() => onChange(tab.key)}
+                aria-current={tab.key === active ? "true" : undefined}
+                className={`font-serif text-lg font-bold transition-colors ${
+                  tab.key === active
+                    ? "text-brand-800 underline decoration-gold-500 decoration-2 underline-offset-8"
+                    : "text-slate-400 hover:text-slate-600"
+                }`}
+              >
+                {tab.label}
+              </button>
+            </span>
+          ))}
+        </div>
+        <Link
+          to={moreTo}
+          aria-label="더보기"
+          className="flex h-7 w-7 items-center justify-center rounded border border-slate-200 text-slate-400 hover:border-brand-300 hover:text-brand-700"
+        >
+          +
         </Link>
       </div>
       {children}
@@ -59,81 +44,158 @@ function Panel({ icon: Icon, title, to, children }) {
   );
 }
 
-export default function Home() {
-  const { rows: notices } = useCollection("notices");
-  const { rows: events } = useCollection("events");
-  const { rows: resources } = useCollection("resources");
-
-  const pinnedFirst = [...notices].sort(
+/** 날짜가 왼쪽, 제목이 오른쪽에 오는 홈 전용 목록. */
+function PostList({ board }) {
+  const { rows } = useCollection(board.collection);
+  const sorted = [...rows].sort(
     (a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned))
   );
+
+  if (sorted.length === 0) return <EmptyState message="등록된 글이 없습니다." />;
+
+  return (
+    <ul className="divide-y divide-slate-100">
+      {sorted.slice(0, 6).map((post) => (
+        <li key={post.id}>
+          <Link
+            to={`${board.path}/${post.id}`}
+            className="group flex items-center gap-4 py-3 text-sm"
+          >
+            <span className="w-24 shrink-0 text-xs tabular-nums text-slate-400">
+              {formatDate(post.createdAt)}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-slate-700 group-hover:text-brand-700">
+              {post.title}
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** 지회·지부 / 산하단체를 카드 한 장씩 넘겨 보는 패널. */
+function GroupSlider({ items, render }) {
+  const [at, setAt] = useState(0);
+  const current = items[Math.min(at, items.length - 1)];
+
+  return (
+    <div>
+      {render(current)}
+      <div className="mt-5 flex justify-center gap-1.5">
+        {items.slice(0, 8).map((item, index) => (
+          <button
+            key={item.name}
+            type="button"
+            onClick={() => setAt(index)}
+            aria-label={`${item.name} 보기`}
+            aria-current={index === Math.min(at, items.length - 1) ? "true" : undefined}
+            className={`h-1.5 rounded-full transition-all ${
+              index === Math.min(at, items.length - 1)
+                ? "w-6 bg-brand-700"
+                : "w-1.5 bg-slate-300 hover:bg-slate-400"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function Home() {
+  const { rows: banners } = useCollection("banners");
+  const { rows: events } = useCollection("events");
+  const [leftTab, setLeftTab] = useState("notice");
+  const [rightTab, setRightTab] = useState("branch");
+
+  const orderedBanners = [...banners].sort((a, b) => (a.order || 0) - (b.order || 0));
 
   const today = new Date().toISOString().slice(0, 10);
   const upcoming = [...events]
     .filter((e) => !e.startDate || e.startDate >= today)
     .sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
 
+  const leftBoard = leftTab === "notice" ? boards.notice : boards.press;
+
   return (
     <>
-      <Hero />
+      <HeroSlider banners={orderedBanners} />
 
-      <div className="mx-auto max-w-6xl px-5 py-16">
+      <div className="mx-auto max-w-6xl px-5 py-14">
         <div className="grid gap-6 lg:grid-cols-2">
-          <Panel icon={Megaphone} title="공지사항" to="/news/notice">
-            {pinnedFirst.length === 0 ? (
-              <EmptyState message="등록된 공지가 없습니다." />
-            ) : (
-              <ul className="divide-y divide-slate-100">
-                {pinnedFirst.slice(0, 5).map((notice) => (
-                  <li key={notice.id}>
-                    <Link
-                      to={`/news/notice/${notice.id}`}
-                      className="flex items-center justify-between gap-4 py-3 group"
-                    >
-                      <span className="flex min-w-0 items-center gap-2">
-                        {notice.pinned && <Badge>중요</Badge>}
-                        <span className="min-w-0 flex-1 truncate text-sm text-slate-700 group-hover:text-brand-700">
-                          {notice.title}
-                        </span>
-                      </span>
-                      <span className="shrink-0 text-xs text-slate-400">
-                        {formatDate(notice.createdAt)}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
+          <TabCard
+            tabs={[
+              { key: "notice", label: "공지사항" },
+              { key: "press", label: "보도자료" },
+            ]}
+            active={leftTab}
+            onChange={setLeftTab}
+            moreTo={leftBoard.path}
+          >
+            <PostList board={leftBoard} />
+          </TabCard>
 
-          <Panel icon={CalendarDays} title="다가오는 행사" to="/news/events">
-            {upcoming.length === 0 ? (
-              <EmptyState message="예정된 행사가 없습니다." />
+          <TabCard
+            tabs={[
+              { key: "branch", label: "지회·지부" },
+              { key: "affiliate", label: "산하단체" },
+            ]}
+            active={rightTab}
+            onChange={setRightTab}
+            moreTo={rightTab === "branch" ? "/members/branches" : "/members/affiliates"}
+          >
+            {rightTab === "branch" ? (
+              <GroupSlider
+                items={branches}
+                render={(branch) => (
+                  <div className="flex items-center gap-5">
+                    <span className="flex h-24 w-24 shrink-0 flex-col items-center justify-center rounded-lg bg-brand-900 text-white">
+                      <span className="font-serif text-2xl font-bold">{branch.region}</span>
+                      <span className="mt-1 text-[10px] tracking-widest text-brand-300">BRANCH</span>
+                    </span>
+                    <div className="min-w-0">
+                      <h3 className="font-serif text-lg font-bold text-brand-900">{branch.name}</h3>
+                      <p className="mt-2 text-sm text-slate-600">지회장 {branch.head}</p>
+                      <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-600">
+                        <Phone size={13} className="text-slate-400" />
+                        {branch.phone}
+                      </p>
+                      <Link
+                        to="/members/branches"
+                        className="mt-3 inline-block rounded-full border border-slate-300 px-4 py-1.5 text-xs text-brand-800 hover:bg-slate-50"
+                      >
+                        자세히 보기
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              />
             ) : (
-              <ul className="space-y-3">
-                {upcoming.slice(0, 5).map((event) => (
-                  <li key={event.id} className="flex items-center gap-4">
-                    <span className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-lg bg-brand-50 text-brand-800">
-                      <span className="text-[10px]">
-                        {String(event.startDate || "").slice(0, 4)}
-                      </span>
-                      <span className="text-sm font-bold">
-                        {String(event.startDate || "").slice(5).replace("-", ".")}
-                      </span>
+              <GroupSlider
+                items={affiliates}
+                render={(group) => (
+                  <div className="flex items-center gap-5">
+                    <span className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg bg-gold-500/15 px-2 text-center font-serif text-sm font-bold leading-snug text-gold-600">
+                      {group.name.slice(0, 6)}
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium text-slate-800">
-                        {event.title}
-                      </span>
-                      <span className="block truncate text-xs text-slate-500">
-                        {event.location || "장소 미정"}
-                      </span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                    <div className="min-w-0">
+                      <h3 className="font-serif text-lg font-bold text-brand-900">{group.name}</h3>
+                      <p className="mt-1 text-xs text-gold-600">{group.since}</p>
+                      <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-600">
+                        {group.summary}
+                      </p>
+                      <Link
+                        to="/members/affiliates"
+                        className="mt-3 inline-block rounded-full border border-slate-300 px-4 py-1.5 text-xs text-brand-800 hover:bg-slate-50"
+                      >
+                        자세히 보기
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              />
             )}
-          </Panel>
+          </TabCard>
         </div>
       </div>
 
@@ -157,27 +219,34 @@ export default function Home() {
       </div>
 
       <div className="mx-auto max-w-6xl px-5 py-16">
-        <Panel icon={FileDown} title="최근 등록 자료" to="/resources">
-          {resources.length === 0 ? (
-            <EmptyState message="등록된 자료가 없습니다." />
-          ) : (
-            <ul className="divide-y divide-slate-100">
-              {resources.slice(0, 4).map((item) => (
-                <li key={item.id} className="flex items-center justify-between gap-4 py-3">
-                  <span className="flex min-w-0 items-center gap-2">
-                    <Badge>{item.category}</Badge>
-                    <span className="min-w-0 flex-1 truncate text-sm text-slate-700">
-                      {item.title}
-                    </span>
-                  </span>
-                  <span className="shrink-0 text-xs text-slate-400">
-                    {formatBytes(item.file?.size)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <h2 className="flex items-center gap-2 font-serif text-xl font-bold text-brand-900">
+            <CalendarDays size={19} className="text-gold-600" />
+            다가오는 행사
+          </h2>
+          <Link to="/events/schedule" className="text-xs text-slate-500 hover:text-brand-700">
+            전체 일정 +
+          </Link>
+        </div>
+
+        {upcoming.length === 0 ? (
+          <EmptyState message="예정된 행사가 없습니다." />
+        ) : (
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {upcoming.slice(0, 4).map((event) => (
+              <li key={event.id} className="rounded-xl border border-slate-200 bg-white p-5">
+                <Badge>{event.category || "행사"}</Badge>
+                <p className="mt-3 font-serif text-xl font-bold tabular-nums text-brand-800">
+                  {String(event.startDate || "").replace(/-/g, ".")}
+                </p>
+                <h3 className="mt-1 font-medium text-brand-900">{event.title}</h3>
+                <p className="mt-1 truncate text-xs text-slate-500">
+                  {event.location || "장소 미정"}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="bg-brand-900">
@@ -187,7 +256,7 @@ export default function Home() {
               관악을 함께 만들어 갈 회원을 기다립니다
             </h2>
             <p className="mt-2 text-sm text-brand-200">
-              연주자, 지도자, 학생 그리고 관악 단체 모두 가입하실 수 있습니다.
+              {org.description}
             </p>
           </div>
           <Link

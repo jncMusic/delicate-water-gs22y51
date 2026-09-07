@@ -17,11 +17,7 @@ function Node({ role, name, tone = "light" }) {
 export default function AboutOrganization() {
   return (
     <>
-      <PageHeader
-        title="조직도"
-        subtitle="협회의 의사결정 구조와 부서별 담당 업무입니다."
-        breadcrumb={["협회소개", "조직도"]}
-      />
+      <PageHeader subtitle="협회의 의사결정 구조와 부서별 담당 업무입니다." />
       <Container>
         <SectionTitle>조직 구성</SectionTitle>
 

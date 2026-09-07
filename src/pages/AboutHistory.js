@@ -4,11 +4,7 @@ import { Container, PageHeader } from "../components/ui";
 export default function AboutHistory() {
   return (
     <>
-      <PageHeader
-        title="협회 연혁"
-        subtitle="창립 이후 협회가 걸어온 길입니다."
-        breadcrumb={["협회소개", "협회 연혁"]}
-      />
+      <PageHeader subtitle="창립 이후 협회가 걸어온 길입니다." />
       <Container>
         <div className="space-y-14">
           {history.map((block) => (

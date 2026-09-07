@@ -5,23 +5,39 @@ React 19 + Tailwind CSS 로 만들었고, 데이터 저장은 Firebase(Firestore
 
 ## 화면 구성
 
-| 구분 | 경로 | 내용 |
-| --- | --- | --- |
-| 홈 | `/` | 협회 소개, 최신 공지·행사·자료, 가입 안내 |
-| 협회소개 | `/about/intro` 외 | 인사말, 연혁, 조직도, 정관, 오시는 길 |
-| 협회소식 | `/news/notice`, `/news/events` | 공지사항(목록·상세·검색·분류), 행사일정 |
-| 사업안내 | `/programs` | 경연대회·정기연주회·연수 등 연간 사업 |
-| 자료실 | `/resources` | 자료 검색·분류·내려받기 |
-| 회원안내 | `/members/guide`, `/members/apply` | 회원 구분·회비·절차, 온라인 가입 신청 |
-| 관리자 | `/admin` | 회원 관리, 공지 관리, 자료실 관리, 일정 관리 |
+참고하신 한국음악협회 홈페이지의 구조를 따랐습니다. 대메뉴 5개 + 우측 전체메뉴,
+서브페이지는 네이비 제목 띠와 박스형 소메뉴 타일, 회원가입은 단계 진행형입니다.
 
-관리자 화면에서 할 수 있는 일
+| 대메뉴 | 소메뉴 |
+| --- | --- |
+| 협회소개 | 사단법인 한국관악협회 · 이사장 인사말 · 협회 연혁 · 역대 이사장 · 조직도 · 임원 소개 · 정관 · CI 다운로드 · 오시는 길 |
+| 협회행사 | 주요 사업 · 행사일정 |
+| 회원/단체 | 회원 안내 · 가입 신청 · 지회·지부 · 산하단체 |
+| 관악정보 | 관악계 소식 · 연주회 소식 · 자료실 · 일자리 정보 |
+| 커뮤니티 | 공지사항 · 보도자료 · 정보공개 |
 
-- **회원 관리** — 신청 목록 조회, 이름·소속·연락처 검색, 상태/구분 필터, 다건 선택 일괄 승인,
-  개별 정보 수정, 삭제, 현재 필터 결과 그대로 엑셀(.xlsx) 내려받기
-- **공지 관리** — 글 작성·수정·삭제, 분류 지정, 상단 고정
+이 밖에 푸터에서 들어가는 회원정보 영역(서비스 이용약관, 개인정보 처리방침,
+이메일 무단수집 거부)은 좌측 세로 메뉴 레이아웃을 씁니다.
+
+**홈 화면**
+
+- 상단 배너 슬라이더 (관리자가 등록·교체, 좌우 이동과 자동 넘김)
+- 공지사항 · 보도자료 탭 목록
+- 지회·지부 · 산하단체 탭 카드
+- 협회의 활동, 다가오는 행사, 가입 안내 띠
+
+**회원 가입 신청** — `01 가입확인 → 02 약관동의 → 03 정보입력 → 04 입력확인 → 05 신청완료`
+5단계로 진행하며, 01 단계에서 같은 이름·연락처로 이미 접수된 신청이 있으면 걸러 냅니다.
+
+**관리자 화면 (`/admin`)**
+
+- **회원 관리** — 이름·소속·연락처 검색, 상태/구분 필터, 다건 선택 일괄 승인,
+  개별 정보 수정·삭제, 현재 필터 결과 그대로 엑셀(.xlsx) 내려받기
+- **게시판 관리** — 6개 게시판(공지사항·보도자료·정보공개·관악계 소식·연주회 소식·일자리 정보)을
+  한 화면에서 전환하며 글 작성·수정·삭제, 분류 지정, 상단 고정
 - **자료실 관리** — 파일 업로드(분류·설명 포함), 내려받기, 삭제
 - **일정 관리** — 행사 일정 추가·수정·삭제
+- **배너 관리** — 홈 배너 추가·수정·삭제, 이미지 업로드, 연결 페이지·배경색·순서 지정
 
 ## 실행
 
@@ -71,10 +87,16 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
     }
 
-    match /notices/{doc} {
-      allow read: if true;
-      allow create, delete: if isAdmin();
-      allow update: if isAdmin() || onlyChanges(['views']);
+    // 게시판 6종 — 방문자는 조회수만 올릴 수 있다
+    match /{board}/{doc} {
+      allow read: if board in ['notices', 'press', 'disclosure',
+                               'sceneNews', 'concertNews', 'jobs'];
+      allow create, delete: if isAdmin()
+        && board in ['notices', 'press', 'disclosure',
+                     'sceneNews', 'concertNews', 'jobs'];
+      allow update: if board in ['notices', 'press', 'disclosure',
+                                 'sceneNews', 'concertNews', 'jobs']
+        && (isAdmin() || onlyChanges(['views']));
     }
 
     match /resources/{doc} {
@@ -84,6 +106,11 @@ service cloud.firestore {
     }
 
     match /events/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /banners/{doc} {
       allow read: if true;
       allow write: if isAdmin();
     }
@@ -108,9 +135,10 @@ service cloud.firestore {
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    match /resources/{file} {
-      allow read: if true;                    // 자료실은 공개
-      allow write: if request.auth != null;   // 로그인 계정만 업로드
+    match /{folder}/{file} {
+      allow read: if folder in ['resources', 'banners'];   // 자료실·배너 이미지는 공개
+      allow write: if request.auth != null
+        && folder in ['resources', 'banners'];             // 로그인 계정만 업로드
     }
   }
 }
@@ -124,18 +152,24 @@ Storage 규칙에서는 Firestore 의 `admins` 문서를 조회할 수 없어 "�
 홈페이지에 보이는 고정 문구는 모두 **`src/data/site.js`** 한 파일에 모여 있습니다.
 현재 값은 화면 구성을 보여주기 위한 예시이므로 실제 협회 정보로 바꿔 주세요.
 
-- `org` — 협회명, 주소, 전화·팩스, 이메일, 업무시간, 회비 계좌
-- `menus` — 상단 메뉴 구성
-- `greeting` — 인사말 본문과 서명
-- `history` — 연혁
-- `organization` — 조직도와 부서별 담당 업무
+- `org` — 법인명, 주소, 전화·팩스, 이메일, 업무시간, 회비 계좌, 고유번호
+- `menus` — 대메뉴·소메뉴 구성 (여기를 고치면 상단 메뉴, 서브페이지 타일, 전체메뉴가 함께 바뀝니다)
+- `greeting` / `overview` — 이사장 인사말, 법인 개요와 주요 활동
+- `history` / `pastChairs` / `executives` / `organization` — 연혁, 역대 이사장, 임원, 조직도
 - `bylaws` — 정관 조문
 - `programs` — 주요 사업
-- `memberTypes`, `joinSteps` — 회원 구분·회비·가입 절차
-- `instruments`, `regions`, `noticeCategories`, `resourceCategories` — 선택 항목 목록
+- `memberTypes` / `memberBenefits` / `joinSteps` — 회원 구분·회비·혜택·가입 절차
+- `branches` / `affiliates` — 지회·지부, 산하단체
+- `instruments`, `regions`, `resourceCategories` — 선택 항목 목록
+
+게시판을 늘리거나 이름을 바꾸려면 **`src/data/boards.js`** 에 항목을 추가하면 됩니다.
+목록·상세 화면과 관리자 화면이 이 정의를 그대로 따라갑니다.
 
 `src/pages/AboutLocation.js` 의 "지도 영역"은 자리만 잡아 두었습니다.
 카카오맵이나 네이버 지도 스크립트를 넣으면 실제 약도가 표시됩니다.
+
+CI 파일은 `public/ci-logo.svg`(가로형)와 `public/favicon.svg`(심볼)입니다.
+협회 실제 로고로 교체하시면 CI 다운로드 페이지에도 그대로 반영됩니다.
 
 ## 배포
 
@@ -146,7 +180,9 @@ Storage 규칙에서는 Firestore 의 `admins` 문서를 조회할 수 없어 "�
 
 ```
 src/
-  data/site.js        협회 정보·문구 (여기만 고치면 내용이 바뀝니다)
+  data/
+    site.js           협회 정보·문구·메뉴 (여기만 고치면 내용이 바뀝니다)
+    boards.js         게시판 정의 (공지사항·보도자료·정보공개·소식·채용)
   lib/
     firebase.js       Firebase 초기화 (.env 가 비면 연결하지 않음)
     store.js          Firestore/localStorage 공통 데이터 계층
@@ -155,6 +191,11 @@ src/
     seed.js           데모 모드 예시 데이터
     useCollection.js  컬렉션 실시간 구독 훅
     download.js       파일 내려받기 도우미
-  components/         Header, Footer, 공통 UI 요소
+  components/
+    Header.js         대메뉴·타일 드롭다운·전체메뉴·모바일 서랍
+    Footer.js         사무국 정보와 약관 링크
+    HeroSlider.js     홈 배너 슬라이더
+    ui.js             서브페이지 레이아웃(타일형·사이드바형)과 공통 UI 요소
   pages/              각 페이지 (admin/ 아래는 관리자 화면)
+    Board.js          모든 게시판이 함께 쓰는 목록·상세 화면
 ```

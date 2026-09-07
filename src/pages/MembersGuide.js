@@ -6,11 +6,7 @@ import { Card, Container, PageHeader, SectionTitle } from "../components/ui";
 export default function MembersGuide() {
   return (
     <>
-      <PageHeader
-        title="회원 가입 안내"
-        subtitle="회원 구분과 가입 절차를 안내합니다."
-        breadcrumb={["회원안내", "가입 안내"]}
-      />
+      <PageHeader subtitle="회원 구분과 가입 절차를 안내합니다." />
       <Container>
         <SectionTitle description="본인의 활동에 맞는 회원 구분을 선택해 신청하세요.">
           회원 구분

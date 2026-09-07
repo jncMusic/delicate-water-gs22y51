@@ -5,11 +5,7 @@ import { Container, PageHeader } from "../components/ui";
 export default function AboutBylaws() {
   return (
     <>
-      <PageHeader
-        title="정관"
-        subtitle="협회의 운영 기준이 되는 정관입니다."
-        breadcrumb={["협회소개", "정관"]}
-      />
+      <PageHeader subtitle="협회의 운영 기준이 되는 정관입니다." />
       <Container>
         <p className="mb-8 flex items-start gap-2.5 rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800">
           <Info size={16} className="mt-0.5 shrink-0" />

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
-import { X, ChevronLeft, ChevronRight, Inbox, Loader2 } from "lucide-react";
-import { Link } from "../lib/router";
+import { X, ChevronLeft, ChevronRight, Home, Inbox, Loader2 } from "lucide-react";
+import { Link, useRoute } from "../lib/router";
+import { findMenu } from "../data/site";
 
 /* ---------- 표시 형식 도우미 ---------- */
 
@@ -27,28 +28,208 @@ export function formatBytes(bytes) {
 
 /* ---------- 레이아웃 ---------- */
 
-/** 서브페이지 상단의 제목 띠. */
-export function PageHeader({ title, subtitle, breadcrumb = [] }) {
+/** 서브페이지 상단 띠의 배경 악보 무늬. */
+function StaffPattern() {
   return (
-    <div className="border-b border-brand-100 bg-gradient-to-br from-brand-900 to-brand-700 text-white">
-      <div className="mx-auto max-w-6xl px-5 py-12 sm:py-16">
-        {breadcrumb.length > 0 && (
-          <nav className="mb-3 flex flex-wrap items-center gap-1.5 text-xs text-brand-200">
-            <Link to="/" className="hover:text-white">
-              홈
-            </Link>
-            {breadcrumb.map((crumb) => (
-              <span key={crumb} className="flex items-center gap-1.5">
-                <span aria-hidden="true">›</span>
-                <span className="text-white">{crumb}</span>
-              </span>
-            ))}
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 220 120"
+      className="pointer-events-none absolute inset-x-0 bottom-0 h-20 w-full text-white/10"
+      preserveAspectRatio="none"
+    >
+      {[0, 1, 2, 3, 4].map((line) => (
+        <line
+          key={line}
+          x1="0"
+          x2="220"
+          y1={40 + line * 12}
+          y2={30 + line * 12}
+          stroke="currentColor"
+          strokeWidth="1.5"
+        />
+      ))}
+      <circle cx="52" cy="74" r="7" fill="currentColor" />
+      <circle cx="104" cy="62" r="7" fill="currentColor" />
+      <circle cx="156" cy="52" r="7" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** 홈 > 대메뉴 > 소메뉴 형태의 경로 표시. */
+function Breadcrumb({ group, child }) {
+  return (
+    <nav aria-label="현재 위치" className="flex items-center gap-2 text-xs text-slate-500">
+      <Link to="/" aria-label="홈" className="text-slate-400 hover:text-brand-700">
+        <Home size={14} />
+      </Link>
+      {group && (
+        <>
+          <span aria-hidden="true" className="text-slate-300">›</span>
+          <span>{group.label}</span>
+        </>
+      )}
+      {child && (
+        <>
+          <span aria-hidden="true" className="text-slate-300">›</span>
+          <span className="font-medium text-brand-800">{child.label}</span>
+        </>
+      )}
+    </nav>
+  );
+}
+
+/**
+ * 서브페이지 상단.
+ * 왼쪽 네이비 띠에 대메뉴 이름, 오른쪽에 소메뉴 타일을 늘어놓고
+ * 그 아래에 경로 표시와 가운데 정렬한 페이지 제목을 둔다.
+ */
+export function PageHeader({ title, subtitle }) {
+  const path = useRoute();
+  const found = findMenu(path);
+  const group = found?.group;
+  const child = found?.child;
+  const heading = title || child?.label || "";
+
+  return (
+    <>
+      <div className="border-b border-slate-200">
+        <div className="mx-auto flex max-w-6xl flex-col sm:flex-row">
+          {/* before 로 화면 왼쪽 끝까지 네이비 배경을 이어 붙인다. */}
+          <div className="relative flex shrink-0 items-center justify-center bg-brand-900 px-6 py-7 sm:w-56 sm:justify-end sm:py-10 sm:before:absolute sm:before:right-full sm:before:top-0 sm:before:h-full sm:before:w-screen sm:before:bg-brand-900 sm:before:content-['']">
+            <span className="absolute inset-0 overflow-hidden">
+              <StaffPattern />
+            </span>
+            <h2 className="relative font-serif text-xl font-bold text-white sm:text-2xl">
+              {group ? group.label : "안내"}
+            </h2>
+          </div>
+
+          {group && group.children.length > 1 && (
+            <nav
+              aria-label={`${group.label} 하위 메뉴`}
+              className="grid flex-1 grid-cols-2 border-slate-200 sm:m-6 sm:grid-cols-3 sm:border lg:grid-cols-5"
+            >
+              {group.children.map((item) => {
+                const active = item.path === child?.path;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    aria-current={active ? "page" : undefined}
+                    className={`border-b border-r border-slate-200 px-3 py-3 text-center text-xs transition-colors sm:border-0 sm:border-b sm:border-r ${
+                      active
+                        ? "bg-brand-50 font-bold text-brand-800"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-brand-700"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-6xl px-5 pt-8">
+        <Breadcrumb group={group} child={child} />
+        <div className="mt-6 text-center">
+          <h1 className="font-serif text-2xl font-bold text-brand-900 sm:text-3xl">{heading}</h1>
+          {subtitle && <p className="mt-3 text-sm text-slate-600">{subtitle}</p>}
+          <span aria-hidden="true" className="mx-auto mt-5 block h-0.5 w-16 bg-brand-700" />
+        </div>
+      </div>
+    </>
+  );
+}
+
+/**
+ * 좌측 세로 메뉴를 쓰는 레이아웃. 가입 신청과 약관 페이지처럼
+ * 단계가 있거나 문서 성격인 화면에 쓴다.
+ */
+export function SidebarPage({ menu, title, subtitle, children }) {
+  const path = useRoute();
+  const child = menu.children.find((item) => path === item.path);
+
+  return (
+    <div className="mx-auto max-w-6xl px-5 py-10">
+      <div className="mb-6 flex justify-end">
+        <Breadcrumb group={menu} child={child} />
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-[220px_1fr]">
+        <aside className="relative overflow-hidden rounded-2xl bg-brand-900 px-5 py-8 text-white">
+          <StaffPattern />
+          <h2 className="relative font-serif text-xl font-bold">{menu.label}</h2>
+          <nav aria-label={`${menu.label} 메뉴`} className="relative mt-8 space-y-1">
+            {menu.children.map((item) => {
+              const active = item.path === path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  aria-current={active ? "page" : undefined}
+                  className={`block rounded-lg px-4 py-2.5 text-sm transition-colors ${
+                    active
+                      ? "bg-brand-600 font-bold text-white"
+                      : "text-brand-200 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
-        )}
-        <h1 className="font-serif text-3xl font-bold sm:text-4xl">{title}</h1>
-        {subtitle && <p className="mt-3 max-w-2xl text-sm text-brand-100 sm:text-base">{subtitle}</p>}
+        </aside>
+
+        <div>
+          <div className="text-center">
+            <h1 className="font-serif text-2xl font-bold text-brand-900 sm:text-3xl">
+              {title || child?.label}
+            </h1>
+            {subtitle && <p className="mt-3 text-sm text-slate-600">{subtitle}</p>}
+            <span aria-hidden="true" className="mx-auto mt-5 block h-0.5 w-16 bg-brand-700" />
+          </div>
+          <div className="mt-10">{children}</div>
+        </div>
       </div>
     </div>
+  );
+}
+
+/** 가입 신청처럼 여러 단계로 나뉜 화면의 진행 표시. */
+export function StepIndicator({ steps, current }) {
+  return (
+    <ol className="flex flex-wrap items-center justify-center gap-2">
+      {steps.map((label, index) => {
+        const no = index + 1;
+        const active = no === current;
+        const done = no < current;
+        return (
+          <li key={label} className="flex items-center gap-2">
+            <span
+              aria-current={active ? "step" : undefined}
+              className={`flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-1.5 text-xs transition-colors ${
+                active ? "bg-brand-50 pr-4 text-brand-800" : ""
+              }`}
+            >
+              <span
+                className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
+                  active
+                    ? "bg-brand-700 text-white"
+                    : done
+                    ? "bg-brand-200 text-brand-800"
+                    : "bg-slate-100 text-slate-400"
+                }`}
+              >
+                {String(no).padStart(2, "0")}
+              </span>
+              {active && <span className="font-bold">{label}</span>}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 

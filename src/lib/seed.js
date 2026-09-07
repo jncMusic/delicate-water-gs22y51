@@ -157,6 +157,162 @@ export const seedData = {
     },
   ],
 
+  banners: [
+    {
+      id: "seed-b1",
+      title: "2026 제18회 전국관악경연대회",
+      subtitle: "접수 4월 1일(수) ~ 4월 30일(목) 16:00",
+      caption: "주최 한국관악협회 · 전국관악경연대회 조직위원회",
+      linkPath: "/community/notice",
+      tone: "blue",
+      image: null,
+      order: 1,
+      createdAt: iso(10),
+    },
+    {
+      id: "seed-b2",
+      title: "제42회 정기연주회",
+      subtitle: "2026년 11월 7일(토) 오후 7시 · 예술의전당 콘서트홀",
+      caption: "위촉 창작 관악곡 초연 무대",
+      linkPath: "/events/schedule",
+      tone: "gold",
+      image: null,
+      order: 2,
+      createdAt: iso(12),
+    },
+    {
+      id: "seed-b3",
+      title: "관악 지도자 연수 수강생 모집",
+      subtitle: "7월 셋째 주 4일 과정 · 정원 40명 선착순",
+      caption: "수료자에게 협회장 명의 수료증 발급",
+      linkPath: "/events/programs",
+      tone: "navy",
+      image: null,
+      order: 3,
+      createdAt: iso(14),
+    },
+  ],
+
+  press: [
+    {
+      id: "seed-p1",
+      title: "한국관악협회, 제18회 전국관악경연대회 개최",
+      category: "보도자료",
+      author: "홍보부",
+      pinned: false,
+      views: 92,
+      body:
+        "한국관악협회는 오는 6월 제18회 전국관악경연대회를 개최한다고 밝혔다.\n\n" +
+        "올해 대회는 관악합주, 목관중주, 금관중주, 독주 네 개 부문으로 나뉘어 진행되며 " +
+        "초등부부터 일반부까지 참가할 수 있다.",
+      createdAt: iso(9),
+    },
+    {
+      id: "seed-p2",
+      title: "관악 지도자 연수, 올해로 10년째",
+      category: "언론보도",
+      author: "홍보부",
+      pinned: false,
+      views: 61,
+      body:
+        "협회가 운영하는 관악 지도자 연수가 올해로 10년째를 맞았다.\n\n" +
+        "그동안 400여 명의 지도교사와 지휘자가 과정을 수료했다.",
+      createdAt: iso(40),
+    },
+  ],
+
+  disclosure: [
+    {
+      id: "seed-d1",
+      title: "2026년도 사업계획서",
+      category: "사업계획",
+      author: "사무국",
+      pinned: true,
+      views: 145,
+      body: "2026년도 사업계획 요약입니다. 전문은 자료실에서 내려받으실 수 있습니다.",
+      createdAt: iso(20),
+    },
+    {
+      id: "seed-d2",
+      title: "2025년도 결산 보고",
+      category: "결산",
+      author: "사무국",
+      pinned: false,
+      views: 88,
+      body: "2025년도 수입·지출 결산 내역입니다. 정기총회에서 승인되었습니다.",
+      createdAt: iso(160),
+    },
+  ],
+
+  sceneNews: [
+    {
+      id: "seed-s1",
+      title: "전국 학교 관악부 실태 조사 결과 발표",
+      category: "국내",
+      author: "학술부",
+      pinned: false,
+      views: 210,
+      body: "전국 초·중·고 관악부를 대상으로 진행한 실태 조사 결과를 공유합니다.",
+      createdAt: iso(15),
+    },
+    {
+      id: "seed-s2",
+      title: "아시아 관악 페스티벌 참가단 모집",
+      category: "해외",
+      author: "사업부",
+      pinned: false,
+      views: 174,
+      body: "올해 아시아 관악 페스티벌에 파견할 참가단을 모집합니다.",
+      createdAt: iso(33),
+    },
+  ],
+
+  concertNews: [
+    {
+      id: "seed-c1",
+      title: "○○윈드오케스트라 정기연주회",
+      category: "정기연주회",
+      author: "홍보부",
+      pinned: false,
+      views: 133,
+      body: "일시 · 장소 · 프로그램은 본문에서 확인하실 수 있습니다.",
+      createdAt: iso(6),
+    },
+    {
+      id: "seed-c2",
+      title: "○○중학교 관악부 정기연주회",
+      category: "학교연주회",
+      author: "홍보부",
+      pinned: false,
+      views: 77,
+      body: "학교 관악부의 한 해 성과를 선보이는 무대입니다.",
+      createdAt: iso(25),
+    },
+  ],
+
+  jobs: [
+    {
+      id: "seed-j1",
+      title: "○○시립교향악단 트럼펫 단원 모집",
+      category: "연주단체",
+      author: "사무국",
+      pinned: false,
+      views: 402,
+      body: "모집 인원, 응시 자격, 지정곡은 본문을 확인해 주세요.",
+      createdAt: iso(5),
+    },
+    {
+      id: "seed-j2",
+      title: "○○예술고등학교 관악 강사 채용",
+      category: "학교",
+      author: "사무국",
+      pinned: false,
+      views: 288,
+      body: "주 2회 출강 기준이며 자세한 조건은 본문에 있습니다.",
+      createdAt: iso(18),
+    },
+  ],
+
   members: [
     {
       id: "seed-m1",

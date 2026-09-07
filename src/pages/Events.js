@@ -47,11 +47,7 @@ export default function Events() {
 
   return (
     <>
-      <PageHeader
-        title="행사일정"
-        subtitle="협회가 주최·주관하는 행사 일정입니다."
-        breadcrumb={["협회소식", "행사일정"]}
-      />
+      <PageHeader subtitle="협회가 주최·주관하는 행사 일정입니다." />
       <Container>
         <SectionTitle description="신청과 세부 안내는 공지사항에서 확인하실 수 있습니다.">
           예정된 행사
