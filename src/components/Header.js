@@ -74,7 +74,7 @@ function MobileDrawer({ onClose, activePath }) {
               to={item.path}
               onClick={onClose}
               className={`flex items-center justify-between py-4 text-sm ${
-                item.path === activePath ? "font-bold text-gold-400" : "font-medium text-white"
+                item.path === activePath ? "font-bold text-accent-400" : "font-medium text-white"
               }`}
             >
               {item.label}
@@ -123,7 +123,7 @@ export default function Header({ path }) {
       <div className="border-b border-slate-200">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
           <Link to="/" className="flex shrink-0 items-center gap-2.5">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-900 text-gold-400">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-900 text-accent-400">
               <Music4 size={19} />
             </span>
             <span className="leading-tight">

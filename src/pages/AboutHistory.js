@@ -9,7 +9,7 @@ export default function AboutHistory() {
         <div className="space-y-14">
           {history.map((block) => (
             <section key={block.period} className="grid gap-6 sm:grid-cols-[160px_1fr]">
-              <h2 className="font-serif text-2xl font-bold text-gold-600">{block.period}</h2>
+              <h2 className="font-serif text-2xl font-bold text-accent-600">{block.period}</h2>
               <ol className="relative border-l-2 border-brand-100 pl-6">
                 {block.items.map((item) => (
                   <li key={`${item.year}-${item.text}`} className="relative pb-7 last:pb-0">

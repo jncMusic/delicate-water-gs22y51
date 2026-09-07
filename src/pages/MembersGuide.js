@@ -18,7 +18,7 @@ export default function MembersGuide() {
               <p className="mt-2 min-h-[48px] text-sm leading-relaxed text-slate-600">
                 {member.target}
               </p>
-              <p className="mt-4 border-y border-slate-100 py-3 text-lg font-bold text-gold-600">
+              <p className="mt-4 border-y border-slate-100 py-3 text-lg font-bold text-accent-600">
                 {member.fee}
               </p>
               <ul className="mt-4 flex-1 space-y-2">
@@ -51,7 +51,7 @@ export default function MembersGuide() {
         <div className="mt-16 grid gap-6 rounded-xl border border-slate-200 bg-slate-50 p-8 sm:grid-cols-[1.5fr_1fr] sm:items-center">
           <div>
             <h2 className="flex items-center gap-2 font-serif text-lg font-bold text-brand-900">
-              <Wallet size={18} className="text-gold-600" />
+              <Wallet size={18} className="text-accent-600" />
               회비 납부 계좌
             </h2>
             <p className="mt-2 text-sm text-slate-700">{org.bank}</p>

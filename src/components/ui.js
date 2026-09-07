@@ -242,7 +242,7 @@ export function SectionTitle({ children, description }) {
     <div className="mb-6">
       <h2 className="font-serif text-xl font-bold text-brand-900 sm:text-2xl">{children}</h2>
       {description && <p className="mt-2 text-sm text-slate-600">{description}</p>}
-      <div className="mt-3 h-0.5 w-10 bg-gold-500" />
+      <div className="mt-3 h-0.5 w-10 bg-accent-500" />
     </div>
   );
 }
@@ -294,7 +294,7 @@ export function Select({ children, ...props }) {
 const buttonVariants = {
   primary: "bg-brand-700 text-white hover:bg-brand-800 disabled:bg-brand-300",
   secondary: "border border-slate-300 bg-white text-brand-800 hover:bg-slate-50 disabled:text-slate-400",
-  gold: "bg-gold-500 text-brand-950 hover:bg-gold-400 disabled:bg-gold-300",
+  gold: "bg-accent-500 text-brand-950 hover:bg-accent-400 disabled:bg-accent-300",
   danger: "border border-rose-200 bg-white text-rose-700 hover:bg-rose-50",
   ghost: "text-brand-700 hover:bg-brand-50",
 };

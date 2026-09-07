@@ -128,7 +128,7 @@ export default function AdminBoards() {
                   </td>
                   <td className="px-3 py-3">
                     <span className="flex items-center gap-1.5 font-medium text-brand-900">
-                      {post.pinned && <Pin size={13} className="shrink-0 text-gold-600" />}
+                      {post.pinned && <Pin size={13} className="shrink-0 text-accent-600" />}
                       {post.title}
                     </span>
                   </td>
@@ -144,7 +144,7 @@ export default function AdminBoards() {
                         onClick={() => togglePin(post)}
                         aria-label={post.pinned ? "상단 고정 해제" : "상단 고정"}
                         className={`rounded p-1.5 hover:bg-slate-100 ${
-                          post.pinned ? "text-gold-600" : "text-slate-400"
+                          post.pinned ? "text-accent-600" : "text-slate-400"
                         }`}
                       >
                         <Pin size={15} />

@@ -4,9 +4,9 @@ import { org } from "../data/site";
 import { Card, Container, PageHeader, SectionTitle } from "../components/ui";
 
 const COLORS = [
-  { name: "협회 네이비", hex: "#1E3553", usage: "심볼과 제호에 쓰는 기본 색" },
-  { name: "브라스 골드", hex: "#C9A227", usage: "심볼의 음표와 강조 요소" },
-  { name: "다크 네이비", hex: "#0F2136", usage: "어두운 배경과 푸터" },
+  { name: "차콜 잉크", hex: "#2B303A", usage: "심볼과 제호에 쓰는 기본 색" },
+  { name: "코퍼", hex: "#C2703D", usage: "심볼의 음표와 강조 요소" },
+  { name: "딥 잉크", hex: "#1A1D24", usage: "어두운 배경과 푸터" },
 ];
 
 const RULES = [

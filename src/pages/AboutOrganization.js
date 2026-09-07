@@ -58,7 +58,7 @@ export default function AboutOrganization() {
                 <ul className="mt-3 space-y-1.5">
                   {dept.duties.map((duty) => (
                     <li key={duty} className="flex gap-2 text-sm text-slate-600">
-                      <span aria-hidden="true" className="mt-2 h-1 w-1 shrink-0 rounded-full bg-gold-500" />
+                      <span aria-hidden="true" className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent-500" />
                       {duty}
                     </li>
                   ))}

@@ -9,8 +9,8 @@ import { navigate } from "../lib/router";
 const TONES = {
   light: "from-brand-500 via-brand-700 to-brand-950",
   deep: "from-brand-700 via-brand-900 to-brand-950",
-  gold: "from-gold-400 via-gold-600 to-brand-900",
-  duo: "from-gold-500 via-brand-700 to-brand-950",
+  gold: "from-accent-400 via-accent-600 to-brand-900",
+  duo: "from-accent-500 via-brand-700 to-brand-950",
 };
 
 const AUTOPLAY_MS = 6000;
@@ -56,7 +56,7 @@ export default function HeroSlider({ banners }) {
 
         <div className="relative mx-auto flex h-full max-w-6xl flex-col justify-center px-5 text-white">
           {/* 한글이 들어오는 자리라 라틴용 넓은 자간을 쓰지 않는다. */}
-          <p className="text-xs font-medium tracking-wide text-gold-300">
+          <p className="text-xs font-medium tracking-wide text-accent-300">
             {current.caption}
           </p>
           <h2 className="mt-4 max-w-3xl font-serif text-3xl font-bold leading-tight drop-shadow sm:text-5xl">

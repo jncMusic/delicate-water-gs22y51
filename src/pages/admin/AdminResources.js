@@ -77,7 +77,7 @@ export default function AdminResources() {
     <div className="grid gap-8 lg:grid-cols-[380px_1fr]">
       <Card className="h-fit">
         <h3 className="flex items-center gap-2 font-serif text-lg font-bold text-brand-900">
-          <Upload size={18} className="text-gold-600" />
+          <Upload size={18} className="text-accent-600" />
           자료 업로드
         </h3>
 

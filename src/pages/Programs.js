@@ -17,7 +17,7 @@ export default function Programs() {
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <h2 className="mt-1 font-serif text-xl font-bold text-brand-900">{program.name}</h2>
-                <p className="mt-2 inline-block rounded-full bg-gold-500/15 px-3 py-1 text-xs font-medium text-gold-600">
+                <p className="mt-2 inline-block rounded-full bg-accent-500/15 px-3 py-1 text-xs font-medium text-accent-600">
                   {program.period}
                 </p>
               </div>
@@ -28,7 +28,7 @@ export default function Programs() {
                     <li key={detail} className="flex gap-2 text-sm text-slate-600">
                       <span
                         aria-hidden="true"
-                        className="mt-2 h-1 w-1 shrink-0 rounded-full bg-gold-500"
+                        className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent-500"
                       />
                       {detail}
                     </li>

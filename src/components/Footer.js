@@ -23,7 +23,7 @@ export default function Footer() {
         <div className="grid gap-10 lg:grid-cols-[1.3fr_2fr]">
           <div>
             <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-800 text-gold-400">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-800 text-accent-400">
                 <Music4 size={17} />
               </span>
               <span className="font-serif text-base font-bold text-white">{org.fullName}</span>

@@ -171,6 +171,25 @@ Storage 규칙에서는 Firestore 의 `admins` 문서를 조회할 수 없어 "�
 CI 파일은 `public/ci-logo.svg`(가로형)와 `public/favicon.svg`(심볼)입니다.
 협회 실제 로고로 교체하시면 CI 다운로드 페이지에도 그대로 반영됩니다.
 
+## 색상
+
+차콜 잉크(무채색)에 구릿빛 포인트를 쓰는 조합입니다.
+`tailwind.config.js` 의 `colors` 두 묶음이 전부이고, 여기만 고치면 사이트 전체가 따라 바뀝니다.
+
+| 토큰 | 쓰임 | 기준 색 |
+| --- | --- | --- |
+| `brand` (50~950) | 바탕·글자·어두운 띠 | `#2B303A` (900) |
+| `accent` (300~600) | 강조·포인트 | `#C2703D` (500) |
+
+색을 바꿀 때 같이 손봐야 하는 곳:
+
+- `public/index.html` 의 `theme-color` (모바일 브라우저 상단 색)
+- `public/favicon.svg`, `public/ci-logo.svg` 의 색값
+- `src/pages/AboutCI.js` 의 `COLORS` 색상표
+
+홈 배너 배경은 협회 색상 안에서만 조합하므로(짙은 톤 / 밝은 톤 / 금색 톤 / 금색+짙은 톤)
+팔레트를 바꾸면 배너도 함께 따라갑니다.
+
 ## 글꼴
 
 본문은 **Pretendard**, 제목은 **나눔명조**를 씁니다. 둘 다 `npm` 패키지로 받아

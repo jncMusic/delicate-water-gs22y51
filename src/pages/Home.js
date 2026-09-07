@@ -22,7 +22,7 @@ function TabCard({ tabs, active, onChange, moreTo, children }) {
                 aria-current={tab.key === active ? "true" : undefined}
                 className={`font-serif text-lg font-bold transition-colors ${
                   tab.key === active
-                    ? "text-brand-800 underline decoration-gold-500 decoration-2 underline-offset-8"
+                    ? "text-brand-800 underline decoration-accent-500 decoration-2 underline-offset-8"
                     : "text-slate-400 hover:text-slate-600"
                 }`}
               >
@@ -175,12 +175,12 @@ export default function Home() {
                 items={affiliates}
                 render={(group) => (
                   <div className="flex items-center gap-5">
-                    <span className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg bg-gold-500/15 px-2 text-center font-serif text-sm font-bold leading-snug text-gold-600">
+                    <span className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg bg-accent-500/15 px-2 text-center font-serif text-sm font-bold leading-snug text-accent-600">
                       {group.name.slice(0, 6)}
                     </span>
                     <div className="min-w-0">
                       <h3 className="font-serif text-lg font-bold text-brand-900">{group.name}</h3>
-                      <p className="mt-1 text-xs text-gold-600">{group.since}</p>
+                      <p className="mt-1 text-xs text-accent-600">{group.since}</p>
                       <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-slate-600">
                         {group.summary}
                       </p>
@@ -207,7 +207,7 @@ export default function Home() {
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {missions.map((mission, index) => (
               <div key={mission.title} className="rounded-xl border border-slate-200 bg-white p-6">
-                <span className="font-serif text-2xl font-bold text-gold-500">
+                <span className="font-serif text-2xl font-bold text-accent-500">
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <h3 className="mt-3 font-bold text-brand-900">{mission.title}</h3>
@@ -221,7 +221,7 @@ export default function Home() {
       <div className="mx-auto max-w-6xl px-5 py-16">
         <div className="mb-6 flex items-center justify-between gap-3">
           <h2 className="flex items-center gap-2 font-serif text-xl font-bold text-brand-900">
-            <CalendarDays size={19} className="text-gold-600" />
+            <CalendarDays size={19} className="text-accent-600" />
             다가오는 행사
           </h2>
           <Link to="/events/schedule" className="text-xs text-slate-500 hover:text-brand-700">
@@ -261,7 +261,7 @@ export default function Home() {
           </div>
           <Link
             to="/members/apply"
-            className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-gold-500 px-6 py-3 text-sm font-bold text-brand-950 hover:bg-gold-400"
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-accent-500 px-6 py-3 text-sm font-bold text-brand-950 hover:bg-accent-400"
           >
             가입 신청하기
             <ArrowRight size={16} />

@@ -17,7 +17,7 @@ export default function Affiliates() {
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <h3 className="mt-1 font-serif text-lg font-bold text-brand-900">{group.name}</h3>
-                <p className="mt-1 text-xs text-gold-600">{group.since}</p>
+                <p className="mt-1 text-xs text-accent-600">{group.since}</p>
               </div>
               <p className="text-[15px] leading-7 text-slate-700">{group.summary}</p>
             </article>

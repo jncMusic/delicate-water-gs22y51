@@ -31,7 +31,7 @@ export default function AboutLocation() {
             <dl className="space-y-5">
               {rows.map((row) => (
                 <div key={row.label} className="flex gap-3">
-                  <row.icon size={16} className="mt-1 shrink-0 text-gold-600" />
+                  <row.icon size={16} className="mt-1 shrink-0 text-accent-600" />
                   <div className="min-w-0">
                     <dt className="text-xs font-medium text-slate-500">{row.label}</dt>
                     <dd className="mt-0.5 break-words text-sm text-slate-800">{row.value}</dd>

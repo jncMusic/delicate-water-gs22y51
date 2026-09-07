@@ -164,7 +164,7 @@ export const seedData = {
       subtitle: "접수 4월 1일(수) ~ 4월 30일(목) 16:00",
       caption: "주최 한국관악협회 · 전국관악경연대회 조직위원회",
       linkPath: "/community/notice",
-      tone: "light",
+      tone: "duo",
       image: null,
       order: 1,
       createdAt: iso(10),
