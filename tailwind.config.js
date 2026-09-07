@@ -4,8 +4,10 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Noto Sans KR"', "system-ui", "-apple-system", "sans-serif"],
-        serif: ['"Noto Serif KR"', "Georgia", "serif"],
+        // 본문과 제목 모두 Pretendard 를 쓴다(참고 사이트도 제목이 고딕 계열).
+        // font-serif 는 기존 코드가 제목에 쓰던 이름이라 그대로 두고 같은 글꼴을 가리킨다.
+        sans: ['"Pretendard Variable"', "Pretendard", "system-ui", "-apple-system", "sans-serif"],
+        serif: ['"Pretendard Variable"', "Pretendard", "system-ui", "-apple-system", "sans-serif"],
       },
       colors: {
         brand: {

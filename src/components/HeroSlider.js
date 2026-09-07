@@ -52,7 +52,8 @@ export default function HeroSlider({ banners }) {
         {current.image && <div aria-hidden="true" className="absolute inset-0 bg-brand-950/45" />}
 
         <div className="relative mx-auto flex h-full max-w-6xl flex-col justify-center px-5 text-white">
-          <p className="text-xs font-medium uppercase tracking-[0.25em] text-gold-300">
+          {/* 한글이 들어오는 자리라 라틴용 넓은 자간을 쓰지 않는다. */}
+          <p className="text-xs font-medium tracking-wide text-gold-300">
             {current.caption}
           </p>
           <h2 className="mt-4 max-w-3xl font-serif text-3xl font-bold leading-tight drop-shadow sm:text-5xl">

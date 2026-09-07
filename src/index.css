@@ -1,3 +1,8 @@
+/* Pretendard 를 사이트에 직접 담는다. 외부 CDN 을 타지 않으므로
+   망 사정과 무관하게 항상 같은 글꼴로 보인다.
+   가변 폰트를 자모 단위로 쪼갠 판이라 화면에 쓰인 글자의 조각만 내려받는다. */
+@import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

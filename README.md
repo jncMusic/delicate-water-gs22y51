@@ -171,6 +171,38 @@ Storage 규칙에서는 Firestore 의 `admins` 문서를 조회할 수 없어 "�
 CI 파일은 `public/ci-logo.svg`(가로형)와 `public/favicon.svg`(심볼)입니다.
 협회 실제 로고로 교체하시면 CI 다운로드 페이지에도 그대로 반영됩니다.
 
+## 글꼴
+
+본문과 제목 모두 **Pretendard**(SIL Open Font License)를 씁니다.
+`npm` 패키지로 받아 사이트 안에 함께 담기 때문에 외부 CDN 을 타지 않습니다.
+학교·관공서 망에서 구글 폰트가 막히거나 느려도 항상 같은 글꼴로 보입니다.
+
+가변 폰트를 자모 단위로 쪼갠 판(dynamic subset)이라, 화면에 실제로 쓰인 글자의
+조각만 내려받습니다. 홈 화면 기준 10개 조각 · 약 25KB 수준입니다.
+
+글꼴을 바꾸려면 두 곳만 고치면 됩니다.
+
+- `src/index.css` 맨 위의 `@import` — 어떤 글꼴 파일을 담을지
+- `tailwind.config.js` 의 `fontFamily` — `sans`(본문)와 `serif`(제목) 지정
+
+제목만 명조로 하고 싶다면 아래처럼 하면 됩니다.
+
+```bash
+npm install @fontsource/nanum-myeongjo
+```
+
+```css
+/* src/index.css 맨 위에 추가 */
+@import "@fontsource/nanum-myeongjo/korean-700.css";
+```
+
+```js
+// tailwind.config.js
+serif: ['"Nanum Myeongjo"', "serif"],
+```
+
+다만 나눔명조 한글 한 벌은 약 570KB 를 한 번에 내려받습니다.
+
 ## 배포
 
 `npm run build` 결과인 `build/` 폴더를 정적 호스팅에 올리면 됩니다.
