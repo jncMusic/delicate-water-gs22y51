@@ -157,8 +157,28 @@ cp .env.example .env     # 값을 채운 뒤
 npm run build            # build/ 에 정적 파일 생성
 ```
 
-`build/` 를 정적 호스팅에 올리면 됩니다. Cloudflare Pages, Netlify, Vercel,
+`build/` 를 정적 호스팅에 올리면 됩니다. Cloudflare Workers, Netlify, Vercel,
 Firebase Hosting 모두 무료 한도로 충분합니다.
+
+### 지금 쓰는 곳 — Cloudflare Workers
+
+저장소를 연결해 두어 커밋이 올라가면 자동으로 빌드·배포됩니다.
+
+| | |
+| --- | --- |
+| Worker 이름 | `delicate-water-gs22y51` |
+| 빌드 명령 | `npm run build` |
+| 배포 명령 | `npx wrangler deploy` (운영 브랜치가 아니면 `wrangler versions upload`) |
+| 설정 파일 | `wrangler.jsonc` |
+
+**환경 변수는 저장소가 아니라 대시보드에 넣습니다.** Settings → Build →
+Variables and secrets 에 `.env` 와 같은 `REACT_APP_*` 값을 넣어야 하며,
+빠지면 빌드는 성공하지만 **데모 모드**로 올라가 가입 신청이 사무국에 닿지 않습니다.
+값을 고친 뒤에는 다시 빌드해야 반영됩니다(Deployments → 해당 빌드 → Retry build,
+또는 커밋을 하나 올리면 자동으로 돕니다).
+
+운영 브랜치(기본 `main`)에서 올라온 것만 실제 주소에 반영되고, 다른 브랜치는
+미리보기 주소로만 올라갑니다.
 
 ### SSL(https)
 
@@ -176,12 +196,17 @@ Firebase Hosting 모두 무료 한도로 충분합니다.
 
 | 호스팅 | 설정 파일 | 별도 작업 |
 | --- | --- | --- |
-| Cloudflare Pages · Netlify | `public/_redirects` | 없음 |
+| Cloudflare Workers | `wrangler.jsonc` 의 `not_found_handling` | 없음 |
 | Vercel | `vercel.json` | 없음 |
+| Netlify | — | `public/_redirects` 에 `/*  /index.html  200` 을 새로 만들어야 합니다 |
 | Firebase Hosting | — | `firebase.json` 에 `"rewrites": [{"source": "**", "destination": "/index.html"}]` |
 | 일반 웹호스팅(카페24 등) | — | 설정이 어려우면 `.env` 에 `REACT_APP_ROUTER=hash` |
 
 `REACT_APP_ROUTER=hash` 로 두면 주소에 `#` 이 붙지만 서버 설정 없이 동작합니다.
+
+Cloudflare Workers 에는 `_redirects` 를 두지 않습니다. 같은 규칙을
+`not_found_handling` 이 이미 처리하는데, 파일이 함께 있으면 Workers 가
+`/* → /index.html` 을 무한 반복으로 판단해 업로드 자체를 거부합니다.
 
 ### 검색 노출과 링크 공유
 
