@@ -218,7 +218,7 @@ export default function Home() {
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {missions.map((mission, index) => (
               <div key={mission.title} className="rounded-xl border border-slate-200 bg-white p-6">
-                <span className="font-serif text-2xl font-bold text-accent-500">
+                <span className="font-serif text-2xl font-bold text-accent-600">
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <h3 className="mt-3 font-bold text-brand-900">{mission.title}</h3>

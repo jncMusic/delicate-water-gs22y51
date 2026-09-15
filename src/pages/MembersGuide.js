@@ -170,7 +170,7 @@ export default function MembersGuide() {
           </div>
           <Link
             to="/members/apply"
-            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-accent-500 px-6 py-3 text-sm font-bold text-white hover:bg-accent-400"
+            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-accent-500 px-6 py-3 text-sm font-bold text-brand-950 hover:bg-accent-400"
           >
             가입 신청하기
           </Link>
