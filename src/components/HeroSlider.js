@@ -34,16 +34,16 @@ function DefaultHero() {
         <p className="mt-3 text-sm text-white/60">{org.founded} 창설</p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
-            to="/members/apply"
-            className="rounded-lg bg-accent-500 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-accent-600"
-          >
-            회원 가입 신청
-          </Link>
-          <Link
             to="/about/overview"
             className="rounded-lg border border-white/40 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-white/10"
           >
             협회 소개
+          </Link>
+          <Link
+            to="/members/apply"
+            className="rounded-lg bg-accent-500 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-accent-600"
+          >
+            회원 가입 신청
           </Link>
         </div>
       </div>
