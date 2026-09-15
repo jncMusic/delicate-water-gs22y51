@@ -101,7 +101,7 @@ export default function Home() {
                 ABOUT KBA
               </p>
               <h2 className="mt-3 font-serif text-2xl font-bold leading-snug text-brand-900 sm:text-3xl">
-                {org.name}는 {org.founded} 창설되었습니다
+                {org.name}는 {org.founded}에 창설되었습니다
               </h2>
               <p className="mt-4 max-w-2xl leading-relaxed text-slate-600">{overview.purpose}</p>
               <Link
