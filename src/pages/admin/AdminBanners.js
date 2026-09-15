@@ -23,10 +23,10 @@ import {
 } from "../../components/ui";
 
 const TONES = [
-  { value: "deep", label: "짙은 톤" },
-  { value: "light", label: "밝은 톤" },
-  { value: "gold", label: "금색 톤" },
-  { value: "duo", label: "금색 + 짙은 톤" },
+  { value: "deep", label: "기본" },
+  { value: "darkest", label: "가장 짙게" },
+  { value: "mid", label: "중간 밝기" },
+  { value: "accent", label: "포인트색" },
 ];
 
 const EMPTY = {

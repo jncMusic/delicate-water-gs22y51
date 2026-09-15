@@ -8,7 +8,7 @@ export default function AboutIntro() {
       <Container>
         <div className="grid gap-12 lg:grid-cols-[1fr_1.6fr]">
           <div>
-            <div className="rounded-xl bg-gradient-to-br from-brand-800 to-brand-600 p-8 text-white">
+            <div className="rounded-xl bg-brand-800 p-8 text-white">
               <p className="font-serif text-2xl font-bold leading-snug">{org.slogan}</p>
               <dl className="mt-8 space-y-3 border-t border-white/20 pt-6 text-sm">
                 <div className="flex gap-3">

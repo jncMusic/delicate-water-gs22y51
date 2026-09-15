@@ -4,13 +4,13 @@ import { navigate } from "../lib/router";
 
 /**
  * 이미지가 없는 배너에 쓰는 배경. 관리자가 고른 색조에 따라 달라진다.
- * 협회 색상 안에서만 조합해서, 팔레트를 바꾸면 배너도 함께 따라간다.
+ * 그라데이션 없이 단색만 쓴다.
  */
 const TONES = {
-  light: "from-brand-500 via-brand-700 to-brand-950",
-  deep: "from-brand-700 via-brand-900 to-brand-950",
-  gold: "from-accent-400 via-accent-600 to-brand-900",
-  duo: "from-accent-500 via-brand-700 to-brand-950",
+  deep: "bg-brand-900",
+  darkest: "bg-brand-950",
+  mid: "bg-brand-700",
+  accent: "bg-accent-500",
 };
 
 const AUTOPLAY_MS = 6000;
@@ -41,7 +41,7 @@ export default function HeroSlider({ banners }) {
   return (
     <section aria-label="주요 안내 배너" className="relative">
       <div
-        className={`relative h-[320px] overflow-hidden bg-gradient-to-br sm:h-[420px] ${
+        className={`relative h-[320px] overflow-hidden sm:h-[420px] ${
           TONES[current.tone] || TONES.deep
         }`}
       >
