@@ -527,6 +527,19 @@ export const certificates = [];
 /** 증명서 발급 절차. 확인된 내용이 없어 비워 둡니다. */
 export const certificateProcess = [];
 
+/**
+ * 홈페이지 운영에 쓰는 외부 서비스. 개인정보 처리방침의 위탁·국외 이전 항목에 씁니다.
+ * region 은 Firebase 콘솔에서 데이터베이스를 만들 때 고른 위치입니다.
+ * 콘솔의 Firestore Database 화면 위쪽에 표시되니 값이 다르면 고쳐 주세요.
+ */
+export const dataProcessor = {
+  name: "Google LLC",
+  service: "Firebase (Google Cloud Platform)",
+  country: "대한민국",
+  region: "asia-northeast3 (서울)",
+  duty: "홈페이지 데이터 보관 및 시스템 운영",
+};
+
 /** 회원 가입·자격에 관해 자주 묻는 내용. */
 export const memberFaq = [
   {
