@@ -24,14 +24,21 @@ const firebaseConfig = {
   apiKey: "AIza...",              // ← REACT_APP_FIREBASE_API_KEY
   authDomain: "....firebaseapp.com",  // ← REACT_APP_FIREBASE_AUTH_DOMAIN
   projectId: "kba-homepage",      // ← REACT_APP_FIREBASE_PROJECT_ID
-  storageBucket: "....appspot.com",   // ← REACT_APP_FIREBASE_STORAGE_BUCKET
-  messagingSenderId: "123456789",     // ← REACT_APP_FIREBASE_MESSAGING_SENDER_ID
+  storageBucket: "....firebasestorage.app",  // ← REACT_APP_FIREBASE_STORAGE_BUCKET
+  messagingSenderId: "123456789",    // ← REACT_APP_FIREBASE_MESSAGING_SENDER_ID
   appId: "1:123...:web:abc...",   // ← REACT_APP_FIREBASE_APP_ID
 };
 ```
 
 > **이 값들은 비밀이 아닙니다.** 브라우저에 그대로 실려 나가는 공개 식별자이고,
 > 실제 보안은 아래 **보안 규칙**이 담당합니다. 규칙을 제대로 넣는 것이 핵심입니다.
+
+`storageBucket` 은 프로젝트를 만든 시점에 따라 `....firebasestorage.app` 또는
+`....appspot.com` 으로 나옵니다. **콘솔에 나온 값을 그대로** 넣으면 됩니다.
+
+`measurementId` 가 같이 나오더라도 `.env` 에 넣지 않습니다.
+Google 애널리틱스는 켜지 않았고(코드에서도 초기화하지 않습니다),
+켜려면 방문자 추적 사실을 **개인정보 처리방침에 먼저 고지**해야 합니다.
 
 `.env` 파일에 옮겨 적습니다.
 
@@ -45,7 +52,7 @@ REACT_APP_SITE_URL=https://kbaband.kr
 REACT_APP_FIREBASE_API_KEY=AIza...
 REACT_APP_FIREBASE_AUTH_DOMAIN=kba-homepage.firebaseapp.com
 REACT_APP_FIREBASE_PROJECT_ID=kba-homepage
-REACT_APP_FIREBASE_STORAGE_BUCKET=kba-homepage.appspot.com
+REACT_APP_FIREBASE_STORAGE_BUCKET=kba-homepage.firebasestorage.app
 REACT_APP_FIREBASE_MESSAGING_SENDER_ID=123456789
 REACT_APP_FIREBASE_APP_ID=1:123...:web:abc...
 ```
@@ -106,6 +113,24 @@ npm start
   (데모 모드일 때는 통과 코드 한 칸만 나옵니다)
 - 관리자 페이지 위의 노란 **데모 모드** 안내가 사라집니다
 - 공지 한 건을 올려 보고 Firestore 콘솔의 `notices` 에 문서가 생기는지 확인하세요
+
+### 어디까지 됐는지 터미널에서 확인하기
+
+브라우저를 열지 않고도 세 가지가 켜졌는지 바로 볼 수 있습니다.
+`.env` 를 채운 뒤 프로젝트 폴더에서 실행하세요.
+
+```bash
+npm run check:firebase
+```
+
+| 항목 | 아직 안 된 상태 | 된 상태 |
+| --- | --- | --- |
+| Firestore | `NOT_FOUND` (DB 없음) | `PERMISSION_DENIED` — 규칙이 막고 있다는 뜻이라 **정상** |
+| Storage | `Not Found.` | 빈 목록(`{}`) 또는 권한 오류 |
+| Authentication | `CONFIGURATION_NOT_FOUND` | `EMAIL_NOT_FOUND` / `INVALID_LOGIN_CREDENTIALS` |
+
+Firestore 가 `PERMISSION_DENIED` 로 나오는 것은 잘못된 게 아닙니다.
+데이터베이스가 있고 규칙이 바깥에서 오는 접근을 막고 있다는 뜻입니다.
 
 ---
 
