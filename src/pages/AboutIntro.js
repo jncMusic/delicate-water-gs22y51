@@ -4,12 +4,15 @@ import { Card, Container, PageHeader, SectionTitle } from "../components/ui";
 export default function AboutIntro() {
   return (
     <>
-      <PageHeader subtitle={org.slogan} />
+      <PageHeader subtitle={org.description} />
       <Container>
         <div className="grid gap-12 lg:grid-cols-[1fr_1.6fr]">
           <div>
             <div className="rounded-xl bg-brand-800 p-8 text-white">
-              <p className="font-serif text-2xl font-bold leading-snug">{org.slogan}</p>
+              <p className="font-display text-xs font-semibold tracking-[0.2em] text-accent-300">
+                {org.abbr}
+              </p>
+              <p className="mt-2 font-serif text-2xl font-bold leading-snug">{org.name}</p>
               <dl className="mt-8 space-y-3 border-t border-white/20 pt-6 text-sm">
                 <div className="flex gap-3">
                   <dt className="w-16 shrink-0 text-brand-200">설립</dt>

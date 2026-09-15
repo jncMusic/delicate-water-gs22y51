@@ -110,37 +110,41 @@ export default function MembersGuide() {
           </div>
         </div>
 
-        <div className="mt-16">
-          <SectionTitle description="회원 자격이 유지되는 동안 아래 증명서를 발급받으실 수 있습니다.">
-            증명서 발급
-          </SectionTitle>
-          <div className="grid gap-5 lg:grid-cols-[1.3fr_1fr]">
-            <div className="grid gap-3 sm:grid-cols-2">
-              {certificates.map((item) => (
-                <div key={item.name} className="rounded-xl border border-slate-200 bg-white p-5">
-                  <h3 className="flex items-center gap-2 font-bold text-brand-900">
-                    <FileText size={15} className="text-accent-600" />
-                    {item.name}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.use}</p>
-                </div>
-              ))}
-            </div>
-            <Card className="bg-slate-50">
-              <h3 className="font-serif text-base font-bold text-brand-900">발급 절차</h3>
-              <ol className="mt-4 space-y-3">
-                {certificateProcess.map((step, index) => (
-                  <li key={step} className="flex gap-3 text-sm leading-relaxed text-slate-700">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-800 text-[11px] font-bold text-white">
-                      {index + 1}
-                    </span>
-                    {step}
-                  </li>
+        {certificates.length > 0 && (
+          <div className="mt-16">
+            <SectionTitle description="회원 자격이 유지되는 동안 아래 증명서를 발급받으실 수 있습니다.">
+              증명서 발급
+            </SectionTitle>
+            <div className="grid gap-5 lg:grid-cols-[1.3fr_1fr]">
+              <div className="grid gap-3 sm:grid-cols-2">
+                {certificates.map((item) => (
+                  <div key={item.name} className="rounded-xl border border-slate-200 bg-white p-5">
+                    <h3 className="flex items-center gap-2 font-bold text-brand-900">
+                      <FileText size={15} className="text-accent-600" />
+                      {item.name}
+                    </h3>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.use}</p>
+                  </div>
                 ))}
-              </ol>
-            </Card>
+              </div>
+              {certificateProcess.length > 0 && (
+                <Card className="bg-slate-50">
+                  <h3 className="font-serif text-base font-bold text-brand-900">발급 절차</h3>
+                  <ol className="mt-4 space-y-3">
+                    {certificateProcess.map((step, index) => (
+                      <li key={step} className="flex gap-3 text-sm leading-relaxed text-slate-700">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-800 text-[11px] font-bold text-white">
+                          {index + 1}
+                        </span>
+                        {step}
+                      </li>
+                    ))}
+                  </ol>
+                </Card>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="mt-16">
           <SectionTitle>자주 묻는 질문</SectionTitle>
