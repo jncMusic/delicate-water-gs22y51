@@ -24,7 +24,15 @@ export default function Programs() {
                 )}
               </div>
               <div>
-                <p className="text-[15px] leading-7 text-slate-700">{program.summary}</p>
+                <p
+                  className={
+                    program.summary
+                      ? "text-[15px] leading-7 text-slate-700"
+                      : "text-sm text-slate-500"
+                  }
+                >
+                  {program.summary || "자세한 내용은 사무국으로 문의해 주세요."}
+                </p>
                 {program.details.length > 0 && (
                 <ul className="mt-4 space-y-1.5 border-t border-slate-100 pt-4">
                   {program.details.map((detail) => (

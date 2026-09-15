@@ -1,5 +1,5 @@
 import { Info } from "lucide-react";
-import { memberSideMenu, org } from "../data/site";
+import { dataProcessor, executives, memberSideMenu, org } from "../data/site";
 import { SidebarPage } from "../components/ui";
 
 const NOTE =
@@ -143,16 +143,41 @@ export function Privacy() {
             ],
           },
           {
-            title: "5. 정보주체의 권리",
+            title: "5. 개인정보 처리업무의 위탁",
+            paragraphs: [
+              `${org.fullName}는 홈페이지 운영을 위하여 아래와 같이 개인정보 처리업무를 위탁하고 있습니다.`,
+            ],
+            list: [
+              `수탁자: ${dataProcessor.name} (${dataProcessor.service})`,
+              `위탁 업무: ${dataProcessor.duty}`,
+              "보유 기간: 회원 탈퇴 또는 위탁계약 종료 시까지",
+            ],
+          },
+          {
+            title: "6. 개인정보의 국외 이전",
+            paragraphs: [
+              `홈페이지의 데이터는 ${dataProcessor.name}가 제공하는 ${dataProcessor.service}에 저장됩니다. ${dataProcessor.name}는 국외 사업자이므로, 장애 대응과 기술 지원 과정에서 국외에서 개인정보에 접근할 수 있습니다.`,
+            ],
+            list: [
+              `이전받는 자: ${dataProcessor.name}`,
+              `이전 국가: ${dataProcessor.country} (저장 위치 ${dataProcessor.region}) 및 ${dataProcessor.name}의 기술 지원이 이루어지는 국가`,
+              "이전 항목: 제1조의 수집 항목, 홈페이지에 등록된 게시물과 첨부파일",
+              "이전 일시 및 방법: 홈페이지 이용 시 정보통신망을 통하여 전송",
+              "이전 목적: 홈페이지 데이터 보관 및 시스템 운영",
+              "보유 기간: 회원 탈퇴 또는 위탁계약 종료 시까지",
+            ],
+          },
+          {
+            title: "7. 정보주체의 권리",
             paragraphs: [
               "이용자는 언제든지 본인의 개인정보에 대한 열람, 정정, 삭제, 처리정지를 요구할 수 있습니다.",
               `요청은 사무국(${[org.phone, org.email].filter(Boolean).join(", ")})으로 접수하실 수 있으며, 협회는 지체 없이 조치합니다.`,
             ],
           },
           {
-            title: "6. 개인정보 보호책임자",
+            title: "8. 개인정보 보호책임자",
             paragraphs: [
-              `개인정보 보호책임자: 사무국장 (${[org.phone, org.email].filter(Boolean).join(" / ")})`,
+              `개인정보 보호책임자: 사무국장 ${executives.office.find((row) => row.role === "사무국장")?.name || ""} (${[org.phone, org.email].filter(Boolean).join(" / ")})`,
               "협회는 개인정보 처리와 관련한 문의·불만을 신속하게 처리하고 있습니다.",
             ],
           },

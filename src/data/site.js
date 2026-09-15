@@ -20,9 +20,9 @@ export const org = {
   phone: "02-2655-0520",
   // 아직 확인되지 않은 항목입니다. 빈 값이면 화면에 표시되지 않습니다.
   fax: "",
-  email: "",
+  email: "kbaoffice@naver.com",
   hours: "",
-  bank: "",
+  bank: "신한은행 140-014-592769 (예금주: 한국관악협회(K.B.A))",
   // 사단법인 등록 전이라 비워 둡니다. 등록 후 고유번호·주무관청을 넣어 주세요.
   registration: "",
 };
@@ -120,13 +120,13 @@ export const overview = {
   facts: [
     { label: "명칭", value: "한국관악협회 (KOREAN BAND ASSOCIATION, KBA)" },
     { label: "창설", value: "1973년" },
-    { label: "지회", value: "총 17개 (서울 2 · 광역시 6 · 특별자치시 2 · 도 6 · 해외 1)" },
+    { label: "지회", value: "총 14개 (광역시 5 · 도 7 · 특별자치도 1 · 해외 1) — 서울특별시 지회는 본부가 겸합니다" },
     { label: "지부", value: "시 단위 7개" },
     { label: "회원단체", value: "학교단체 · 군악단체 · 일반단체" },
     { label: "사업본부", value: "국내사업본부 · 국제사업본부" },
   ],
   activities: [
-    "대한민국 관악제 개최",
+    "관악 페스티벌·뮤직 페스티벌과 대한민국 관악제 개최",
     "대한민국 관악경연대회와 대한민국 관악콩쿠르 주최",
     "대한민국관악상 및 우수 관악지도자상 표창",
     "학술제 및 세미나 개최",
@@ -137,7 +137,7 @@ export const overview = {
   plan: "향후 48개국 국제사업본부를 신설하여 운영할 계획입니다.",
 };
 export const missions = [
-  { title: "연주 사업", body: "대한민국 관악제를 엽니다." },
+  { title: "연주 사업", body: "관악 페스티벌, 뮤직 페스티벌, 대한민국 관악제를 엽니다." },
   { title: "경연대회", body: "대한민국 관악경연대회와 대한민국 관악콩쿠르를 주최합니다." },
   { title: "학술·출판", body: "학술제와 세미나를 열고, 창작 관악곡 악보와 도서·간행물을 펴냅니다." },
   { title: "시상·국제교류", body: "대한민국관악상과 우수 관악지도자상을 시상하고, 아시아태평양·세계 관악협회와 교류합니다." },
@@ -350,6 +350,16 @@ export const bylawsNote =
  */
 export const programs = [
   { name: "대한민국 관악제", period: "", summary: "관악 음악을 한자리에서 선보이는 협회의 대표 무대입니다.", details: [] },
+  { name: "뮤직 페스티벌", period: "", summary: "", details: [] },
+  {
+    name: "관악 페스티벌",
+    period: "매년 8월",
+    summary: "지역에서 여는 관악 축제로, 대한민국 관악경연대회와 함께 운영합니다.",
+    details: [
+      "2026 부산 관악 페스티벌 — 제50회 대한민국 관악경연대회와 연계 운영",
+      "2025 부산 관악 페스티벌 — 2025년 9월, 부산 콘서트홀, 약 3,500명 참가",
+    ],
+  },
   {
     name: "대한민국 관악경연대회",
     period: "매년 8월",
@@ -456,13 +466,13 @@ export const branchList = [
   { region: "해외", head: "" },
 ];
 
-export const branchTotals = { branches: 17, chapters: 7 };
+export const branchTotals = { branches: 14, chapters: 7 };
 
+/** 지회 분포. 서울특별시 지회는 정관 제2조에 따라 본부가 겸합니다. */
 export const branchSummary = [
-  { area: "서울", count: 2 },
-  { area: "광역시", count: 6 },
-  { area: "특별자치시", count: 2 },
-  { area: "도", count: 6 },
+  { area: "광역시", count: 5 },
+  { area: "도", count: 7 },
+  { area: "특별자치도", count: 1 },
   { area: "해외", count: 1 },
 ];
 /**
@@ -516,6 +526,19 @@ export const certificates = [];
 
 /** 증명서 발급 절차. 확인된 내용이 없어 비워 둡니다. */
 export const certificateProcess = [];
+
+/**
+ * 홈페이지 운영에 쓰는 외부 서비스. 개인정보 처리방침의 위탁·국외 이전 항목에 씁니다.
+ * region 은 Firebase 콘솔에서 데이터베이스를 만들 때 고른 위치입니다.
+ * 콘솔의 Firestore Database 화면 위쪽에 표시되니 값이 다르면 고쳐 주세요.
+ */
+export const dataProcessor = {
+  name: "Google LLC",
+  service: "Firebase (Google Cloud Platform)",
+  country: "대한민국",
+  region: "asia-northeast3 (서울)",
+  duty: "홈페이지 데이터 보관 및 시스템 운영",
+};
 
 /** 회원 가입·자격에 관해 자주 묻는 내용. */
 export const memberFaq = [
