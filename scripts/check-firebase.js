@@ -1,23 +1,10 @@
 /**
  * .env 에 적은 Firebase 프로젝트가 어디까지 준비됐는지 확인한다.
- * 콘솔에서 Firestore / Storage / Authentication 을 켰는지만 본다.
- * 데이터는 읽지 않고, 규칙이 막아 주는지도 같이 확인한다.
+ *
+ * 켜졌는지만 보는 게 아니라, 보안 규칙이 게시됐고 의도대로 막고 있는지까지 본다.
+ * 공개돼야 할 것은 열려 있는지, 가려져야 할 것은 막혀 있는지 양쪽을 다 확인한다.
  */
-const fs = require("fs");
-const path = require("path");
-
-function loadEnv() {
-  const file = path.join(__dirname, "..", ".env");
-  if (!fs.existsSync(file)) return {};
-  const out = {};
-  for (const line of fs.readFileSync(file, "utf8").split("\n")) {
-    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
-    if (m) out[m[1]] = m[2].replace(/^["']|["']$/g, "");
-  }
-  return out;
-}
-
-const env = { ...loadEnv(), ...process.env };
+const env = require("./env")();
 const projectId = env.REACT_APP_FIREBASE_PROJECT_ID;
 const apiKey = env.REACT_APP_FIREBASE_API_KEY;
 const bucket = env.REACT_APP_FIREBASE_STORAGE_BUCKET;
@@ -28,57 +15,86 @@ if (!projectId || !apiKey) {
   process.exit(1);
 }
 
-async function body(url, init) {
+async function probe(url, init) {
   try {
     const res = await fetch(url, init);
     const text = await res.text();
     let json = null;
     try { json = JSON.parse(text); } catch (e) { /* 본문이 JSON 이 아닐 수 있다 */ }
-    return { status: res.status, message: (json && json.error && json.error.message) || text.slice(0, 120) };
+    return { status: res.status, message: (json && json.error && json.error.message) || "" };
   } catch (e) {
     return { status: 0, message: e.message };
   }
 }
 
-function line(name, ok, detail) {
-  console.log(`${ok ? "  켜짐  " : "  아직  "} ${name.padEnd(16)} ${detail}`);
-  return ok;
+const fsUrl = (p) =>
+  `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${p}&key=${apiKey}`;
+const stUrl = (p) => `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${p}`;
+
+let failed = false;
+
+function report(name, ok, detail) {
+  if (!ok) failed = true;
+  console.log(`  ${ok ? "정상" : "확인"}  ${name.padEnd(24)} ${detail}`);
 }
 
 (async () => {
   console.log(`\n프로젝트: ${projectId}\n`);
 
-  const fsRes = await body(
-    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/notices?pageSize=1`
-  );
-  // 규칙이 바깥에서 오는 접근을 막고 있다는 뜻이라 PERMISSION_DENIED 가 정상이다.
-  const firestoreOk = fsRes.status === 403 || fsRes.status === 200;
-  line("Firestore", firestoreOk, firestoreOk ? "데이터베이스 있음 (규칙이 막고 있음)" : fsRes.message);
+  // --- Firestore ---
+  const notices = await probe(fsUrl("notices?pageSize=1"));
+  const members = await probe(fsUrl("members?pageSize=1"));
 
-  let storageOk = false;
-  let storageDetail = "REACT_APP_FIREBASE_STORAGE_BUCKET 이 비어 있습니다";
-  if (bucket) {
-    const stRes = await body(`https://firebasestorage.googleapis.com/v0/b/${bucket}/o?maxResults=1`);
-    storageOk = stRes.status !== 404;
-    storageDetail = storageOk ? "버킷 있음" : "버킷 없음 — Storage 시작하기를 누르세요";
+  if (notices.status === 200) {
+    report("공지 읽기(방문자)", true, "열려 있음");
+  } else if (notices.status === 403) {
+    report("공지 읽기(방문자)", false, "막혀 있음 — Firestore 규칙을 게시하세요");
+  } else if (notices.status === 404) {
+    report("Firestore", false, "데이터베이스가 없습니다 — FIREBASE.md 3단계");
+  } else {
+    report("공지 읽기(방문자)", false, `${notices.status} ${notices.message}`);
   }
-  line("Storage", storageOk, storageDetail);
 
-  const auRes = await body(
+  // 회원 명단이 열려 있으면 개인정보가 새는 것이라 가장 위험하다.
+  report("회원 명단 보호", members.status === 403,
+    members.status === 403 ? "막혀 있음" : `열려 있습니다 (${members.status}) — 규칙을 다시 확인하세요`);
+
+  // --- Storage ---
+  if (!bucket) {
+    report("Storage", false, "REACT_APP_FIREBASE_STORAGE_BUCKET 이 비어 있습니다");
+  } else {
+    // 없는 파일이라 404 가 정상이다. 403 이면 규칙이 읽기를 막고 있다는 뜻.
+    const open = await probe(stUrl("resources%2F_check.txt"));
+    const shut = await probe(stUrl("_nosuchfolder%2F_check.txt"));
+    const upload = await probe(
+      `https://firebasestorage.googleapis.com/v0/b/${bucket}/o?name=resources/_check.txt`,
+      { method: "POST", headers: { "Content-Type": "text/plain" }, body: "check" });
+
+    if (open.status === 404) report("자료실 읽기(방문자)", true, "열려 있음");
+    else if (open.status === 403) report("자료실 읽기(방문자)", false, "막혀 있음 — Storage 규칙을 게시하세요");
+    else report("Storage", false, `버킷 없음 또는 ${open.status} — FIREBASE.md 4단계`);
+
+    report("엉뚱한 폴더 차단", shut.status === 403,
+      shut.status === 403 ? "막혀 있음" : `열려 있습니다 (${shut.status})`);
+    report("비로그인 업로드 차단", upload.status === 403,
+      upload.status === 403 ? "막혀 있음" : `올라갔습니다 (${upload.status}) — 규칙을 다시 확인하세요`);
+  }
+
+  // --- Authentication ---
+  // 없는 계정으로 물어본다. 로그인하려는 게 아니라 켜졌는지만 본다.
+  const auth = await probe(
     `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      // 존재하지 않는 계정으로 물어본다. 로그인하려는 게 아니라 켜졌는지만 본다.
       body: JSON.stringify({ email: "check@example.invalid", password: "check-check", returnSecureToken: true }),
     }
   );
-  const authOk = auRes.message !== "CONFIGURATION_NOT_FOUND";
-  line("Authentication", authOk, authOk ? "이메일/비밀번호 로그인 준비됨" : "아직 시작하지 않음");
+  const authOn = auth.message !== "CONFIGURATION_NOT_FOUND";
+  report("관리자 로그인", authOn, authOn ? "켜져 있음" : "아직 켜지 않음 — FIREBASE.md 5단계");
 
-  const done = firestoreOk && storageOk && authOk;
-  console.log(done
-    ? "\n세 가지 모두 준비됐습니다. npm start 로 확인하세요.\n"
-    : "\n아직 남은 항목은 FIREBASE.md 3~5단계를 보세요.\n");
-  process.exit(done ? 0 : 1);
+  console.log(failed
+    ? "\n위에서 '확인' 으로 나온 항목을 FIREBASE.md 에서 찾아 마저 해주세요.\n"
+    : "\n전부 정상입니다. npm start 로 확인하세요.\n");
+  process.exit(failed ? 1 : 0);
 })();

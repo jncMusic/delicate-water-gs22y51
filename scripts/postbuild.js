@@ -7,6 +7,7 @@
  */
 const fs = require("fs");
 const path = require("path");
+require("./env")();
 
 const BUILD = path.join(__dirname, "..", "build");
 const siteUrl = (process.env.REACT_APP_SITE_URL || "").replace(/\/+$/, "");
