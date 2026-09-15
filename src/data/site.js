@@ -20,9 +20,9 @@ export const org = {
   phone: "02-2655-0520",
   // 아직 확인되지 않은 항목입니다. 빈 값이면 화면에 표시되지 않습니다.
   fax: "",
-  email: "",
+  email: "kbaoffice@naver.com",
   hours: "",
-  bank: "",
+  bank: "신한은행 140-014-592769 (예금주: 한국관악협회(K.B.A))",
   // 사단법인 등록 전이라 비워 둡니다. 등록 후 고유번호·주무관청을 넣어 주세요.
   registration: "",
 };
@@ -120,7 +120,7 @@ export const overview = {
   facts: [
     { label: "명칭", value: "한국관악협회 (KOREAN BAND ASSOCIATION, KBA)" },
     { label: "창설", value: "1973년" },
-    { label: "지회", value: "총 17개 (서울 2 · 광역시 6 · 특별자치시 2 · 도 6 · 해외 1)" },
+    { label: "지회", value: "총 14개 (광역시 5 · 도 7 · 특별자치도 1 · 해외 1) — 서울특별시 지회는 본부가 겸합니다" },
     { label: "지부", value: "시 단위 7개" },
     { label: "회원단체", value: "학교단체 · 군악단체 · 일반단체" },
     { label: "사업본부", value: "국내사업본부 · 국제사업본부" },
@@ -456,13 +456,13 @@ export const branchList = [
   { region: "해외", head: "" },
 ];
 
-export const branchTotals = { branches: 17, chapters: 7 };
+export const branchTotals = { branches: 14, chapters: 7 };
 
+/** 지회 분포. 서울특별시 지회는 정관 제2조에 따라 본부가 겸합니다. */
 export const branchSummary = [
-  { area: "서울", count: 2 },
-  { area: "광역시", count: 6 },
-  { area: "특별자치시", count: 2 },
-  { area: "도", count: 6 },
+  { area: "광역시", count: 5 },
+  { area: "도", count: 7 },
+  { area: "특별자치도", count: 1 },
   { area: "해외", count: 1 },
 ];
 /**

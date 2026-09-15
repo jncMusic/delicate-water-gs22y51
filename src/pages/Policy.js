@@ -1,5 +1,5 @@
 import { Info } from "lucide-react";
-import { memberSideMenu, org } from "../data/site";
+import { executives, memberSideMenu, org } from "../data/site";
 import { SidebarPage } from "../components/ui";
 
 const NOTE =
@@ -152,7 +152,7 @@ export function Privacy() {
           {
             title: "6. 개인정보 보호책임자",
             paragraphs: [
-              `개인정보 보호책임자: 사무국장 (${[org.phone, org.email].filter(Boolean).join(" / ")})`,
+              `개인정보 보호책임자: 사무국장 ${executives.office.find((row) => row.role === "사무국장")?.name || ""} (${[org.phone, org.email].filter(Boolean).join(" / ")})`,
               "협회는 개인정보 처리와 관련한 문의·불만을 신속하게 처리하고 있습니다.",
             ],
           },
