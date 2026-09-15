@@ -4,6 +4,7 @@ import {
   certificateProcess,
   certificates,
   feeGuide,
+  officerFees,
   joinSteps,
   memberFaq,
   memberTypes,
@@ -26,8 +27,14 @@ export default function MembersGuide() {
               <p className="mt-2 min-h-[48px] text-sm leading-relaxed text-slate-600">
                 {member.target}
               </p>
-              <p className="mt-4 border-y border-slate-100 py-3 text-lg font-bold text-accent-600">
-                {member.fee}
+              <p
+                className={`mt-4 border-y border-slate-100 py-3 ${
+                  member.fee
+                    ? "text-lg font-bold text-accent-600"
+                    : "text-sm text-slate-500"
+                }`}
+              >
+                {member.fee || "연회비는 아래 회비 표를 확인해 주세요."}
               </p>
               <ul className="mt-4 flex-1 space-y-2">
                 {member.benefits.map((benefit) => (
@@ -67,17 +74,25 @@ export default function MembersGuide() {
               <p className="mt-3 text-sm font-medium text-brand-900">
                 {org.bank || "계좌는 사무국으로 문의해 주세요."}
               </p>
-              <dl className="mt-4 space-y-2 border-t border-slate-200 pt-4 text-sm">
-                {memberTypes.map((member) => (
-                  <div key={member.type} className="flex justify-between gap-3">
-                    <dt className="text-slate-600">{member.type}</dt>
-                    <dd className="font-medium text-brand-900">{member.fee}</dd>
+              <p className="mt-4 border-t border-slate-200 pt-4 text-sm leading-relaxed text-slate-600">
+                회비는 직위와 회원 구분에 따라 다릅니다. 오른쪽 표를 확인해 주세요.
+              </p>
+            </Card>
+            <Card>
+              <h3 className="font-serif text-base font-bold text-brand-900">임원 회비</h3>
+              <p className="mt-1.5 text-xs text-slate-500">{officerFees.note}</p>
+              <dl className="mt-4 divide-y divide-slate-100 border-y border-slate-100">
+                {officerFees.rows.map((row) => (
+                  <div key={row.role} className="flex justify-between gap-3 py-2.5 text-sm">
+                    <dt className="text-slate-600">{row.role}</dt>
+                    <dd className="font-medium tabular-nums text-brand-900">
+                      {row.amount.toLocaleString("ko-KR")}원
+                    </dd>
                   </div>
                 ))}
               </dl>
-            </Card>
-            <Card>
-              <ul className="space-y-3">
+
+              <ul className="mt-5 space-y-3">
                 {feeGuide.notes.map((note) => (
                   <li key={note} className="flex gap-2.5 text-sm leading-relaxed text-slate-700">
                     <span
@@ -95,37 +110,41 @@ export default function MembersGuide() {
           </div>
         </div>
 
-        <div className="mt-16">
-          <SectionTitle description="회원 자격이 유지되는 동안 아래 증명서를 발급받으실 수 있습니다.">
-            증명서 발급
-          </SectionTitle>
-          <div className="grid gap-5 lg:grid-cols-[1.3fr_1fr]">
-            <div className="grid gap-3 sm:grid-cols-2">
-              {certificates.map((item) => (
-                <div key={item.name} className="rounded-xl border border-slate-200 bg-white p-5">
-                  <h3 className="flex items-center gap-2 font-bold text-brand-900">
-                    <FileText size={15} className="text-accent-600" />
-                    {item.name}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.use}</p>
-                </div>
-              ))}
-            </div>
-            <Card className="bg-slate-50">
-              <h3 className="font-serif text-base font-bold text-brand-900">발급 절차</h3>
-              <ol className="mt-4 space-y-3">
-                {certificateProcess.map((step, index) => (
-                  <li key={step} className="flex gap-3 text-sm leading-relaxed text-slate-700">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-800 text-[11px] font-bold text-white">
-                      {index + 1}
-                    </span>
-                    {step}
-                  </li>
+        {certificates.length > 0 && (
+          <div className="mt-16">
+            <SectionTitle description="회원 자격이 유지되는 동안 아래 증명서를 발급받으실 수 있습니다.">
+              증명서 발급
+            </SectionTitle>
+            <div className="grid gap-5 lg:grid-cols-[1.3fr_1fr]">
+              <div className="grid gap-3 sm:grid-cols-2">
+                {certificates.map((item) => (
+                  <div key={item.name} className="rounded-xl border border-slate-200 bg-white p-5">
+                    <h3 className="flex items-center gap-2 font-bold text-brand-900">
+                      <FileText size={15} className="text-accent-600" />
+                      {item.name}
+                    </h3>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.use}</p>
+                  </div>
                 ))}
-              </ol>
-            </Card>
+              </div>
+              {certificateProcess.length > 0 && (
+                <Card className="bg-slate-50">
+                  <h3 className="font-serif text-base font-bold text-brand-900">발급 절차</h3>
+                  <ol className="mt-4 space-y-3">
+                    {certificateProcess.map((step, index) => (
+                      <li key={step} className="flex gap-3 text-sm leading-relaxed text-slate-700">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-800 text-[11px] font-bold text-white">
+                          {index + 1}
+                        </span>
+                        {step}
+                      </li>
+                    ))}
+                  </ol>
+                </Card>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="mt-16">
           <SectionTitle>자주 묻는 질문</SectionTitle>

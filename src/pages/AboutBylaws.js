@@ -22,7 +22,7 @@ export default function AboutBylaws() {
                 {chapter.articles.map((article) => (
                   <div key={article.no}>
                     <dt className="text-sm font-bold text-brand-800">{article.no}</dt>
-                    <dd className="mt-1.5 text-[15px] leading-7 text-slate-700">{article.text}</dd>
+                    <dd className="mt-1.5 whitespace-pre-line text-[15px] leading-7 text-slate-700">{article.text}</dd>
                   </div>
                 ))}
               </dl>

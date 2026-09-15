@@ -49,6 +49,7 @@ export default function AboutLocation() {
 
         <div className="mt-16">
           <SectionTitle description="사무국 방문 시 참고해 주세요.">교통 안내</SectionTitle>
+          {directions.length > 0 && (
           <div className="grid gap-5 sm:grid-cols-3">
             {directions.map((way) => {
               const Icon = ICONS[way.type] || Bus;
@@ -73,7 +74,8 @@ export default function AboutLocation() {
               );
             })}
           </div>
-          <p className="mt-5 text-xs text-slate-500">
+          )}
+          <p className="mt-5 text-sm leading-relaxed text-slate-600">
             방문 전 사무국({org.phone})으로 연락 주시면 담당자를 안내해 드립니다.
             {org.hours && ` 업무시간은 ${org.hours} 입니다.`}
           </p>

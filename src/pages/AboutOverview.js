@@ -4,7 +4,7 @@ import { Card, Container, PageHeader, SectionTitle } from "../components/ui";
 export default function AboutOverview() {
   return (
     <>
-      <PageHeader subtitle={org.slogan} />
+      <PageHeader subtitle={org.description} />
       <Container className="pt-10">
         <div className="rounded-2xl bg-brand-900 px-8 py-12 text-center text-white">
           <p className="font-display text-xs font-semibold uppercase tracking-[0.25em] text-accent-400">{org.nameEn}</p>

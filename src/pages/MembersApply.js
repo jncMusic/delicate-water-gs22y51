@@ -7,7 +7,7 @@ import {
   instruments,
   memberBenefits,
   memberSideMenu,
-  memberTypes,
+  applyMemberTypes,
   org,
   regions,
 } from "../data/site";
@@ -280,8 +280,8 @@ function StepForm({ form, set, onBack, onNext, error, setError }) {
         </Field>
         <Field label="회원 구분" required>
           <Select value={form.memberType} onChange={set("memberType")}>
-            {memberTypes.map((item) => (
-              <option key={item.type} value={item.type}>{item.type}</option>
+            {applyMemberTypes.map((item) => (
+              <option key={item} value={item}>{item}</option>
             ))}
           </Select>
         </Field>
@@ -318,7 +318,7 @@ function StepForm({ form, set, onBack, onNext, error, setError }) {
           <Input value={form.position} onChange={set("position")} placeholder="지도교사, 단원 등" />
         </Field>
         <div className="sm:col-span-2">
-          <Field label="남기실 말씀" hint="단체회원은 단원 수 등 간단한 소개를 적어 주세요.">
+          <Field label="남기실 말씀" hint="전공·소속·활동 내용 등 참고하실 내용을 적어 주세요.">
             <Textarea rows={4} value={form.note} onChange={set("note")} />
           </Field>
         </div>
