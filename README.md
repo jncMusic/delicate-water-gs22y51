@@ -53,99 +53,26 @@ npm run build    # build/ 에 정적 파일 생성
 
 ## Firebase 연결
 
-1. [Firebase 콘솔](https://console.firebase.google.com/)에서 프로젝트를 만듭니다.
-2. **Firestore Database**, **Storage**, **Authentication**(이메일/비밀번호)을 사용 설정합니다.
-3. Authentication 에서 사무국 관리자 계정을 직접 추가합니다.
-4. Firestore 에 `admins` 컬렉션을 만들고, 문서 ID 를 3번에서 만든 계정의 **UID** 로 하는 빈 문서를 넣습니다.
-   (이 문서가 있는 계정만 관리자 권한을 갖습니다.)
-5. 프로젝트 설정 → 내 앱 → 웹 앱의 SDK 설정값을 `.env` 에 넣습니다.
+게시글·회원·업로드 파일을 저장하고 관리자 로그인을 처리합니다.
+설정 전에는 **데모 모드**로 동작해서 입력한 내용이 그 브라우저에만 남습니다.
 
-```bash
-cp .env.example .env
-# .env 를 열어 REACT_APP_FIREBASE_* 값을 채웁니다
-```
+**설정 절차와 보안 규칙은 [FIREBASE.md](FIREBASE.md) 에 따로 정리했습니다.**
+콘솔 작업 순서, 붙여넣을 규칙, 자주 막히는 곳까지 들어 있습니다.
 
-`.env` 는 `.gitignore` 에 있어 저장소에 올라가지 않습니다.
-값이 채워지면 앱이 자동으로 Firebase 모드로 전환되고, 관리자 로그인도 Firebase 계정으로 바뀝니다.
+요약하면 이렇습니다.
 
-### Firestore 보안 규칙
+1. Firebase 프로젝트를 만들고 웹 앱을 등록해 설정값 6개를 `.env` 에 넣습니다
+2. Firestore 를 **프로덕션 모드**, 위치 **asia-northeast3(서울)** 로 만듭니다
+3. Storage 를 만듭니다
+4. Authentication 에서 이메일/비밀번호를 켜고 관리자 계정을 만듭니다
+5. Firestore 의 `admins` 컬렉션에 그 계정의 **UID** 로 문서를 만듭니다
+6. Firestore·Storage 의 **보안 규칙**을 붙여넣고 게시합니다
 
-콘솔의 Firestore → 규칙에 아래를 넣으세요. 조회수·다운로드수만 방문자가 올릴 수 있고,
-그 밖의 쓰기는 관리자만 가능합니다. 가입 신청은 누구나 넣을 수 있지만 열람은 관리자만 합니다.
+`.env` 는 `.gitignore` 에 있어 저장소에 올라가지 않습니다. 호스팅에 올릴 때는
+각 서비스의 환경 변수 설정에 같은 값을 넣어야 합니다.
 
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-
-    function isAdmin() {
-      return request.auth != null
-        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
-    }
-
-    function onlyChanges(fields) {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
-    }
-
-    // 게시판 6종 — 방문자는 조회수만 올릴 수 있다
-    match /{board}/{doc} {
-      allow read: if board in ['notices', 'press', 'disclosure',
-                               'sceneNews', 'concertNews', 'jobs'];
-      allow create, delete: if isAdmin()
-        && board in ['notices', 'press', 'disclosure',
-                     'sceneNews', 'concertNews', 'jobs'];
-      allow update: if board in ['notices', 'press', 'disclosure',
-                                 'sceneNews', 'concertNews', 'jobs']
-        && (isAdmin() || onlyChanges(['views']));
-    }
-
-    match /resources/{doc} {
-      allow read: if true;
-      allow create, delete: if isAdmin();
-      allow update: if isAdmin() || onlyChanges(['downloads']);
-    }
-
-    match /events/{doc} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /banners/{doc} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    // 가입 신청은 누구나, 열람·수정·삭제는 관리자만
-    match /members/{doc} {
-      allow create: if true;
-      allow read, update, delete: if isAdmin();
-    }
-
-    match /admins/{uid} {
-      allow read: if isAdmin();
-      allow write: if false;   // 콘솔에서만 추가합니다
-    }
-  }
-}
-```
-
-### Storage 보안 규칙
-
-```
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /{folder}/{file} {
-      allow read: if folder in ['resources', 'banners'];   // 자료실·배너 이미지는 공개
-      allow write: if request.auth != null
-        && folder in ['resources', 'banners'];             // 로그인 계정만 업로드
-    }
-  }
-}
-```
-
-Storage 규칙에서는 Firestore 의 `admins` 문서를 조회할 수 없어 "로그인 여부"까지만 확인합니다.
-관리자 계정만 만들어 두면 실질적으로 사무국만 업로드할 수 있습니다.
+> 설정값(API 키 등)은 비밀이 아닙니다. 브라우저에 실려 나가는 공개 식별자이고
+> 실제 보안은 보안 규칙이 담당합니다. **규칙을 게시하는 단계를 빠뜨리지 마세요.**
 
 ## 협회 정보 수정
 
