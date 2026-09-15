@@ -19,6 +19,35 @@ const SESSION_KEY = "kwa:admin";
 
 export const AUTH_MODE = firebaseEnabled ? "firebase" : "demo";
 
+/**
+ * 로그인 실패를 사무국이 읽고 조치할 수 있는 문구로 바꾼다.
+ *
+ * 전부 "로그인에 실패했습니다" 로 뭉뚱그리면 비밀번호 문제인지 설정 문제인지
+ * 가릴 수 없다. 짚어 줄 수 있는 것은 짚어 주고, 나머지는 원래 코드를 덧붙여
+ * 콘솔을 열지 않고도 물어볼 수 있게 한다.
+ */
+function signInMessage(err) {
+  switch (err.code) {
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/user-not-found":
+    case "auth/invalid-email":
+      return "이메일 또는 비밀번호가 올바르지 않습니다.";
+    case "auth/user-disabled":
+      return "사용 중지된 계정입니다. 콘솔에서 다시 사용 설정해 주세요.";
+    case "auth/too-many-requests":
+      return "로그인 시도가 많아 잠시 막혔습니다. 몇 분 뒤 다시 시도해 주세요.";
+    case "auth/operation-not-allowed":
+      return "이메일/비밀번호 로그인이 꺼져 있습니다. Firebase 콘솔에서 사용 설정해 주세요.";
+    case "auth/unauthorized-domain":
+      return "이 주소가 Firebase 승인된 도메인에 없습니다. 콘솔에 현재 주소를 추가해 주세요.";
+    case "auth/network-request-failed":
+      return "네트워크에 연결하지 못했습니다. 인터넷 상태를 확인해 주세요.";
+    default:
+      return `로그인에 실패했습니다. (${err.code || "원인 불명"})`;
+  }
+}
+
 export function useAdmin() {
   const [user, setUser] = useState(null);
   const [ready, setReady] = useState(!firebaseEnabled);
@@ -46,11 +75,7 @@ export function useAdmin() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
-      throw new Error(
-        err.code === "auth/invalid-credential" || err.code === "auth/wrong-password"
-          ? "이메일 또는 비밀번호가 올바르지 않습니다."
-          : "로그인에 실패했습니다. 잠시 후 다시 시도해 주세요."
-      );
+      throw new Error(signInMessage(err));
     }
   }, []);
 
