@@ -4,6 +4,7 @@ import {
   certificateProcess,
   certificates,
   feeGuide,
+  officerFees,
   joinSteps,
   memberFaq,
   memberTypes,
@@ -26,8 +27,14 @@ export default function MembersGuide() {
               <p className="mt-2 min-h-[48px] text-sm leading-relaxed text-slate-600">
                 {member.target}
               </p>
-              <p className="mt-4 border-y border-slate-100 py-3 text-lg font-bold text-accent-600">
-                {member.fee}
+              <p
+                className={`mt-4 border-y border-slate-100 py-3 ${
+                  member.fee
+                    ? "text-lg font-bold text-accent-600"
+                    : "text-sm text-slate-500"
+                }`}
+              >
+                {member.fee || "회비는 사무국으로 문의해 주세요."}
               </p>
               <ul className="mt-4 flex-1 space-y-2">
                 {member.benefits.map((benefit) => (
@@ -71,13 +78,28 @@ export default function MembersGuide() {
                 {memberTypes.map((member) => (
                   <div key={member.type} className="flex justify-between gap-3">
                     <dt className="text-slate-600">{member.type}</dt>
-                    <dd className="font-medium text-brand-900">{member.fee}</dd>
+                    <dd className="font-medium text-brand-900">
+                      {member.fee || "사무국 문의"}
+                    </dd>
                   </div>
                 ))}
               </dl>
             </Card>
             <Card>
-              <ul className="space-y-3">
+              <h3 className="font-serif text-base font-bold text-brand-900">임원 회비</h3>
+              <p className="mt-1.5 text-xs text-slate-500">{officerFees.note}</p>
+              <dl className="mt-4 divide-y divide-slate-100 border-y border-slate-100">
+                {officerFees.rows.map((row) => (
+                  <div key={row.role} className="flex justify-between gap-3 py-2.5 text-sm">
+                    <dt className="text-slate-600">{row.role}</dt>
+                    <dd className="font-medium tabular-nums text-brand-900">
+                      {row.amount.toLocaleString("ko-KR")}원
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+
+              <ul className="mt-5 space-y-3">
                 {feeGuide.notes.map((note) => (
                   <li key={note} className="flex gap-2.5 text-sm leading-relaxed text-slate-700">
                     <span
