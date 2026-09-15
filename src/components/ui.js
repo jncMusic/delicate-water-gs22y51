@@ -92,6 +92,8 @@ export function PageHeader({ title, subtitle }) {
 
   return (
     <>
+      {/* 관리자·오류 화면처럼 메뉴에 없는 페이지는 띠와 타일을 그리지 않는다. */}
+      {group && (
       <div className="border-b border-slate-200">
         <div className="mx-auto flex max-w-6xl flex-col sm:flex-row">
           {/* before 로 화면 왼쪽 끝까지 네이비 배경을 이어 붙인다. */}
@@ -100,7 +102,7 @@ export function PageHeader({ title, subtitle }) {
               <StaffPattern />
             </span>
             <h2 className="relative font-serif text-xl font-bold text-white sm:text-2xl">
-              {group ? group.label : "안내"}
+              {group.label}
             </h2>
           </div>
 
@@ -130,10 +132,11 @@ export function PageHeader({ title, subtitle }) {
           )}
         </div>
       </div>
+      )}
 
       <div className="mx-auto max-w-6xl px-5 pt-8">
-        <Breadcrumb group={group} child={child} />
-        <div className="mt-6 text-center">
+        {group && <Breadcrumb group={group} child={child} />}
+        <div className={`text-center ${group ? "mt-6" : "mt-4"}`}>
           <p className="font-display text-[11px] font-semibold uppercase tracking-[0.3em] text-accent-500">
             {org.abbr}
           </p>

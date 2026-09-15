@@ -7,7 +7,11 @@ import { menus, menuHome, org } from "../data/site";
 function TileDropdown({ menu, activePath, onSelect }) {
   return (
     <div className="absolute left-1/2 top-full z-30 -translate-x-1/2 pt-1">
-      <div className="grid grid-cols-3 border border-slate-200 bg-white shadow-lg lg:grid-cols-5">
+      {/*
+        1fr 은 minmax(0,1fr) 이라 폭이 정해지지 않은 절대 위치 요소 안에서 0 까지 줄어든다.
+        그러면 whitespace-nowrap 인 글자가 옆 칸을 덮으므로 칸을 글자 폭에 맞춘다.
+      */}
+      <div className="grid grid-cols-[repeat(3,max-content)] border border-slate-200 bg-white shadow-lg lg:grid-cols-[repeat(5,max-content)]">
         {menu.children.map((item) => (
           <Link
             key={item.path}
