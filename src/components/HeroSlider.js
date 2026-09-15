@@ -41,7 +41,7 @@ function DefaultHero() {
           </Link>
           <Link
             to="/members/apply"
-            className="rounded-lg bg-accent-500 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-accent-600"
+            className="rounded-lg bg-accent-500 px-6 py-3 text-sm font-bold text-brand-950 transition-colors hover:bg-accent-400"
           >
             회원 가입 신청
           </Link>

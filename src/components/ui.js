@@ -137,7 +137,7 @@ export function PageHeader({ title, subtitle }) {
       <div className="mx-auto max-w-6xl px-5 pt-8">
         {group && <Breadcrumb group={group} child={child} />}
         <div className={`text-center ${group ? "mt-6" : "mt-4"}`}>
-          <p className="font-display text-[11px] font-semibold uppercase tracking-[0.3em] text-accent-500">
+          <p className="font-display text-[11px] font-semibold uppercase tracking-[0.3em] text-accent-600">
             {org.abbr}
           </p>
           <span aria-hidden="true" className="mx-auto my-4 block h-px w-8 bg-slate-300" />

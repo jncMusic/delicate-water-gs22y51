@@ -11,7 +11,7 @@ export default function AboutOverview() {
           <h2 className="mt-4 font-serif text-2xl font-bold leading-relaxed sm:text-3xl">
             {overview.purpose}
           </h2>
-          <p className="mt-5 text-sm text-brand-100">— 정관 제2조 (목적)</p>
+          <p className="mt-5 text-sm text-brand-100">— 정관 제3조 (목적)</p>
         </div>
 
         <div className="mt-16 grid gap-10 lg:grid-cols-2">
