@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Pause, Play } from "lucide-react";
-import { navigate } from "../lib/router";
+import { Link, navigate } from "../lib/router";
+import { org } from "../data/site";
 
 /**
  * 이미지가 없는 배너에 쓰는 배경. 관리자가 고른 색조에 따라 달라진다.
@@ -14,6 +15,41 @@ const TONES = {
 };
 
 const AUTOPLAY_MS = 6000;
+
+
+/** 등록된 배너가 없을 때 대신 보여 주는 첫 화면. */
+function DefaultHero() {
+  return (
+    <section aria-label="협회 소개" className="relative bg-brand-900">
+      <div className="mx-auto flex min-h-[320px] max-w-6xl flex-col justify-center px-5 py-16 text-white sm:min-h-[420px]">
+        <p className="font-display text-xs font-semibold tracking-[0.2em] text-accent-300">
+          {org.nameEn}
+        </p>
+        <h2 className="mt-4 font-serif text-3xl font-bold leading-tight sm:text-5xl">
+          {org.name}
+        </h2>
+        <p className="mt-5 max-w-2xl text-sm leading-relaxed text-white/85 sm:text-base">
+          {org.description}
+        </p>
+        <p className="mt-3 text-sm text-white/60">{org.founded} 창설</p>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link
+            to="/members/apply"
+            className="rounded-lg bg-accent-500 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-accent-600"
+          >
+            회원 가입 신청
+          </Link>
+          <Link
+            to="/about/overview"
+            className="rounded-lg border border-white/40 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-white/10"
+          >
+            협회 소개
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function HeroSlider({ banners }) {
   const [index, setIndex] = useState(0);
@@ -33,7 +69,9 @@ export default function HeroSlider({ banners }) {
     if (index >= total) setIndex(0);
   }, [index, total]);
 
-  if (total === 0) return null;
+  // 배너를 한 건도 등록하지 않으면 첫 화면이 통째로 비어 버린다.
+  // 사무국이 배너를 올리기 전에도 협회가 어떤 곳인지는 보여야 한다.
+  if (total === 0) return <DefaultHero />;
 
   const current = banners[Math.min(index, total - 1)];
   const clickable = Boolean(current.linkPath);

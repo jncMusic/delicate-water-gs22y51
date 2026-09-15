@@ -4,7 +4,7 @@ import { Link } from "../lib/router";
 import { useCollection } from "../lib/useCollection";
 import HeroSlider from "../components/HeroSlider";
 import { boards } from "../data/boards";
-import { affiliateTypes, branchSummary, branchTotals, missions } from "../data/site";
+import { affiliateTypes, branchSummary, branchTotals, missions, org, overview } from "../data/site";
 import { Badge, EmptyState, SectionTitle, formatDate } from "../components/ui";
 
 /** 참고 사이트처럼 탭으로 두 목록을 번갈아 보여주는 홈 카드. */
@@ -93,8 +93,48 @@ export default function Home() {
     <>
       <HeroSlider banners={orderedBanners} />
 
+      <div className="border-b border-slate-200">
+        <div className="mx-auto max-w-6xl px-5 py-14">
+          <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr] lg:items-center">
+            <div>
+              <p className="font-display text-xs font-semibold tracking-[0.2em] text-accent-600">
+                ABOUT KBA
+              </p>
+              <h2 className="mt-3 font-serif text-2xl font-bold leading-snug text-brand-900 sm:text-3xl">
+                {org.name}는 {org.founded} 창설되었습니다
+              </h2>
+              <p className="mt-4 max-w-2xl leading-relaxed text-slate-600">{overview.purpose}</p>
+              <Link
+                to="/about/overview"
+                className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-brand-800 hover:text-accent-600"
+              >
+                협회 소개 자세히 보기
+                <ArrowRight size={15} />
+              </Link>
+            </div>
+
+            <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-slate-200 bg-slate-200">
+              {[
+                { label: "창설", value: org.founded.replace("년", ""), unit: "년" },
+                { label: "지회", value: branchTotals.branches, unit: "개" },
+                { label: "지부", value: branchTotals.chapters, unit: "개" },
+                { label: "회원단체", value: affiliateTypes.length, unit: "종" },
+              ].map((stat) => (
+                <div key={stat.label} className="bg-white px-5 py-6 text-center">
+                  <dt className="text-xs text-slate-500">{stat.label}</dt>
+                  <dd className="mt-1.5 font-serif text-2xl font-bold tabular-nums text-brand-900">
+                    {stat.value}
+                    <span className="ml-0.5 text-sm font-medium text-slate-400">{stat.unit}</span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </div>
+      </div>
+
       <div className="mx-auto max-w-6xl px-5 py-14">
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid items-start gap-6 lg:grid-cols-2">
           <TabCard
             tabs={[
               { key: "notice", label: "공지사항" },
