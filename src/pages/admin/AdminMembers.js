@@ -20,6 +20,7 @@ import {
 
 const EXPORT_COLUMNS = [
   ["name", "성명/단체명"],
+  ["birthDate", "생년월일"],
   ["memberType", "회원구분"],
   ["status", "상태"],
   ["instrument", "악기"],
@@ -29,6 +30,9 @@ const EXPORT_COLUMNS = [
   ["email", "이메일"],
   ["region", "지역"],
   ["note", "비고"],
+  ["guardianName", "법정대리인"],
+  ["guardianRelation", "관계"],
+  ["guardianPhone", "법정대리인 연락처"],
 ];
 
 function Stat({ label, value, tone = "" }) {
@@ -215,7 +219,19 @@ export default function AdminMembers() {
                       className="h-4 w-4 rounded border-slate-300"
                     />
                   </td>
-                  <td className="px-3 py-3 font-medium text-brand-900">{member.name}</td>
+                  <td className="px-3 py-3 font-medium text-brand-900">
+                    <span className="flex items-center gap-1.5">
+                      {member.name}
+                      {member.isMinor && (
+                        <span
+                          title={`법정대리인 ${member.guardianName || "미입력"}`}
+                          className="rounded-full border border-accent-500/40 bg-accent-500/10 px-1.5 py-0.5 text-[10px] font-medium text-accent-600"
+                        >
+                          만14세미만
+                        </span>
+                      )}
+                    </span>
+                  </td>
                   <td className="px-3 py-3 text-center text-slate-600">{member.memberType}</td>
                   <td className="px-3 py-3 text-slate-600">{member.affiliation || "-"}</td>
                   <td className="px-3 py-3 text-center text-slate-600">{member.instrument || "-"}</td>
@@ -273,6 +289,7 @@ export default function AdminMembers() {
           <div className="grid gap-4 sm:grid-cols-2">
             {[
               ["name", "성명/단체명"],
+              ["birthDate", "생년월일"],
               ["affiliation", "소속"],
               ["position", "직위"],
               ["phone", "연락처"],
@@ -325,6 +342,33 @@ export default function AdminMembers() {
                 ))}
               </Select>
             </Field>
+            {editing.isMinor && (
+              <div className="sm:col-span-2 rounded-lg border border-accent-500/40 bg-accent-500/5 p-4">
+                <p className="mb-3 text-xs font-bold text-brand-900">
+                  법정대리인 동의 — 만 14세 미만 신청자입니다.
+                </p>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <Field label="법정대리인 성명">
+                    <Input
+                      value={editing.guardianName || ""}
+                      onChange={(e) => setEditing({ ...editing, guardianName: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="관계">
+                    <Input
+                      value={editing.guardianRelation || ""}
+                      onChange={(e) => setEditing({ ...editing, guardianRelation: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="연락처">
+                    <Input
+                      value={editing.guardianPhone || ""}
+                      onChange={(e) => setEditing({ ...editing, guardianPhone: e.target.value })}
+                    />
+                  </Field>
+                </div>
+              </div>
+            )}
             <div className="sm:col-span-2">
               <Field label="비고">
                 <Textarea

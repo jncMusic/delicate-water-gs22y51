@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertCircle, Check, CheckCircle2 } from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, ShieldAlert } from "lucide-react";
 import { Link } from "../lib/router";
 import { createDoc } from "../lib/store";
 import { useCollection } from "../lib/useCollection";
@@ -25,6 +25,7 @@ const STEPS = ["가입확인", "약관동의", "정보입력", "입력확인", "
 
 const EMPTY = {
   name: "",
+  birthDate: "",
   phone: "",
   memberType: "정회원",
   instrument: "플루트",
@@ -33,6 +34,26 @@ const EMPTY = {
   email: "",
   region: "서울",
   note: "",
+  // 만 14세 미만이면 법정대리인(보호자) 동의를 함께 받는다.
+  guardianName: "",
+  guardianPhone: "",
+  guardianRelation: "부",
+};
+
+const GUARDIAN_RELATIONS = ["부", "모", "조부모", "그 밖의 법정대리인"];
+
+/** 오늘 기준 만 나이. 생년월일이 없으면 null. */
+export function ageOf(birthDate) {
+  if (!birthDate) return null;
+  const born = new Date(birthDate);
+  if (Number.isNaN(born.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - born.getFullYear();
+  const passed =
+    today.getMonth() > born.getMonth() ||
+    (today.getMonth() === born.getMonth() && today.getDate() >= born.getDate());
+  if (!passed) age -= 1;
+  return age;
 };
 
 const onlyDigits = (value) => value.replace(/\D/g, "");
@@ -51,6 +72,9 @@ function ErrorText({ children }) {
 function StepVerify({ form, set, members, onNext, error, setError }) {
   const verify = () => {
     if (!form.name.trim()) return setError("성명(또는 단체명)을 입력해 주세요.");
+    if (!form.birthDate) return setError("생년월일을 입력해 주세요.");
+    const age = ageOf(form.birthDate);
+    if (age === null || age < 0 || age > 120) return setError("생년월일을 다시 확인해 주세요.");
     if (onlyDigits(form.phone).length < 9) return setError("연락처를 정확히 입력해 주세요.");
 
     const already = members.some(
@@ -74,6 +98,9 @@ function StepVerify({ form, set, members, onNext, error, setError }) {
           placeholder="이름을 입력해주세요"
           aria-label="성명 또는 단체명"
         />
+        <Field label="생년월일" required hint="만 14세 미만은 법정대리인 동의가 필요해 확인합니다.">
+          <Input type="date" value={form.birthDate} onChange={set("birthDate")} />
+        </Field>
         <Input
           value={form.phone}
           onChange={set("phone")}
@@ -103,11 +130,21 @@ function StepVerify({ form, set, members, onNext, error, setError }) {
 }
 
 /* ── 02 약관동의 ── */
-function StepAgree({ agree, setAgree, onBack, onNext, error, setError }) {
-  const all = agree.terms && agree.privacy;
+function StepAgree({ form, set, agree, setAgree, onBack, onNext, error, setError }) {
+  const age = ageOf(form.birthDate);
+  const isMinor = age !== null && age < 14;
+  const consented = agree.terms && agree.privacy;
+  const guardianReady =
+    !isMinor ||
+    (agree.guardian && form.guardianName.trim() && onlyDigits(form.guardianPhone).length >= 9);
 
   const proceed = () => {
-    if (!all) return setError("필수 항목에 모두 동의해 주세요.");
+    if (!consented) return setError("필수 항목에 모두 동의해 주세요.");
+    if (isMinor && !agree.guardian) return setError("법정대리인 동의에 체크해 주세요.");
+    if (isMinor && !form.guardianName.trim())
+      return setError("법정대리인 성명을 입력해 주세요.");
+    if (isMinor && onlyDigits(form.guardianPhone).length < 9)
+      return setError("법정대리인 연락처를 정확히 입력해 주세요.");
     setError(null);
     onNext();
   };
@@ -123,7 +160,7 @@ function StepAgree({ agree, setAgree, onBack, onNext, error, setError }) {
       key: "privacy",
       label: "개인정보 수집 및 이용 동의 (필수)",
       link: "/policy/privacy",
-      body: "성명, 연락처, 이메일, 소속 정보를 회원 관리와 행사 안내 목적으로 수집하며 회원 자격이 유지되는 동안 보관합니다.",
+      body: "성명, 생년월일, 연락처, 이메일, 소속 정보를 회원 관리와 행사 안내 목적으로 수집하며 회원 자격이 유지되는 동안 보관합니다.",
     },
   ];
 
@@ -132,8 +169,10 @@ function StepAgree({ agree, setAgree, onBack, onNext, error, setError }) {
       <label className="flex items-center gap-2 rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 text-sm font-bold text-brand-900">
         <input
           type="checkbox"
-          checked={all}
-          onChange={(e) => setAgree({ terms: e.target.checked, privacy: e.target.checked })}
+          checked={consented}
+          onChange={(e) =>
+            setAgree({ ...agree, terms: e.target.checked, privacy: e.target.checked })
+          }
           className="h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-500"
         />
         약관에 모두 동의합니다.
@@ -163,11 +202,58 @@ function StepAgree({ agree, setAgree, onBack, onNext, error, setError }) {
         ))}
       </div>
 
+      {/* 만 14세 미만은 법정대리인 동의를 함께 받아야 한다. */}
+      {isMinor && (
+        <div className="mt-4 rounded-lg border-2 border-accent-500/40 bg-accent-500/5 p-5">
+          <h3 className="flex items-center gap-2 font-bold text-brand-900">
+            <ShieldAlert size={17} className="text-accent-600" />
+            법정대리인 동의 (만 14세 미만 필수)
+          </h3>
+          <p className="mt-2.5 text-xs leading-relaxed text-slate-600">
+            만 {age}세로 확인되었습니다. 만 14세 미만 아동의 개인정보는 법정대리인의 동의를
+            받아야 수집할 수 있습니다. 보호자 정보를 입력해 주시면 사무국에서 확인 연락을
+            드릴 수 있습니다. 보호자 정보는 동의 확인 목적으로만 쓰입니다.
+          </p>
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+            <Field label="법정대리인 성명" required>
+              <Input value={form.guardianName} onChange={set("guardianName")} />
+            </Field>
+            <Field label="법정대리인 연락처" required>
+              <Input
+                value={form.guardianPhone}
+                onChange={set("guardianPhone")}
+                placeholder="010-0000-0000"
+              />
+            </Field>
+            <Field label="관계">
+              <Select value={form.guardianRelation} onChange={set("guardianRelation")}>
+                {GUARDIAN_RELATIONS.map((item) => (
+                  <option key={item} value={item}>{item}</option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+
+          <label className="mt-4 flex items-start gap-2 text-sm font-medium text-brand-900">
+            <input
+              type="checkbox"
+              checked={Boolean(agree.guardian)}
+              onChange={(e) => setAgree({ ...agree, guardian: e.target.checked })}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-500"
+            />
+            법정대리인으로서 위 아동의 개인정보 수집·이용에 동의합니다. (필수)
+          </label>
+        </div>
+      )}
+
       <ErrorText>{error}</ErrorText>
 
       <div className="mt-7 flex justify-center gap-2">
         <Button variant="secondary" onClick={onBack}>이전</Button>
-        <Button onClick={proceed} className="px-10">다음</Button>
+        <Button onClick={proceed} disabled={!consented || !guardianReady} className="px-10">
+          다음
+        </Button>
       </div>
     </div>
   );
@@ -250,8 +336,12 @@ function StepForm({ form, set, onBack, onNext, error, setError }) {
 
 /* ── 04 입력확인 ── */
 function StepConfirm({ form, onBack, onSubmit, saving, error }) {
+  const age = ageOf(form.birthDate);
+  const isMinor = age !== null && age < 14;
+
   const rows = [
     ["성명 / 단체명", form.name],
+    ["생년월일", form.birthDate ? `${form.birthDate} (만 ${age}세)` : "-"],
     ["회원 구분", form.memberType],
     ["연락처", form.phone],
     ["이메일", form.email],
@@ -260,6 +350,12 @@ function StepConfirm({ form, onBack, onSubmit, saving, error }) {
     ["소속", form.affiliation || "-"],
     ["직위 / 역할", form.position || "-"],
     ["남기실 말씀", form.note || "-"],
+    ...(isMinor
+      ? [
+          ["법정대리인", `${form.guardianName} (${form.guardianRelation})`],
+          ["법정대리인 연락처", form.guardianPhone],
+        ]
+      : []),
   ];
 
   return (
@@ -326,7 +422,7 @@ export default function MembersApply() {
   const { rows: members } = useCollection("members");
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(EMPTY);
-  const [agree, setAgree] = useState({ terms: false, privacy: false });
+  const [agree, setAgree] = useState({ terms: false, privacy: false, guardian: false });
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -342,11 +438,18 @@ export default function MembersApply() {
     setSaving(true);
     setError(null);
     try {
+      const age = ageOf(form.birthDate);
+      const isMinor = age !== null && age < 14;
       await createDoc("members", {
         ...form,
         name: form.name.trim(),
         email: form.email.trim(),
         phone: form.phone.trim(),
+        isMinor,
+        // 만 14세 이상이면 보호자 정보는 남기지 않는다.
+        guardianName: isMinor ? form.guardianName.trim() : "",
+        guardianPhone: isMinor ? form.guardianPhone.trim() : "",
+        guardianRelation: isMinor ? form.guardianRelation : "",
         status: "대기",
       });
       go(5);
@@ -380,6 +483,8 @@ export default function MembersApply() {
       )}
       {step === 2 && (
         <StepAgree
+          form={form}
+          set={set}
           agree={agree}
           setAgree={setAgree}
           onBack={() => go(1)}
