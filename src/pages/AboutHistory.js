@@ -4,7 +4,7 @@ import { Container, PageHeader } from "../components/ui";
 export default function AboutHistory() {
   return (
     <>
-      <PageHeader subtitle="연도별 주요 사실입니다." />
+      <PageHeader subtitle="협회 창설과 역대 대표 취임 기록입니다." />
       <Container>
         <div className="space-y-14">
           {history.map((block) => (
