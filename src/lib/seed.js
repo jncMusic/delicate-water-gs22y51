@@ -22,7 +22,7 @@ export const seedData = {
       body:
         "2026년도 연회비 납부를 안내드립니다.\n\n" +
         "· 납부 기간: 1월 2일 ~ 3월 31일\n" +
-        "· 정회원 60,000원 / 준회원 30,000원 / 단체회원 200,000원\n\n" +
+        "· 회비 기준은 홈페이지 회원 안내에서 확인해 주세요.\n\n" +
         "입금자명은 회원 성함(단체는 단체명)으로 해 주셔야 확인이 가능합니다. " +
         "성함과 입금자명이 다른 경우 사무국으로 미리 알려 주시기 바랍니다.",
       createdAt: iso(12),
@@ -243,7 +243,7 @@ export const seedData = {
       id: "seed-r3",
       title: "회원 가입신청서 서식",
       category: "협회서식",
-      description: "정회원·준회원·단체회원 가입신청서 통합 서식입니다.",
+      description: "정회원·준회원 가입신청서 서식입니다.",
       uploader: "사무국",
       downloads: 531,
       file: { name: "회원가입신청서.hwp", size: 87040, type: "application/x-hwp", url: null },
@@ -626,7 +626,7 @@ export const seedData = {
     {
       id: "seed-m4",
       name: "○○중학교 관악부",
-      memberType: "단체회원",
+      memberType: "준회원",
       instrument: "관악합주",
       affiliation: "○○중학교",
       position: "단체",

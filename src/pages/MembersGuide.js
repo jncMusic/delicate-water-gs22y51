@@ -34,7 +34,7 @@ export default function MembersGuide() {
                     : "text-sm text-slate-500"
                 }`}
               >
-                {member.fee || "회비는 사무국으로 문의해 주세요."}
+                {member.fee || "연회비는 아래 회비 표를 확인해 주세요."}
               </p>
               <ul className="mt-4 flex-1 space-y-2">
                 {member.benefits.map((benefit) => (
@@ -74,16 +74,9 @@ export default function MembersGuide() {
               <p className="mt-3 text-sm font-medium text-brand-900">
                 {org.bank || "계좌는 사무국으로 문의해 주세요."}
               </p>
-              <dl className="mt-4 space-y-2 border-t border-slate-200 pt-4 text-sm">
-                {memberTypes.map((member) => (
-                  <div key={member.type} className="flex justify-between gap-3">
-                    <dt className="text-slate-600">{member.type}</dt>
-                    <dd className="font-medium text-brand-900">
-                      {member.fee || "사무국 문의"}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
+              <p className="mt-4 border-t border-slate-200 pt-4 text-sm leading-relaxed text-slate-600">
+                회비는 직위와 회원 구분에 따라 다릅니다. 오른쪽 표를 확인해 주세요.
+              </p>
             </Card>
             <Card>
               <h3 className="font-serif text-base font-bold text-brand-900">임원 회비</h3>

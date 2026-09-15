@@ -267,7 +267,7 @@ export default function Home() {
               회원 가입 안내
             </h2>
             <p className="mt-2 text-sm text-brand-200">
-              연주자, 지도자, 학생과 관악 단체가 정회원·준회원·단체회원으로 가입할 수 있습니다.
+              관악을 전공했거나 지도하는 분은 정회원으로, 그 밖에 관악 활동에 관심 있는 분은 준회원으로 가입하실 수 있습니다.
             </p>
           </div>
           <Link
