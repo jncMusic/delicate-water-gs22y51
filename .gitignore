@@ -1,1 +1,9 @@
 node_modules
+build
+.env
+.env.local
+.DS_Store
+npm-debug.log*
+
+# wrangler 로컬 실행 중 생기는 임시 파일
+.wrangler/
