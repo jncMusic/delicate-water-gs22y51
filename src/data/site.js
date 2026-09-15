@@ -9,6 +9,9 @@ export const org = {
   fullName: "한국관악협회",
   nameEn: "KOREAN BAND ASSOCIATION",
   abbr: "KBA",
+  // 도메인이 정해지면 .env 의 REACT_APP_SITE_URL 에 넣으세요(끝에 / 없이).
+  // 검색 노출과 카카오톡·SNS 공유 정보에 쓰입니다.
+  siteUrl: process.env.REACT_APP_SITE_URL || "",
   slogan: "전문 관악인 양성과 국제 음악문화 교류",
   founded: "1973년",
   description:

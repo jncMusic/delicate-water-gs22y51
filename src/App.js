@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import { useRoute } from "./lib/router";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { boardByPath, boards } from "./data/boards";
+import { findMenu, org } from "./data/site";
 import Home from "./pages/Home";
 import AboutOverview from "./pages/AboutOverview";
 import AboutIntro from "./pages/AboutIntro";
@@ -77,8 +79,23 @@ function resolve(path) {
   return <NotFound />;
 }
 
+/** 주소에 맞는 문서 제목을 찾는다. 브라우저 탭·방문 기록·검색 결과에 쓰인다. */
+function titleFor(path) {
+  if (path === "/") return `${org.name} | ${org.nameEn}`;
+  const found = findMenu(path);
+  if (found) return `${found.child.label} | ${org.name}`;
+  const board = boardByPath(path);
+  if (board) return `${board.label} | ${org.name}`;
+  if (path === "/admin") return `관리자 | ${org.name}`;
+  return org.name;
+}
+
 export default function App() {
   const path = useRoute();
+
+  useEffect(() => {
+    document.title = titleFor(path.length > 1 ? path.replace(/\/+$/, "") : path);
+  }, [path]);
 
   return (
     <div className="flex min-h-screen flex-col">

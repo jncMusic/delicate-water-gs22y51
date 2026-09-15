@@ -223,8 +223,44 @@ Pretendard 는 가변 폰트를 자모 단위로 쪼갠 판이라 화면에 실�
 
 ## 배포
 
-`npm run build` 결과인 `build/` 폴더를 정적 호스팅에 올리면 됩니다.
-주소에 해시(`#`)를 쓰는 라우터라 서버 리다이렉트 설정 없이도 새로고침과 직접 링크가 동작합니다.
+도메인은 **kbaband.kr** 입니다.
+
+```bash
+cp .env.example .env     # 값을 채운 뒤
+npm run build            # build/ 에 정적 파일 생성
+```
+
+`build/` 를 정적 호스팅에 올리면 됩니다. Cloudflare Pages, Netlify, Vercel,
+Firebase Hosting 모두 무료 한도로 충분합니다.
+
+### 주소 방식
+
+기본은 `kbaband.kr/about/intro` 처럼 깔끔한 주소를 씁니다.
+이 방식은 서버가 **"없는 주소는 index.html 을 주라"** 고 동작해야 하며,
+설정 파일을 미리 넣어 두었습니다.
+
+| 호스팅 | 설정 파일 | 별도 작업 |
+| --- | --- | --- |
+| Cloudflare Pages · Netlify | `public/_redirects` | 없음 |
+| Vercel | `vercel.json` | 없음 |
+| Firebase Hosting | — | `firebase.json` 에 `"rewrites": [{"source": "**", "destination": "/index.html"}]` |
+| 일반 웹호스팅(카페24 등) | — | 설정이 어려우면 `.env` 에 `REACT_APP_ROUTER=hash` |
+
+`REACT_APP_ROUTER=hash` 로 두면 주소에 `#` 이 붙지만 서버 설정 없이 동작합니다.
+
+### 검색 노출과 링크 공유
+
+`npm run build` 가 끝나면 `scripts/postbuild.js` 가 자동으로 처리합니다.
+
+- `index.html` 의 공유 정보(og 태그)에 실제 주소를 채웁니다 — 카카오톡·네이버·페이스북에
+  링크를 붙였을 때 제목·설명·이미지가 보입니다. 이미지는 `public/og-image.png` 입니다.
+- `sitemap.xml` 과 `robots.txt` 를 만듭니다. 관리자 화면은 색인에서 제외합니다.
+
+배포 후 [네이버 서치어드바이저](https://searchadvisor.naver.com)와
+[구글 서치콘솔](https://search.google.com/search-console)에 사이트와 `sitemap.xml` 을
+등록하면 검색에 나오기 시작합니다.
+
+화면마다 브라우저 탭 제목이 바뀌도록 되어 있습니다(`src/App.js` 의 `titleFor`).
 
 ## 폴더 구조
 
