@@ -168,7 +168,13 @@ export async function uploadFile(file, folder = "resources") {
 
   const path = `${folder}/${newId()}-${file.name}`;
   const target = storageRef(storage, path);
-  await uploadBytes(target, file);
+  // 저장 위치가 홈페이지와 다른 도메인이라 링크에 붙이는 파일명은 무시된다.
+  // 올릴 때 "열지 말고 이 이름으로 저장하라"고 파일 자체에 적어 둬야
+  // 받는 쪽에서 PDF 가 화면에 열리지 않고 원래 이름으로 저장된다.
+  await uploadBytes(target, file, {
+    contentType: file.type || "application/octet-stream",
+    contentDisposition: `attachment; filename*=UTF-8''${encodeURIComponent(file.name)}`,
+  });
   return {
     name: file.name,
     size: file.size,

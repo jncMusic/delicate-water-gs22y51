@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { Download, FileText, Search } from "lucide-react";
+import { Download, Search } from "lucide-react";
 import { useCollection } from "../lib/useCollection";
 import { bumpCounter, DEMO_MODE } from "../lib/store";
 import { triggerDownload } from "../lib/download";
+import { fileKind } from "../lib/fileType";
 import { resourceCategories } from "../data/site";
 import {
   Badge,
@@ -110,10 +111,13 @@ export default function Resources() {
         ) : (
           <>
             <ul className="divide-y divide-slate-100 border-t-2 border-brand-800">
-              {visible.map((item) => (
+              {visible.map((item) => {
+                const kind = fileKind(item.file?.name);
+                return (
                 <li key={item.id} className="flex flex-wrap items-start gap-4 py-5">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
-                    <FileText size={20} />
+                  <span className="flex h-11 w-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-brand-50 text-brand-700">
+                    <kind.Icon size={18} />
+                    <span className="text-[9px] font-semibold leading-none">{kind.label}</span>
                   </span>
 
                   <div className="min-w-0 flex-1">
@@ -143,7 +147,8 @@ export default function Resources() {
                     받기
                   </button>
                 </li>
-              ))}
+                );
+              })}
             </ul>
 
             <Pagination page={safePage} pageCount={pageCount} onChange={setPage} />

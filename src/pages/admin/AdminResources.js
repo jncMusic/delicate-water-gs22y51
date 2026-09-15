@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { AlertCircle, Download, FileText, Trash2, Upload } from "lucide-react";
+import { AlertCircle, Download, Trash2, Upload } from "lucide-react";
 import { useCollection } from "../../lib/useCollection";
 import {
   createDoc,
@@ -11,6 +11,7 @@ import {
 } from "../../lib/store";
 import { resourceCategories } from "../../data/site";
 import { downloadResource } from "../Resources";
+import { fileKind } from "../../lib/fileType";
 import {
   Badge,
   Button,
@@ -138,10 +139,13 @@ export default function AdminResources() {
           <EmptyState message="등록된 자료가 없습니다." />
         ) : (
           <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white px-5">
-            {rows.map((item) => (
+            {rows.map((item) => {
+              const kind = fileKind(item.file?.name);
+              return (
               <li key={item.id} className="flex flex-wrap items-start gap-4 py-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
-                  <FileText size={18} />
+                <span className="flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-brand-50 text-brand-700">
+                  <kind.Icon size={16} />
+                  <span className="text-[9px] font-semibold leading-none">{kind.label}</span>
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -174,7 +178,8 @@ export default function AdminResources() {
                   </button>
                 </div>
               </li>
-            ))}
+            );
+            })}
           </ul>
         )}
       </div>
