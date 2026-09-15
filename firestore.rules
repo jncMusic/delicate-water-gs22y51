@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // admins 목록에 문서가 있는 계정만 관리자다
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isBoard(name) {
+      return name in ['notices', 'press', 'disclosure',
+                      'sceneNews', 'concertNews', 'jobs'];
+    }
+
+    // 방문자가 올릴 수 있는 것은 숫자 하나뿐이고, 그것도 1씩만 늘릴 수 있다
+    function bumpsOnly(field) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([field])
+        && request.resource.data[field] == resource.data[field] + 1;
+    }
+
+    // 게시판 6종 — 누구나 읽고, 쓰기는 관리자만. 조회수만 예외.
+    match /{board}/{doc} {
+      allow read: if isBoard(board);
+      allow create, delete: if isAdmin() && isBoard(board);
+      allow update: if isBoard(board) && (isAdmin() || bumpsOnly('views'));
+    }
+
+    match /resources/{doc} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || bumpsOnly('downloads');
+    }
+
+    match /events/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /banners/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 가입 신청은 누구나 넣을 수 있다. 다만 아무 값이나 넣지는 못하게 막는다.
+    // 특히 스스로 '승인' 상태로 만들 수 없어야 한다.
+    match /members/{doc} {
+      allow create: if request.resource.data.status == '대기'
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() < 100
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() < 30
+        && request.resource.data.email is string
+        && request.resource.data.email.size() < 200
+        && request.resource.data.keys().size() < 30;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /admins/{uid} {
+      allow read: if isAdmin();
+      allow write: if false;   // 콘솔에서만 추가·삭제합니다
+    }
+  }
+}

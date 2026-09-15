@@ -136,6 +136,7 @@ Firestore 가 `PERMISSION_DENIED` 로 나오는 것은 잘못된 게 아닙니�
 
 ## Firestore 보안 규칙
 
+저장소의 [`firestore.rules`](firestore.rules) 와 같은 내용입니다.
 콘솔 **Firestore Database → 규칙** 에 그대로 붙여넣고 게시하세요.
 
 ```
@@ -219,6 +220,7 @@ service cloud.firestore {
 
 ## Storage 보안 규칙
 
+저장소의 [`storage.rules`](storage.rules) 와 같은 내용입니다.
 콘솔 **Storage → 규칙** 에 붙여넣고 게시하세요.
 
 ```
