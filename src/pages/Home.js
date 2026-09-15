@@ -4,7 +4,7 @@ import { Link } from "../lib/router";
 import { useCollection } from "../lib/useCollection";
 import HeroSlider from "../components/HeroSlider";
 import { boards } from "../data/boards";
-import { affiliateTypes, branchSummary, branchTotals, missions, org, overview } from "../data/site";
+import { branchSummary, branchTotals, missions, org, overview, programs } from "../data/site";
 import { Badge, EmptyState, SectionTitle, formatDate } from "../components/ui";
 
 /** 참고 사이트처럼 탭으로 두 목록을 번갈아 보여주는 홈 카드. */
@@ -118,7 +118,7 @@ export default function Home() {
                 { label: "창설", value: org.founded.replace("년", ""), unit: "년" },
                 { label: "지회", value: branchTotals.branches, unit: "개" },
                 { label: "지부", value: branchTotals.chapters, unit: "개" },
-                { label: "회원단체", value: affiliateTypes.length, unit: "종" },
+                { label: "사업", value: programs.length, unit: "개" },
               ].map((stat) => (
                 <div key={stat.label} className="bg-white px-5 py-6 text-center">
                   <dt className="text-xs text-slate-500">{stat.label}</dt>
@@ -148,64 +148,36 @@ export default function Home() {
           </TabCard>
 
           <TabCard
-            tabs={[
-              { key: "branch", label: "지회·지부" },
-              { key: "affiliate", label: "회원단체" },
-            ]}
+            tabs={[{ key: "branch", label: "지회·지부" }]}
             active={rightTab}
             onChange={setRightTab}
-            moreTo={rightTab === "branch" ? "/members/branches" : "/members/affiliates"}
+            moreTo="/members/branches"
           >
-            {rightTab === "branch" ? (
-              <div>
-                <div className="flex items-center gap-5">
-                  <span className="flex h-24 w-24 shrink-0 flex-col items-center justify-center rounded-lg bg-brand-900 text-white">
-                    <span className="font-serif text-3xl font-bold">{branchTotals.branches}</span>
-                    <span className="mt-0.5 text-[10px] tracking-widest text-brand-300">지회</span>
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-sm leading-relaxed text-slate-600">
-                      국내외 {branchTotals.branches}개 지회와 {branchTotals.chapters}개 지부를 두고
-                      있습니다.
-                    </p>
-                    <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                      {branchSummary.map((row) => (
-                        <li key={row.area}>
-                          {row.area} <strong className="text-brand-800">{row.count}</strong>
-                        </li>
-                      ))}
-                    </ul>
-                    <Link
-                      to="/members/branches"
-                      className="mt-3 inline-block rounded-full border border-slate-300 px-4 py-1.5 text-xs text-brand-800 hover:bg-slate-50"
-                    >
-                      자세히 보기
-                    </Link>
-                  </div>
-                </div>
+            <div className="flex items-center gap-5">
+              <span className="flex h-24 w-24 shrink-0 flex-col items-center justify-center rounded-lg bg-brand-900 text-white">
+                <span className="font-serif text-3xl font-bold">{branchTotals.branches}</span>
+                <span className="mt-0.5 text-[10px] tracking-widest text-brand-300">지회</span>
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm leading-relaxed text-slate-600">
+                  국내외 {branchTotals.branches}개 지회와 {branchTotals.chapters}개 지부를 두고
+                  있습니다.
+                </p>
+                <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                  {branchSummary.map((row) => (
+                    <li key={row.area}>
+                      {row.area} <strong className="text-brand-800">{row.count}</strong>
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  to="/members/branches"
+                  className="mt-3 inline-block rounded-full border border-slate-300 px-4 py-1.5 text-xs text-brand-800 hover:bg-slate-50"
+                >
+                  자세히 보기
+                </Link>
               </div>
-            ) : (
-              <ul className="space-y-3">
-                {affiliateTypes.map((type) => (
-                  <li key={type.name} className="flex items-start gap-4">
-                    <span className="mt-0.5 shrink-0 rounded-full bg-accent-500/15 px-3 py-1 text-xs font-bold text-accent-600">
-                      {type.name}
-                    </span>
-                    <span className="min-w-0 text-sm leading-relaxed text-slate-600">
-                      {type.summary}
-                    </span>
-                  </li>
-                ))}
-                <li className="pt-1">
-                  <Link
-                    to="/members/affiliates"
-                    className="inline-block rounded-full border border-slate-300 px-4 py-1.5 text-xs text-brand-800 hover:bg-slate-50"
-                  >
-                    자세히 보기
-                  </Link>
-                </li>
-              </ul>
-            )}
+            </div>
           </TabCard>
         </div>
       </div>

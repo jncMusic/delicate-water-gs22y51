@@ -19,7 +19,6 @@ import Events from "./pages/Events";
 import MembersGuide from "./pages/MembersGuide";
 import MembersApply from "./pages/MembersApply";
 import Branches from "./pages/Branches";
-import Affiliates from "./pages/Affiliates";
 import Resources from "./pages/Resources";
 import Board, { BoardDetail } from "./pages/Board";
 import { Terms, Privacy, EmailPolicy } from "./pages/Policy";
@@ -45,7 +44,6 @@ const ROUTES = {
   "/members/guide": MembersGuide,
   "/members/apply": MembersApply,
   "/members/branches": Branches,
-  "/members/affiliates": Affiliates,
 
   "/info/scene": () => <Board board={boards.scene} />,
   "/info/concert": () => <Board board={boards.concert} />,
