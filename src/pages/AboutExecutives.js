@@ -57,7 +57,7 @@ export default function AboutExecutives() {
         </div>
 
         <p className="mt-8 text-xs text-slate-500">
-          가나다순이 아닌 협회 조직도 문서의 순서를 따랐습니다.
+          명단은 가나다순입니다.
         </p>
       </Container>
     </>

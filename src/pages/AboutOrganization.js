@@ -38,12 +38,11 @@ function Joint() {
   );
 }
 
-/** 줄기를 따라 내려오는 세로줄. joint 를 켜면 가운데에 점이 찍힌다. */
-function Stem({ joint = false }) {
+/** 줄기를 따라 내려오는 세로줄. */
+function Stem() {
   return (
     <div className="relative h-10">
       <span aria-hidden="true" className={`absolute left-1/2 h-full w-0.5 -translate-x-1/2 ${LINE}`} />
-      {joint && <Joint />}
     </div>
   );
 }
@@ -66,25 +65,36 @@ function Chart({ chart }) {
               <span />
 
               {/* 아래로 내려가는 줄. 마지막 칸 뒤는 갈래 줄이 대신한다. */}
-              {index < spine.length - 1 && (
-                <>
-                  <span />
-                  <div className="w-full">
-                    <Stem joint={branching} />
-                  </div>
-                  {branching ? (
-                    // 감사는 줄기 옆으로 빠진다. 가로줄이 점에서 칸까지 이어진다.
-                    <div className="flex w-full items-center self-center pr-2">
-                      <span aria-hidden="true" className={`h-0.5 flex-1 ${LINE}`} />
-                      <div className="w-24 shrink-0 sm:w-32">
-                        <Box label={aside.label} />
-                      </div>
+              {index < spine.length - 1 &&
+                (branching ? (
+                  /*
+                    감사는 줄기 옆으로 빠진다. 가로줄을 칸(column)에 맡기면
+                    줄기 한가운데가 아니라 칸 경계에서 시작해 점과 끊겨 보인다.
+                    그래서 이 줄만 세 칸을 통째로 쓰고 가로줄을 50% 에서 긋는다.
+                  */
+                  <div className="relative col-span-3 h-12 w-full">
+                    <span
+                      aria-hidden="true"
+                      className={`absolute left-1/2 h-full w-0.5 -translate-x-1/2 ${LINE}`}
+                    />
+                    <span
+                      aria-hidden="true"
+                      className={`absolute left-1/2 right-24 top-1/2 h-0.5 -translate-y-1/2 sm:right-32 ${LINE}`}
+                    />
+                    <div className="absolute right-0 top-1/2 w-24 -translate-y-1/2 sm:w-32">
+                      <Box label={aside.label} />
                     </div>
-                  ) : (
+                    <Joint />
+                  </div>
+                ) : (
+                  <>
                     <span />
-                  )}
-                </>
-              )}
+                    <div className="w-full">
+                      <Stem />
+                    </div>
+                    <span />
+                  </>
+                ))}
             </div>
           );
         })}
