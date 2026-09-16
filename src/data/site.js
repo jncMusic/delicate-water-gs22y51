@@ -59,7 +59,9 @@ export const menus = [
   {
     label: "관악정보",
     children: [
+      { label: "예술계 소식", path: "/info/arts" },
       { label: "관악계 소식", path: "/info/scene" },
+      { label: "회원동향", path: "/info/member-news" },
       { label: "연주회 소식", path: "/info/concert" },
       { label: "자료실", path: "/info/resources" },
       { label: "일자리 정보", path: "/info/jobs" },

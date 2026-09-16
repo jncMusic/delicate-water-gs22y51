@@ -45,7 +45,9 @@ const ROUTES = {
   "/members/apply": MembersApply,
   "/members/branches": Branches,
 
+  "/info/arts": () => <Board board={boards.arts} />,
   "/info/scene": () => <Board board={boards.scene} />,
+  "/info/member-news": () => <Board board={boards.memberNews} />,
   "/info/concert": () => <Board board={boards.concert} />,
   "/info/resources": Resources,
   "/info/jobs": () => <Board board={boards.jobs} />,

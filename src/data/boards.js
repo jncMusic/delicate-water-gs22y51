@@ -27,6 +27,23 @@ export const boards = {
     description: "사업 계획과 결산 등 협회가 공개하는 자료입니다.",
     categories: ["사업계획", "결산", "총회자료", "기타"],
   },
+  arts: {
+    key: "arts",
+    collection: "artsNews",
+    label: "예술계 소식",
+    path: "/info/arts",
+    description: "공연·전시·공모 등 예술계 전반의 소식입니다.",
+    categories: ["공연", "공모·지원", "정책", "기타"],
+  },
+  memberNews: {
+    key: "memberNews",
+    // members 는 가입 신청이 쓰고 있으므로 이름이 겹치지 않게 둔다.
+    collection: "memberNews",
+    label: "회원동향",
+    path: "/info/member-news",
+    description: "회원의 수상·임명·활동 소식을 전합니다.",
+    categories: ["수상", "임명", "활동", "기타"],
+  },
   scene: {
     key: "scene",
     collection: "sceneNews",

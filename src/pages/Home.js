@@ -72,11 +72,77 @@ function PostList({ board }) {
   );
 }
 
+/**
+ * 포스터를 앞세우는 홈 카드.
+ *
+ * 연주회 소식처럼 포스터가 붙는 게시판은 제목만 나열하기보다 첫 글의 그림을
+ * 크게 보여 주는 편이 눈에 들어온다. 그림이 없으면 글 목록으로 물러난다.
+ */
+function PosterHighlight({ board }) {
+  const { rows } = useCollection(board.collection);
+  const sorted = pinnedFirst(rows);
+
+  if (sorted.length === 0) return <EmptyState message="등록된 소식이 없습니다." />;
+
+  const [lead, ...rest] = sorted;
+  const image = lead.images?.[0];
+  if (!image) return <PostList board={board} />;
+
+  return (
+    <div>
+      <Link to={`${board.path}/${lead.id}`} className="group flex gap-4">
+        <img
+          src={image.thumb || image.url}
+          alt=""
+          loading="lazy"
+          className="h-32 w-[90px] shrink-0 rounded-lg border border-slate-200 object-cover"
+        />
+        <span className="min-w-0 flex-1">
+          <span className="text-xs tabular-nums text-slate-400">
+            {formatDate(lead.createdAt)}
+          </span>
+          <span className="mt-1 block font-medium leading-snug text-brand-900 group-hover:text-brand-700">
+            {lead.title}
+          </span>
+          {/* line-clamp 는 스스로 display 를 -webkit-box 로 바꾼다. 여기에 block 을
+              같이 붙이면 그쪽이 이겨 줄이 잘리지 않는다. */}
+          {lead.body && (
+            <span className="mt-2 line-clamp-3 text-sm leading-relaxed text-slate-500">
+              {lead.body}
+            </span>
+          )}
+        </span>
+      </Link>
+
+      {rest.length > 0 && (
+        <ul className="mt-4 divide-y divide-slate-100 border-t border-slate-100">
+          {rest.slice(0, 3).map((post) => (
+            <li key={post.id}>
+              <Link
+                to={`${board.path}/${post.id}`}
+                className="group flex items-center gap-3 py-2.5 text-sm"
+              >
+                <span className="w-20 shrink-0 text-xs tabular-nums text-slate-400">
+                  {formatDate(post.createdAt)}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-slate-700 group-hover:text-brand-700">
+                  {post.title}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function Home() {
   const { rows: banners } = useCollection("banners");
   const { rows: events } = useCollection("events");
   const [leftTab, setLeftTab] = useState("notice");
   const [rightTab, setRightTab] = useState("branch");
+  const [newsTab, setNewsTab] = useState("arts");
 
   const orderedBanners = [...banners].sort((a, b) => (a.order || 0) - (b.order || 0));
 
@@ -86,6 +152,7 @@ export default function Home() {
     .sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
 
   const leftBoard = leftTab === "notice" ? boards.notice : boards.press;
+  const newsBoard = boards[newsTab];
 
   return (
     <>
@@ -176,6 +243,30 @@ export default function Home() {
                 </Link>
               </div>
             </div>
+          </TabCard>
+        </div>
+
+        <div className="mt-6 grid items-start gap-6 lg:grid-cols-2">
+          <TabCard
+            tabs={[{ key: "concert", label: "연주회 소식" }]}
+            active="concert"
+            onChange={() => {}}
+            moreTo={boards.concert.path}
+          >
+            <PosterHighlight board={boards.concert} />
+          </TabCard>
+
+          <TabCard
+            tabs={[
+              { key: "arts", label: "예술계 소식" },
+              { key: "scene", label: "관악계 소식" },
+              { key: "memberNews", label: "회원동향" },
+            ]}
+            active={newsTab}
+            onChange={setNewsTab}
+            moreTo={newsBoard.path}
+          >
+            <PostList board={newsBoard} />
           </TabCard>
         </div>
       </div>
