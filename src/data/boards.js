@@ -55,6 +55,15 @@ export const boards = {
 
 export const boardList = Object.values(boards);
 
+/**
+ * 게시판 정렬 규칙: 고정한 글이 먼저, 나머지는 받은 순서(최신순)대로.
+ *
+ * 공개 목록·홈·관리자 화면이 모두 이 규칙을 써야 한다. 관리자 화면만 이걸
+ * 빼먹는 바람에, 고정을 눌러도 줄이 움직이지 않아 안 걸린 것처럼 보였다.
+ */
+export const pinnedFirst = (rows) =>
+  [...rows].sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)));
+
 /** 경로 앞부분으로 게시판을 찾는다. */
 export const boardByPath = (path) =>
   boardList.find((board) => path === board.path || path.startsWith(`${board.path}/`));

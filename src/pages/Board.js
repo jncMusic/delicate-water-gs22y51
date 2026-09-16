@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, Search } from "lucide-react";
 import { Link, navigate } from "../lib/router";
 import { useCollection } from "../lib/useCollection";
+import { pinnedFirst } from "../data/boards";
 import { bumpCounter } from "../lib/store";
 import {
   Badge,
@@ -47,12 +48,13 @@ export default function Board({ board }) {
 
   const filtered = useMemo(() => {
     const needle = keyword.trim().toLowerCase();
-    return rows
-      .filter((row) => category === "전체" || row.category === category)
-      .filter(
-        (row) => !needle || `${row.title} ${row.body || ""}`.toLowerCase().includes(needle)
-      )
-      .sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)));
+    return pinnedFirst(
+      rows
+        .filter((row) => category === "전체" || row.category === category)
+        .filter(
+          (row) => !needle || `${row.title} ${row.body || ""}`.toLowerCase().includes(needle)
+        )
+    );
   }, [rows, keyword, category]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PER_PAGE));

@@ -3,7 +3,7 @@ import { ArrowRight, CalendarDays } from "lucide-react";
 import { Link } from "../lib/router";
 import { useCollection } from "../lib/useCollection";
 import HeroSlider from "../components/HeroSlider";
-import { boards } from "../data/boards";
+import { boards, pinnedFirst } from "../data/boards";
 import { branchSummary, branchTotals, missions, org, overview, programs } from "../data/site";
 import { Badge, EmptyState, SectionTitle, formatDate } from "../components/ui";
 
@@ -47,9 +47,7 @@ function TabCard({ tabs, active, onChange, moreTo, children }) {
 /** 날짜가 왼쪽, 제목이 오른쪽에 오는 홈 전용 목록. */
 function PostList({ board }) {
   const { rows } = useCollection(board.collection);
-  const sorted = [...rows].sort(
-    (a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned))
-  );
+  const sorted = pinnedFirst(rows);
 
   if (sorted.length === 0) return <EmptyState message="등록된 글이 없습니다." />;
 
