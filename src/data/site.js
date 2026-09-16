@@ -347,7 +347,14 @@ export const bylawsNote =
  */
 export const programs = [
   { name: "대한민국 관악제", period: "", summary: "관악 음악을 한자리에서 선보이는 협회의 대표 무대입니다.", details: [] },
-  { name: "뮤직 페스티벌", period: "", summary: "", details: [] },
+  {
+    name: "뮤직 페스티벌",
+    period: "",
+    summary: "보컬·밴드·연주단체가 함께 참여하는 지역 음악 축제입니다.",
+    details: [
+      "제1회 여주 음악 페스티벌 — 여주시와 함께 준비하고 있습니다. 일정과 참가 요강은 확정되는 대로 안내해 드립니다.",
+    ],
+  },
   {
     name: "관악 페스티벌",
     period: "매년 8월",

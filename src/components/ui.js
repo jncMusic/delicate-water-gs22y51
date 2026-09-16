@@ -254,8 +254,14 @@ export function SectionTitle({ children, description }) {
 }
 
 export function Card({ children, className = "" }) {
+  // 부르는 쪽이 배경을 정해 주면 기본 흰 배경은 빼야 한다. 둘 다 붙여 두면
+  // Tailwind 가 만든 CSS 안에서 bg-white 가 뒤에 오는 바람에 기본값이 이겨,
+  // 짙은 카드가 흰 카드로 나오고 그 위의 흰 글씨가 보이지 않는다.
+  const background = /(^|\s)bg-/.test(className) ? "" : "bg-white";
   return (
-    <div className={`rounded-xl border border-slate-200 bg-white p-6 shadow-sm ${className}`}>
+    <div
+      className={`rounded-xl border border-slate-200 ${background} p-6 shadow-sm ${className}`}
+    >
       {children}
     </div>
   );
@@ -328,6 +334,7 @@ const badgeTones = {
   대기: "bg-amber-50 text-amber-700 border-amber-200",
   보류: "bg-slate-100 text-slate-600 border-slate-200",
   탈퇴: "bg-rose-50 text-rose-700 border-rose-200",
+  종료: "bg-slate-100 text-slate-500 border-slate-200",
   default: "bg-brand-50 text-brand-700 border-brand-200",
 };
 

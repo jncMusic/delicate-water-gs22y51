@@ -32,6 +32,7 @@ const emptyPost = (board) => ({
   author: "사무국",
   body: "",
   pinned: false,
+  closed: false,
   images: [],
 });
 
@@ -193,6 +194,7 @@ export default function AdminBoards() {
                           className="h-9 w-7 shrink-0 rounded border border-slate-200 object-cover"
                         />
                       )}
+                      {post.closed && <Badge tone="종료">종료</Badge>}
                       {post.title}
                     </span>
                   </td>
@@ -341,15 +343,26 @@ export default function AdminBoards() {
               </div>
             </Field>
 
-            <label className="flex items-center gap-2 text-sm text-brand-900">
-              <input
-                type="checkbox"
-                checked={Boolean(draft.pinned)}
-                onChange={set("pinned")}
-                className="h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-500"
-              />
-              목록 상단에 고정
-            </label>
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              <label className="flex items-center gap-2 text-sm text-brand-900">
+                <input
+                  type="checkbox"
+                  checked={Boolean(draft.pinned)}
+                  onChange={set("pinned")}
+                  className="h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-500"
+                />
+                목록 상단에 고정
+              </label>
+              <label className="flex items-center gap-2 text-sm text-brand-900">
+                <input
+                  type="checkbox"
+                  checked={Boolean(draft.closed)}
+                  onChange={set("closed")}
+                  className="h-4 w-4 rounded border-slate-300 text-brand-700 focus:ring-brand-500"
+                />
+                끝난 행사로 표시(목록에 '종료')
+              </label>
+            </div>
 
             {error && (
               <p className="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-700">

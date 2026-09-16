@@ -133,6 +133,7 @@ export default function Board({ board }) {
                         className="flex items-center gap-3 font-medium text-slate-800 hover:text-brand-700"
                       >
                         <PostThumb post={post} />
+                        {post.closed && <Badge tone="종료">종료</Badge>}
                         {post.title}
                       </Link>
                     </td>
@@ -157,6 +158,7 @@ export default function Board({ board }) {
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-2">
                         <Badge>{post.pinned ? "중요" : post.category}</Badge>
+                        {post.closed && <Badge tone="종료">종료</Badge>}
                         <span className="text-xs text-slate-400">{formatDate(post.createdAt)}</span>
                       </span>
                       <span className="mt-1.5 block font-medium text-slate-800">{post.title}</span>
@@ -229,6 +231,7 @@ export function BoardDetail({ board, id }) {
             <div className="mb-3 flex items-center gap-2">
               <Badge>{post.category}</Badge>
               {post.pinned && <Badge>중요</Badge>}
+              {post.closed && <Badge tone="종료">종료된 행사</Badge>}
             </div>
             <h2 className="font-serif text-2xl font-bold leading-snug text-brand-900">
               {post.title}

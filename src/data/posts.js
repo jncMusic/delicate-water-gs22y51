@@ -25,6 +25,7 @@ export const builtinPosts = {
       category: "행사",
       author: "사무국",
       pinned: false,
+      closed: true,
       createdAt: "2026-06-25T09:00:00+09:00",
       images: [
         {
@@ -64,6 +65,7 @@ export const builtinPosts = {
       category: "행사",
       author: "사무국",
       pinned: false,
+      closed: true,
       createdAt: "2026-07-15T09:00:00+09:00",
       images: [
         {
