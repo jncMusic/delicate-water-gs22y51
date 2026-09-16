@@ -40,9 +40,58 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="ko_KR" />
     <meta name="twitter:card" content="summary_large_image" />
+
+    <!--
+      검색엔진에게 "이 사이트는 한국관악협회라는 단체의 공식 홈페이지" 라고
+      기계가 읽는 형식으로 알려 주는 부분이다. 사람에게는 보이지 않는다.
+      구글은 이것으로 단체 정보 패널을 만들고, '한국관악협회' 처럼 이름으로
+      찾을 때 공식 홈페이지를 가려내는 데 쓴다.
+      주소는 절대 주소여야 해서 빌드 뒤 scripts/postbuild.js 가 %SITE_URL% 을 채운다.
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "%SITE_URL%/#organization",
+            "name": "한국관악협회",
+            "alternateName": ["KBA", "KOREAN BAND ASSOCIATION", "한국 관악 협회"],
+            "url": "%SITE_URL%/",
+            "logo": "%SITE_URL%/og-image.png",
+            "image": "%SITE_URL%/og-image.png",
+            "foundingDate": "1973",
+            "description": "한국관악협회는 관악 활동을 통해 음악 문화의 저변을 넓히고, 국내외 관악 음악 활동으로 국가 문화 발전에 기여하며, 청소년의 정서 함양과 차세대 관악 음악인 양성을 목적으로 하는 단체입니다.",
+            "email": "kbaoffice@naver.com",
+            "telephone": "+82-2-2655-0520",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "사당로 287, 5층",
+              "addressLocality": "동작구",
+              "addressRegion": "서울특별시",
+              "addressCountry": "KR"
+            },
+            "sameAs": ["https://blog.naver.com/kbaoffice"]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "%SITE_URL%/#website",
+            "url": "%SITE_URL%/",
+            "name": "한국관악협회",
+            "inLanguage": "ko-KR",
+            "publisher": { "@id": "%SITE_URL%/#organization" }
+          }
+        ]
+      }
+    </script>
   </head>
   <body class="bg-white text-brand-950">
-    <noscript>이 사이트를 이용하려면 자바스크립트를 활성화해 주세요.</noscript>
+    <!--
+      전에는 여기에 "자바스크립트를 켜 주세요" 안내가 있었다. 지금은 빌드할 때
+      화면마다 HTML 을 미리 그려 두므로(scripts/prerender.js) 자바스크립트가
+      없어도 글을 읽고 메뉴를 눌러 옮겨 다닐 수 있다. 맞지 않는 안내가 모든
+      쪽의 첫 문장으로 나오면 검색 결과에도 그 문장이 잡히므로 뺀다.
+    -->
     <div id="root"></div>
   </body>
 </html>

@@ -239,6 +239,8 @@ Cloudflare Workers 에는 `_redirects` 를 두지 않습니다. 같은 규칙을
 - `index.html` 의 공유 정보(og 태그)에 실제 주소를 채웁니다 — 카카오톡·네이버·페이스북에
   링크를 붙였을 때 제목·설명·이미지가 보입니다. 이미지는 `public/og-image.png` 입니다.
 - `sitemap.xml` 과 `robots.txt` 를 만듭니다. 관리자 화면은 색인에서 제외합니다.
+- 메뉴에 있는 화면을 하나씩 미리 그려 `build/about/intro.html` 처럼 진짜 HTML 로
+  저장합니다(`scripts/prerender.js`). 아래 「자바스크립트 없이도 읽히게」 참고.
 
 배포 후 [네이버 서치어드바이저](https://searchadvisor.naver.com)와
 [구글 서치콘솔](https://search.google.com/search-console)에 사이트와 `sitemap.xml` 을
@@ -254,7 +256,33 @@ Cloudflare Workers 에는 `_redirects` 를 두지 않습니다. 같은 규칙을
 > "확인 파일에 잘못된 콘텐츠가 있습니다" 로 실패합니다. 파일은 남겨 두었지만
 > **소유 확인은 메타 태그(HTML 태그) 방식으로 하세요.**
 
-화면마다 브라우저 탭 제목이 바뀌도록 되어 있습니다(`src/App.js` 의 `titleFor`).
+#### 자바스크립트 없이도 읽히게 (프리렌더)
+
+이 홈페이지는 자바스크립트가 화면을 그리는 방식(SPA)입니다. 그대로 두면 서버가
+주는 HTML 에는 `<div id="root"></div>` 한 줄뿐이라, **네이버 크롤러(Yeti)처럼
+자바스크립트를 돌리지 않는 검색엔진에게는 읽을 글자가 없습니다.**
+
+그래서 빌드 마지막에 `scripts/prerender.js` 가 메뉴에 있는 화면 27개를 미리 한 번
+그려서 `build/<주소>.html` 로 저장합니다.
+
+- Cloudflare Workers 가 `/about/intro` 요청에 `about/intro.html` 을 내주므로
+  `sitemap.xml` 에 적은 주소 모양과 정확히 맞습니다.
+- 브라우저로 들어온 사람에게는 React 가 같은 자리를 다시 그립니다. **보이는 화면은
+  전과 똑같습니다.**
+- 여기서 문제가 생기면 경고만 남기고 빌드는 그대로 끝납니다. 예전처럼 SPA 로
+  배포될 뿐, 홈페이지가 안 열리지는 않습니다.
+
+화면별 제목과 설명은 `src/data/seo.js` 한 곳에 있습니다. 프리렌더와 화면(`src/App.js`
+의 `applyMeta`)이 같은 값을 써서, 주소가 바뀔 때마다 `<title>`·설명·대표 주소
+(`canonical`)가 함께 바뀝니다.
+
+`public/index.html` 에는 "이 사이트는 한국관악협회라는 단체의 공식 홈페이지"임을
+기계가 읽는 형식으로 적은 부분(`application/ld+json`)이 있습니다. 구글이 단체 정보를
+묶고 이름으로 찾을 때 공식 홈페이지를 가려내는 데 씁니다.
+
+> 게시판 목록처럼 내용이 수시로 바뀌는 쪽은 미리 그린 HTML 에 **그 시점의 글**만
+> 들어갑니다. 새 글은 사람이 볼 때 자바스크립트가 채워 넣고, 검색엔진에는 다음
+> 배포 때 반영됩니다.
 
 ## 폴더 구조
 
@@ -263,6 +291,7 @@ src/
   data/
     site.js           협회 정보·문구·메뉴 (여기만 고치면 내용이 바뀝니다)
     boards.js         게시판 정의 (공지사항·보도자료·정보공개·소식·채용)
+    seo.js            화면별 제목·설명 (검색 결과와 공유 카드에 쓰입니다)
   lib/
     firebase.js       Firebase 초기화 (.env 가 비면 연결하지 않음)
     store.js          Firestore/localStorage 공통 데이터 계층
