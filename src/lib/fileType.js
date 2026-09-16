@@ -38,3 +38,20 @@ export function fileKind(name) {
   if (found) return { label: found.label, ext, Icon: found.Icon };
   return { label: ext ? ext.toUpperCase() : "파일", ext, Icon: File };
 }
+
+/** 목록에서 아이콘 대신 그림을 바로 보여 줘도 되는 파일인지. */
+export function isImageFile(name) {
+  return ["jpg", "jpeg", "png", "gif", "webp", "bmp"].includes(extensionOf(name));
+}
+
+/**
+ * 자료 한 건에서 미리보기로 쓸 그림 주소를 찾는다.
+ * 협회가 홈페이지에 함께 넣어 둔 자료는 별도 썸네일이 있고,
+ * 사무국이 올린 자료는 첨부파일이 그림이면 그 파일을 그대로 쓴다.
+ */
+export function previewOf(item) {
+  if (item?.thumb) return item.thumb;
+  const file = item?.file;
+  if (file?.url && isImageFile(file.name)) return file.url;
+  return null;
+}

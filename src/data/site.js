@@ -561,5 +561,5 @@ export const regions = [
   "경기", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주", "해외",
 ];
 
-export const resourceCategories = ["대회요강", "협회서식", "교육자료", "악보", "회의자료", "기타"];
+export const resourceCategories = ["대회요강", "협회서식", "교육자료", "악보", "회의자료", "홍보물", "기타"];
 export const memberStatuses = ["대기", "승인", "보류", "탈퇴"];
