@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { AlertCircle, Download, Trash2, Upload } from "lucide-react";
+import { AlertCircle, Download, Lock, Trash2, Upload } from "lucide-react";
 import { useCollection } from "../../lib/useCollection";
 import {
   createDoc,
@@ -11,7 +11,7 @@ import {
 } from "../../lib/store";
 import { resourceCategories } from "../../data/site";
 import { downloadResource } from "../Resources";
-import { fileKind } from "../../lib/fileType";
+import { fileKind, previewOf } from "../../lib/fileType";
 import {
   Badge,
   Button,
@@ -141,12 +141,22 @@ export default function AdminResources() {
           <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white px-5">
             {rows.map((item) => {
               const kind = fileKind(item.file?.name);
+              const preview = previewOf(item);
               return (
               <li key={item.id} className="flex flex-wrap items-start gap-4 py-4">
-                <span className="flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-brand-50 text-brand-700">
-                  <kind.Icon size={16} />
-                  <span className="text-[9px] font-semibold leading-none">{kind.label}</span>
-                </span>
+                {preview ? (
+                  <img
+                    src={preview}
+                    alt=""
+                    loading="lazy"
+                    className="h-14 w-10 shrink-0 rounded-lg border border-slate-200 object-cover"
+                  />
+                ) : (
+                  <span className="flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-brand-50 text-brand-700">
+                    <kind.Icon size={16} />
+                    <span className="text-[9px] font-semibold leading-none">{kind.label}</span>
+                  </span>
+                )}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge>{item.category}</Badge>
@@ -156,7 +166,7 @@ export default function AdminResources() {
                     <span>{item.file?.name || "첨부 없음"}</span>
                     <span>{formatBytes(item.file?.size)}</span>
                     <span>{formatDate(item.createdAt)}</span>
-                    <span>다운로드 {item.downloads || 0}</span>
+                    {!item.builtin && <span>다운로드 {item.downloads || 0}</span>}
                   </p>
                 </div>
                 <div className="flex gap-1">
@@ -168,14 +178,24 @@ export default function AdminResources() {
                   >
                     <Download size={16} />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => remove(item)}
-                    aria-label={`${item.title} 삭제`}
-                    className="rounded p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  {item.builtin ? (
+                    <span
+                      className="flex items-center gap-1 px-1.5 text-xs text-slate-400"
+                      title="홈페이지에 함께 들어 있는 자료라 관리자 화면에서는 지울 수 없습니다."
+                    >
+                      <Lock size={12} />
+                      기본 제공
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => remove(item)}
+                      aria-label={`${item.title} 삭제`}
+                      className="rounded p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-600"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
                 </div>
               </li>
             );

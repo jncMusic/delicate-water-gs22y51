@@ -3,7 +3,7 @@ import { Download, Search } from "lucide-react";
 import { useCollection } from "../lib/useCollection";
 import { bumpCounter, DEMO_MODE } from "../lib/store";
 import { triggerDownload } from "../lib/download";
-import { fileKind } from "../lib/fileType";
+import { fileKind, previewOf } from "../lib/fileType";
 import { resourceCategories } from "../data/site";
 import {
   Badge,
@@ -113,12 +113,31 @@ export default function Resources() {
             <ul className="divide-y divide-slate-100 border-t-2 border-brand-800">
               {visible.map((item) => {
                 const kind = fileKind(item.file?.name);
+                const preview = previewOf(item);
                 return (
                 <li key={item.id} className="flex flex-wrap items-start gap-4 py-5">
-                  <span className="flex h-11 w-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-brand-50 text-brand-700">
-                    <kind.Icon size={18} />
-                    <span className="text-[9px] font-semibold leading-none">{kind.label}</span>
-                  </span>
+                  {preview ? (
+                    // 포스터처럼 보고 싶은 자료는 내려받지 않고도 크게 볼 수 있게 한다.
+                    <a
+                      href={item.file?.url || preview}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="shrink-0"
+                      aria-label={`${item.title} 크게 보기`}
+                    >
+                      <img
+                        src={preview}
+                        alt=""
+                        loading="lazy"
+                        className="h-16 w-11 rounded-lg border border-slate-200 object-cover hover:opacity-80"
+                      />
+                    </a>
+                  ) : (
+                    <span className="flex h-11 w-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg bg-brand-50 text-brand-700">
+                      <kind.Icon size={18} />
+                      <span className="text-[9px] font-semibold leading-none">{kind.label}</span>
+                    </span>
+                  )}
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -134,7 +153,7 @@ export default function Resources() {
                       <span>{item.file?.name || "첨부 없음"}</span>
                       <span>{formatBytes(item.file?.size)}</span>
                       <span>등록 {formatDate(item.createdAt)}</span>
-                      <span>다운로드 {item.downloads || 0}</span>
+                      {!item.builtin && <span>다운로드 {item.downloads || 0}</span>}
                     </p>
                   </div>
 

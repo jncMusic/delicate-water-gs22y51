@@ -17,6 +17,7 @@ import {
 } from "firebase/storage";
 import { db, storage, firebaseEnabled } from "./firebase";
 import { seedData } from "./seed";
+import { builtinRows, isBuiltinId } from "../data/posts";
 
 /**
  * 화면과 저장소 사이의 얇은 데이터 계층.
@@ -40,6 +41,17 @@ const newId = () =>
 /** 최신 글이 위로 오도록 정렬. */
 const byNewest = (rows) =>
   [...rows].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+
+/**
+ * 저장소에서 읽어온 글에 홈페이지가 품고 있는 기본 게시물을 섞는다.
+ * 같은 id 가 저장소에도 있으면 저장소 쪽을 남긴다.
+ */
+function withBuiltin(name, rows) {
+  const builtin = builtinRows(name);
+  if (builtin.length === 0) return rows;
+  const taken = new Set(rows.map((row) => row.id));
+  return byNewest([...rows, ...builtin.filter((row) => !taken.has(row.id))]);
+}
 
 function readLocal(name) {
   try {
@@ -66,7 +78,7 @@ function writeLocal(name, rows, { silent = false } = {}) {
 function emit(name) {
   const subs = listeners.get(name);
   if (!subs) return;
-  const rows = byNewest(readLocal(name));
+  const rows = withBuiltin(name, byNewest(readLocal(name)));
   subs.forEach((cb) => cb(rows));
 }
 
@@ -78,17 +90,17 @@ export function subscribe(name, callback) {
   if (DEMO_MODE) {
     if (!listeners.has(name)) listeners.set(name, new Set());
     listeners.get(name).add(callback);
-    callback(byNewest(readLocal(name)));
+    callback(withBuiltin(name, byNewest(readLocal(name))));
     return () => listeners.get(name)?.delete(callback);
   }
 
   const q = query(collection(db, name), orderBy("createdAt", "desc"));
   return onSnapshot(
     q,
-    (snap) => callback(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+    (snap) => callback(withBuiltin(name, snap.docs.map((d) => ({ id: d.id, ...d.data() })))),
     (err) => {
       console.error(`[store] ${name} 구독 오류`, err);
-      callback([]);
+      callback(withBuiltin(name, []));
     }
   );
 }
@@ -135,6 +147,8 @@ export async function saveMany(name, ids, patch) {
 
 /** 조회수·다운로드수처럼 화면에서 세는 값. 실패해도 사용자 흐름을 막지 않는다. */
 export async function bumpCounter(name, id, field, current = 0) {
+  // 기본 게시물은 저장소에 문서가 없으니 셀 것도 없다.
+  if (isBuiltinId(id)) return;
   try {
     await saveDoc(name, id, { [field]: (current || 0) + 1 });
   } catch (err) {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Search } from "lucide-react";
+import { Download, Search } from "lucide-react";
 import { Link, navigate } from "../lib/router";
 import { useCollection } from "../lib/useCollection";
 import { bumpCounter } from "../lib/store";
@@ -16,6 +16,20 @@ import {
 } from "../components/ui";
 
 const PER_PAGE = 10;
+
+/** 글에 붙은 첫 그림을 목록에서 작게 보여 준다. 포스터 공지를 알아보기 쉽게. */
+function PostThumb({ post, className = "" }) {
+  const image = post.images?.[0];
+  if (!image) return null;
+  return (
+    <img
+      src={image.thumb || image.url}
+      alt=""
+      loading="lazy"
+      className={`h-11 w-8 shrink-0 rounded border border-slate-200 object-cover ${className}`}
+    />
+  );
+}
 
 /** 게시판 목록. boards.js 의 정의를 받아 어느 게시판이든 같은 화면으로 그린다. */
 export default function Board({ board }) {
@@ -116,8 +130,10 @@ export default function Board({ board }) {
                     <td className="py-3.5">
                       <Link
                         to={`${board.path}/${post.id}`}
-                        className="font-medium text-slate-800 hover:text-brand-700"
+                        className="flex items-center gap-3 font-medium text-slate-800 hover:text-brand-700"
                       >
+                        <PostThumb post={post} />
+                        {post.closed && <Badge tone="종료">종료</Badge>}
                         {post.title}
                       </Link>
                     </td>
@@ -125,7 +141,9 @@ export default function Board({ board }) {
                     <td className="py-3.5 text-center text-slate-500">
                       {formatDate(post.createdAt)}
                     </td>
-                    <td className="py-3.5 text-center text-slate-400">{post.views || 0}</td>
+                    <td className="py-3.5 text-center text-slate-400">
+                      {post.builtin ? "-" : post.views || 0}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -135,12 +153,16 @@ export default function Board({ board }) {
             <ul className="divide-y divide-slate-100 border-t-2 border-brand-800 sm:hidden">
               {visible.map((post) => (
                 <li key={post.id}>
-                  <Link to={`${board.path}/${post.id}`} className="block py-4">
-                    <span className="flex items-center gap-2">
-                      <Badge>{post.pinned ? "중요" : post.category}</Badge>
-                      <span className="text-xs text-slate-400">{formatDate(post.createdAt)}</span>
+                  <Link to={`${board.path}/${post.id}`} className="flex items-start gap-3 py-4">
+                    <PostThumb post={post} className="mt-0.5" />
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-2">
+                        <Badge>{post.pinned ? "중요" : post.category}</Badge>
+                        {post.closed && <Badge tone="종료">종료</Badge>}
+                        <span className="text-xs text-slate-400">{formatDate(post.createdAt)}</span>
+                      </span>
+                      <span className="mt-1.5 block font-medium text-slate-800">{post.title}</span>
                     </span>
-                    <span className="mt-1.5 block font-medium text-slate-800">{post.title}</span>
                   </Link>
                 </li>
               ))}
@@ -209,6 +231,7 @@ export function BoardDetail({ board, id }) {
             <div className="mb-3 flex items-center gap-2">
               <Badge>{post.category}</Badge>
               {post.pinned && <Badge>중요</Badge>}
+              {post.closed && <Badge tone="종료">종료된 행사</Badge>}
             </div>
             <h2 className="font-serif text-2xl font-bold leading-snug text-brand-900">
               {post.title}
@@ -216,13 +239,37 @@ export function BoardDetail({ board, id }) {
             <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-500">
               <span>작성 {post.author || "사무국"}</span>
               <span>등록일 {formatDate(post.createdAt)}</span>
-              <span>조회 {post.views || 0}</span>
+              {!post.builtin && <span>조회 {post.views || 0}</span>}
             </p>
           </header>
 
           <div className="whitespace-pre-line py-10 text-[15px] leading-8 text-slate-700">
             {post.body}
           </div>
+
+          {post.images?.length > 0 && (
+            <div className="space-y-6 pb-10">
+              {post.images.map((image) => (
+                <figure key={image.url}>
+                  <img
+                    src={image.url}
+                    alt={image.alt || post.title}
+                    className="mx-auto w-full max-w-2xl rounded-lg border border-slate-200"
+                  />
+                  <figcaption className="mt-3 text-center">
+                    <a
+                      href={image.url}
+                      download={image.name}
+                      className="inline-flex items-center gap-1.5 text-sm text-brand-700 hover:underline"
+                    >
+                      <Download size={14} />
+                      원본 내려받기
+                    </a>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          )}
         </article>
 
         <div className="divide-y divide-slate-100 border-y border-slate-200 text-sm">
