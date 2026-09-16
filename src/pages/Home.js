@@ -246,8 +246,6 @@ export default function Home() {
     <>
       <HeroSlider banners={orderedBanners} />
 
-      <PosterStrip />
-
       <div className="border-b border-slate-200">
         <div className="mx-auto max-w-6xl px-5 py-14">
           <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr] lg:items-center">
@@ -287,6 +285,8 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      <PosterStrip />
 
       <div className="mx-auto max-w-6xl px-5 py-14">
         <div className="grid items-start gap-6 lg:grid-cols-2">
