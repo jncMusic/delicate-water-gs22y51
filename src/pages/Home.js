@@ -74,7 +74,7 @@ function PostList({ board }) {
 }
 
 /**
- * 첫 화면의 포스터 띠.
+ * 첫 화면의 「주요 행사」 띠.
  *
  * 협회가 가진 그림은 행사 포스터뿐이라, 그것을 첫 화면에 내어 글자만 있는
  * 화면을 면한다. 어느 한 게시판에 매어 두지 않고 포스터가 붙을 만한 곳
@@ -136,7 +136,7 @@ function PosterStrip() {
   return (
     <div className="border-b border-slate-200 bg-slate-50">
       <div className="mx-auto max-w-6xl px-5 py-12">
-        <h2 className="font-serif text-xl font-bold text-brand-900">행사 포스터</h2>
+        <h2 className="font-serif text-xl font-bold text-brand-900">주요 행사</h2>
         <div className={`mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 ${columns}`}>
           {posters.map((poster) => (
             <Link key={poster.key} to={poster.to} className="group block">
