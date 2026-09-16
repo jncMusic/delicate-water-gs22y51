@@ -28,10 +28,16 @@ function DefaultHero() {
         <h2 className="mt-4 font-serif text-3xl font-bold leading-tight sm:text-5xl">
           {org.name}
         </h2>
-        <p className="mt-5 max-w-2xl text-sm leading-relaxed text-white/85 sm:text-base">
-          {org.description}
-        </p>
-        <p className="mt-3 text-sm text-white/60">{org.founded} 창설</p>
+        {/*
+          협회 이름·창설 연도·목적 문장은 바로 아래 ABOUT 칸이 통계와 함께
+          더 자세히 말한다. 여기서 또 적으면 같은 말이 두 번 나온다.
+          한 줄 덧붙일 말이 생기면 site.js 의 slogan 에 넣으면 여기 나온다.
+        */}
+        {org.slogan && (
+          <p className="mt-5 max-w-2xl text-sm leading-relaxed text-white/85 sm:text-base">
+            {org.slogan}
+          </p>
+        )}
         <div className="mt-8 flex flex-wrap gap-3">
           <Link
             to="/about/overview"

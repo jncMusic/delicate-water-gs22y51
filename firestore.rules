@@ -10,7 +10,8 @@ service cloud.firestore {
 
     function isBoard(name) {
       return name in ['notices', 'press', 'disclosure',
-                      'sceneNews', 'concertNews', 'jobs'];
+                      'artsNews', 'sceneNews', 'memberNews',
+                      'concertNews', 'jobs'];
     }
 
     // 방문자가 올릴 수 있는 것은 숫자 하나뿐이고, 그것도 1씩만 늘릴 수 있다

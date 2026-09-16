@@ -70,7 +70,7 @@ function MobileDrawer({ onClose, activePath }) {
   const items = menus.flatMap((menu) => menu.children);
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-16 z-40 overflow-y-auto bg-brand-900 lg:hidden">
+    <div className="fixed inset-x-0 bottom-0 top-16 z-40 overflow-y-auto bg-brand-900 md:hidden">
       <ul className="px-5 py-2">
         {items.map((item) => (
           <li key={item.path} className="border-b border-white/10 last:border-0">
@@ -136,7 +136,7 @@ export default function Header({ path }) {
 
           <nav
             aria-label="주 메뉴"
-            className="hidden h-full items-stretch lg:flex"
+            className="hidden h-full items-stretch md:flex"
             onMouseLeave={() => setHovered(null)}
           >
             {menus.map((menu) => (
@@ -147,7 +147,7 @@ export default function Header({ path }) {
               >
                 <Link
                   to={menuHome(menu)}
-                  className={`flex items-center border-b-2 px-6 text-[15px] font-medium transition-colors ${
+                  className={`flex items-center border-b-2 px-3 text-sm font-medium transition-colors lg:px-6 lg:text-[15px] ${
                     isActive(menu)
                       ? "border-brand-700 text-brand-800"
                       : "border-transparent text-slate-700 hover:text-brand-700"
@@ -171,14 +171,16 @@ export default function Header({ path }) {
               type="button"
               onClick={() => setFullMenu((v) => !v)}
               aria-expanded={fullMenu}
-              className="hidden items-center gap-1.5 rounded px-3 py-2 text-xs text-brand-800 hover:bg-slate-50 lg:flex"
+              aria-label="전체메뉴"
+              className="hidden items-center gap-1.5 rounded px-2 py-2 text-xs text-brand-800 hover:bg-slate-50 md:flex lg:px-3"
             >
               {fullMenu ? <X size={16} /> : <Menu size={16} />}
-              전체메뉴
+              {/* 좁은 폭에서는 메뉴 다섯 개가 먼저다. 글자는 넉넉할 때만 쓴다. */}
+              <span className="hidden lg:inline">전체메뉴</span>
             </button>
             <Link
               to="/admin"
-              className="hidden items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-2 text-xs text-slate-600 hover:bg-slate-50 lg:flex"
+              className="hidden items-center gap-1.5 rounded-lg border border-slate-300 px-2 py-2 text-xs text-slate-600 hover:bg-slate-50 md:flex lg:px-3"
             >
               <Lock size={13} />
               관리자
@@ -188,7 +190,7 @@ export default function Header({ path }) {
               onClick={() => setDrawer((v) => !v)}
               aria-label={drawer ? "메뉴 닫기" : "메뉴 열기"}
               aria-expanded={drawer}
-              className="rounded-lg p-2 text-brand-800 hover:bg-slate-100 lg:hidden"
+              className="rounded-lg p-2 text-brand-800 hover:bg-slate-100 md:hidden"
             >
               {drawer ? <X size={22} /> : <Menu size={22} />}
             </button>

@@ -496,6 +496,13 @@ export const seedData = {
       author: "홍보부",
       pinned: true,
       views: 302,
+      images: [
+        {
+          url: "/posters/2025-busan-winds-festival.jpg",
+          thumb: "/posters/2025-busan-winds-festival-thumb.jpg",
+          name: "예시 포스터.jpg",
+        },
+      ],
       body:
         "회원이 참여하는 연주회 소식을 홈페이지에 게재해 드립니다.\n\n" +
         "공연명, 일시, 장소, 프로그램, 문의처를 사무국 이메일로 보내 주시면 " +
@@ -524,6 +531,52 @@ export const seedData = {
     },
   ],
 
+  artsNews: [
+    {
+      id: "seed-a1",
+      title: "[한국문화예술위원회] 2027년 공연예술창작주체 지원사업 공고",
+      category: "공모·지원",
+      author: "사무국",
+      pinned: false,
+      views: 41,
+      body: "공연예술 단체를 대상으로 하는 창작 지원 사업 공고입니다. 자세한 내용은 원문을 확인해 주세요.",
+      createdAt: iso(2),
+    },
+    {
+      id: "seed-a2",
+      title: "[문화체육관광부] 생활예술 활성화 기본계획 발표",
+      category: "정책",
+      author: "사무국",
+      pinned: false,
+      views: 27,
+      body: "동호회·생활예술 분야의 지원 방향을 담은 기본계획이 발표되었습니다.",
+      createdAt: iso(6),
+    },
+    {
+      id: "seed-a3",
+      title: "[예술경영지원센터] 공연장 안전관리 교육 신청 안내",
+      category: "기타",
+      author: "사무국",
+      pinned: false,
+      views: 18,
+      body: "공연장 운영 담당자를 위한 안전관리 교육입니다.",
+      createdAt: iso(9),
+    },
+  ],
+  memberNews: [
+    {
+      id: "seed-m1",
+      title: "회원 소식을 사무국으로 보내 주세요",
+      category: "기타",
+      author: "사무국",
+      pinned: true,
+      views: 64,
+      body:
+        "회원의 수상·임명·연주 활동 소식을 홈페이지에 실어 드립니다.\n\n" +
+        "사무국(kbaoffice@naver.com)으로 내용과 사진을 보내 주시면 확인 후 게재합니다.",
+      createdAt: iso(4),
+    },
+  ],
   jobs: [
     {
       id: "seed-j3",

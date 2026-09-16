@@ -10,7 +10,7 @@ import {
   DEMO_MODE,
   DEMO_FILE_LIMIT,
 } from "../../lib/store";
-import { boardList } from "../../data/boards";
+import { boardList, pinnedFirst } from "../../data/boards";
 import { postTemplates } from "../../data/postTemplates";
 import { isImageFile } from "../../lib/fileType";
 import {
@@ -42,6 +42,8 @@ export default function AdminBoards() {
   const [boardKey, setBoardKey] = useState(boardList[0].key);
   const board = boardList.find((item) => item.key === boardKey);
   const { rows, loading } = useCollection(board.collection);
+  // 공개 목록과 같은 순서로 보여 줘야 고정이 걸렸는지 눈으로 확인할 수 있다.
+  const ordered = useMemo(() => pinnedFirst(rows), [rows]);
 
   const [draft, setDraft] = useState(null);
   // 저장 버튼을 누를 때 한꺼번에 올린다. 작성을 취소하면 아무것도 남지 않는다.
@@ -129,7 +131,14 @@ export default function AdminBoards() {
     await removeDoc(board.collection, post.id);
   };
 
-  const togglePin = (post) => saveDoc(board.collection, post.id, { pinned: !post.pinned });
+  const togglePin = async (post) => {
+    try {
+      await saveDoc(board.collection, post.id, { pinned: !post.pinned });
+    } catch (err) {
+      console.error(err);
+      window.alert("고정 상태를 바꾸지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    }
+  };
 
   /** 본문을 서식으로 채운다. 쓰던 글이 있으면 먼저 물어본다. */
   const applyTemplate = (template) => {
@@ -190,14 +199,19 @@ export default function AdminBoards() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {rows.map((post) => (
+              {ordered.map((post) => (
                 <tr key={post.id} className="hover:bg-slate-50">
                   <td className="px-3 py-3 text-center">
                     <Badge>{post.category}</Badge>
                   </td>
                   <td className="px-3 py-3">
                     <span className="flex items-center gap-2 font-medium text-brand-900">
-                      {post.pinned && <Pin size={13} className="shrink-0 text-accent-600" />}
+                      {post.pinned && (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-accent-500 bg-accent-500/10 px-2 py-0.5 text-xs font-medium text-accent-600">
+                          <Pin size={11} />
+                          고정
+                        </span>
+                      )}
                       {post.images?.[0] && (
                         <img
                           src={post.images[0].thumb || post.images[0].url}
