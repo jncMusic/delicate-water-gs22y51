@@ -14,7 +14,7 @@ import { Card, Container, PageHeader, SectionTitle } from "../components/ui";
 
 const LINE = "bg-slate-300";
 
-function Box({ label, tone = "light" }) {
+function Box({ label, tone = "light", compact = false }) {
   const styles = {
     dark: "bg-brand-900 text-white border-brand-900",
     mid: "bg-brand-500 text-white border-brand-500",
@@ -22,8 +22,12 @@ function Box({ label, tone = "light" }) {
     accent: "bg-accent-500 text-brand-950 border-accent-500",
   }[tone];
   return (
-    <div className={`w-full rounded-lg border px-4 py-3 text-center shadow-sm ${styles}`}>
-      <span className="text-sm font-bold">{label}</span>
+    <div
+      className={`w-full rounded-lg border py-3 text-center shadow-sm ${
+        compact ? "px-2" : "px-4"
+      } ${styles}`}
+    >
+      <span className="whitespace-nowrap text-sm font-bold">{label}</span>
     </div>
   );
 }
@@ -49,12 +53,14 @@ function Stem() {
 
 function Chart({ chart }) {
   const { spine, aside, leaves } = chart;
+  // 칸 하나가 차지하는 폭의 절반(%). 가로줄 양 끝과 세로줄 위치를 여기서 뽑는다.
+  const half = 100 / (leaves.length * 2);
 
   return (
     /* 좁은 화면에서는 감사 칸이 밖으로 밀린다. 모양을 무너뜨리는 대신
        옆으로 밀어 볼 수 있게 두는 편이 조직도로서 읽기 낫다. */
     <div className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 px-5 py-12">
-      <div className="mx-auto grid min-w-[30rem] max-w-3xl grid-cols-[1fr_11rem_1fr] justify-items-center gap-y-0">
+      <div className="mx-auto grid min-w-[42rem] max-w-3xl grid-cols-[1fr_11rem_1fr] justify-items-center gap-y-0">
         {spine.map((role, index) => {
           const branching = aside && aside.after === role;
           return (
@@ -99,18 +105,32 @@ function Chart({ chart }) {
           );
         })}
 
-        {/* 맨 아래 갈래 */}
-        <div className="col-span-3 w-full max-w-md">
+        {/*
+          맨 아래 갈래. 칸이 몇 개든 맞게 그리려고 위치를 계산한다.
+          칸 n 개를 고르게 나누면 i 번째 칸의 한가운데는 (2i+1)/(2n) 지점이고,
+          가로줄은 첫 칸 가운데에서 마지막 칸 가운데까지 이으면 된다.
+        */}
+        <div className="col-span-3 w-full">
           <div className="relative h-12">
             <span aria-hidden="true" className={`absolute left-1/2 top-0 h-1/2 w-0.5 -translate-x-1/2 ${LINE}`} />
             <Joint />
-            <span aria-hidden="true" className={`absolute left-1/4 right-1/4 top-1/2 h-0.5 ${LINE}`} />
-            <span aria-hidden="true" className={`absolute left-1/4 top-1/2 h-1/2 w-0.5 -translate-x-1/2 ${LINE}`} />
-            <span aria-hidden="true" className={`absolute right-1/4 top-1/2 h-1/2 w-0.5 translate-x-1/2 ${LINE}`} />
+            <span
+              aria-hidden="true"
+              className={`absolute top-1/2 h-0.5 ${LINE}`}
+              style={{ left: `${half}%`, right: `${half}%` }}
+            />
+            {leaves.map((leaf, i) => (
+              <span
+                key={leaf}
+                aria-hidden="true"
+                className={`absolute top-1/2 h-1/2 w-0.5 -translate-x-1/2 ${LINE}`}
+                style={{ left: `${half * (2 * i + 1)}%` }}
+              />
+            ))}
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-2 sm:gap-3" style={{ gridTemplateColumns: `repeat(${leaves.length}, minmax(0, 1fr))` }}>
             {leaves.map((leaf) => (
-              <Box key={leaf} label={leaf} tone="accent" />
+              <Box key={leaf} label={leaf} tone="accent" compact />
             ))}
           </div>
         </div>
