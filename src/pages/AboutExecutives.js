@@ -25,15 +25,6 @@ export default function AboutExecutives() {
           ))}
         </div>
 
-        <div className="mt-14">
-          <SectionTitle>사무국</SectionTitle>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {executives.office.map((person) => (
-              <OfficerCard key={person.role} {...person} />
-            ))}
-          </div>
-        </div>
-
         {/* 인원이 많은 직위는 카드 대신 이름만 나열한다. */}
         <div className="mt-14 space-y-8">
           {executives.groups.map((group) => (
@@ -56,8 +47,17 @@ export default function AboutExecutives() {
           ))}
         </div>
 
+        <div className="mt-14">
+          <SectionTitle>사무국</SectionTitle>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {executives.office.map((person) => (
+              <OfficerCard key={person.role} {...person} />
+            ))}
+          </div>
+        </div>
+
         <p className="mt-8 text-xs text-slate-500">
-          가나다순이 아닌 협회 조직도 문서의 순서를 따랐습니다.
+          명단은 가나다순입니다.
         </p>
       </Container>
     </>

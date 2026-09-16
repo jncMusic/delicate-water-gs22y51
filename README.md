@@ -74,6 +74,29 @@ npm run build    # build/ 에 정적 파일 생성
 > 설정값(API 키 등)은 비밀이 아닙니다. 브라우저에 실려 나가는 공개 식별자이고
 > 실제 보안은 보안 규칙이 담당합니다. **규칙을 게시하는 단계를 빠뜨리지 마세요.**
 
+## 오시는 길의 약도 (선택)
+
+**기본은 주소 안내판입니다.** 협회는 지도 키 없이 주소만으로 운영하기로 했고,
+방문객은 「주소 복사」와 「카카오맵·네이버 지도에서 보기」로 길찾기를 이어 갑니다.
+키를 발급받을 필요가 없습니다.
+
+나중에 그 자리에 실제 약도를 띄우고 싶으면 카카오맵 키를 넣으면 됩니다.
+절차는 이렇습니다.
+
+1. [developers.kakao.com](https://developers.kakao.com) 에 카카오 계정으로 로그인합니다
+2. **내 애플리케이션 → 애플리케이션 추가하기** 로 앱을 하나 만듭니다
+   (앱 이름 `한국관악협회`, 사업자명 `한국관악협회` 정도면 됩니다)
+3. 만든 앱을 누르고 **앱 키** 에서 **JavaScript 키** 를 복사합니다
+4. 왼쪽 **앱 설정 → 플랫폼 → Web 플랫폼 등록** 에서 사이트 도메인에
+   `https://kbaband.kr` 을 넣습니다. **이걸 빠뜨리면 지도가 뜨지 않습니다.**
+5. 복사한 키를 `REACT_APP_KAKAO_MAP_KEY` 로 넣습니다
+   - 로컬: `.env`
+   - 운영: Cloudflare 대시보드 → 해당 Worker → **Settings → Build →
+     Variables and secrets** 에 추가한 뒤 다시 배포
+
+주소는 `src/data/site.js` 의 `org.address` 를 그대로 읽어 좌표를 찾습니다.
+좌표를 코드에 적어 두지 않으므로 사무국이 이사하면 주소만 고치면 됩니다.
+
 ## 협회 정보 수정
 
 채워야 할 항목을 화면별로 정리한 목록은 **[CONTENT.md](CONTENT.md)** 에 있습니다.
@@ -89,14 +112,15 @@ npm run build    # build/ 에 정적 파일 생성
 - `bylaws` — 정관 조문
 - `programs` — 주요 사업
 - `memberTypes` / `memberBenefits` / `joinSteps` — 회원 구분·회비·혜택·가입 절차
-- `branches` / `affiliates` — 지회·지부, 산하단체
+- `branchList` / `branchSummary` / `branchTotals` — 지회·지부
 - `instruments`, `regions`, `resourceCategories` — 선택 항목 목록
 
 게시판을 늘리거나 이름을 바꾸려면 **`src/data/boards.js`** 에 항목을 추가하면 됩니다.
 목록·상세 화면과 관리자 화면이 이 정의를 그대로 따라갑니다.
 
-`src/pages/AboutLocation.js` 의 "지도 영역"은 자리만 잡아 두었습니다.
-카카오맵이나 네이버 지도 스크립트를 넣으면 실제 약도가 표시됩니다.
+「오시는 길」의 교통 안내는 `src/data/site.js` 의 `directions` 입니다.
+`지하철` / `버스` / `자가용` 중 채워 넣은 것만 화면에 나옵니다.
+약도를 띄우는 방법은 위의 [오시는 길의 약도](#오시는-길의-약도-선택) 항목을 보세요.
 
 CI 파일은 `public/ci-logo.svg`(가로형)와 `public/favicon.svg`(심볼)입니다.
 협회 실제 로고로 교체하시면 CI 다운로드 페이지에도 그대로 반영됩니다.
