@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { MapPin } from "lucide-react";
 
 /**
- * 카카오맵 약도.
+ * 오시는 길의 위치 안내.
  *
- * REACT_APP_KAKAO_MAP_KEY 가 있으면 카카오맵 SDK 를 받아 주소를 좌표로 바꾸고
- * 표시한다. 키가 없거나 스크립트를 받지 못하면 주소를 적은 판을 대신 보여 준다.
- * 지도가 안 나와도 화면이 비어 보이지 않아야 하고, 방문객에게는 개발 사정이
- * 아니라 주소가 보여야 한다.
+ * 기본은 주소를 큼직하게 보여 주는 안내판이다. 협회는 카카오맵 키 없이
+ * 주소만으로 운영하기로 했고, 방문객은 어차피 쓰던 지도 앱에서 길찾기를 한다.
+ *
+ * REACT_APP_KAKAO_MAP_KEY 를 넣어 두면 그 자리가 실제 약도로 바뀐다. 키가
+ * 없거나 스크립트를 받지 못하면 안내판이 그대로 남으므로, 어느 쪽이든 화면이
+ * 비지 않는다.
  *
  * 좌표를 코드에 박지 않고 주소로 찾는다. 사무국이 이사하면 site.js 의 주소만
  * 고치면 지도도 따라 움직인다.
@@ -82,17 +84,23 @@ export default function KakaoMap({ address, title, className = "" }) {
 
   return (
     <div
-      className={`relative min-h-[340px] overflow-hidden rounded-xl border border-slate-200 bg-slate-50 ${className}`}
+      className={`relative min-h-[260px] overflow-hidden rounded-xl border border-slate-200 bg-brand-900 ${className}`}
     >
       <div ref={box} className="absolute inset-0" />
       {!ready && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-slate-500">
-          <MapPin size={32} className="text-accent-600" />
-          <p className="font-medium text-brand-900">{title}</p>
-          <p className="text-center text-sm leading-relaxed">{address}</p>
-          <p className="text-center text-xs text-slate-400">
-            아래 버튼을 누르시면 지도에서 위치와 길찾기를 확인하실 수 있습니다.
-          </p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-8 text-center">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10">
+            <MapPin size={24} className="text-accent-400" />
+          </span>
+          <div>
+            <p className="font-display text-[11px] font-semibold uppercase tracking-[0.25em] text-accent-400">
+              Address
+            </p>
+            <p className="mt-3 font-serif text-lg font-bold leading-relaxed text-white sm:text-xl">
+              {address}
+            </p>
+            <p className="mt-2 text-sm text-brand-200">{title} 사무국</p>
+          </div>
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
-import { Bus, Car, Clock, ExternalLink, Mail, MapPin, Phone, Printer, TrainFront, Wallet } from "lucide-react";
+import { useState } from "react";
+import { Bus, Car, Check, Clock, Copy, ExternalLink, Mail, MapPin, Phone, Printer, TrainFront, Wallet } from "lucide-react";
 import { directions, org } from "../data/site";
 import KakaoMap from "../components/KakaoMap";
 import { Card, Container, PageHeader, SectionTitle } from "../components/ui";
@@ -26,6 +27,38 @@ const mapLinks = [
   { label: "네이버 지도", href: `https://map.naver.com/p/search/${encodeURIComponent(org.address)}` },
 ];
 
+/**
+ * 주소 복사 단추.
+ *
+ * 약도를 띄우지 않고 주소로만 안내하므로, 방문객이 쓰던 길찾기 앱에
+ * 붙여넣을 수 있어야 한다. 옛 브라우저나 http 환경에서는 클립보드 권한이
+ * 없을 수 있어, 실패하면 단추만 그대로 두고 아무 일도 없던 것처럼 둔다.
+ */
+function CopyAddress({ value }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.warn("[오시는 길] 주소를 복사하지 못했습니다", err);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-brand-800 hover:bg-slate-50"
+    >
+      {copied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} className="text-slate-400" />}
+      {copied ? "복사했습니다" : "주소 복사"}
+    </button>
+  );
+}
+
 export default function AboutLocation() {
   return (
     <>
@@ -40,6 +73,7 @@ export default function AboutLocation() {
           <div className="flex flex-col">
             <KakaoMap address={org.address} title={org.name} className="flex-1" />
             <div className="mt-3 flex shrink-0 flex-wrap gap-2">
+              <CopyAddress value={org.address} />
               {mapLinks.map((link) => (
                 <a
                   key={link.label}
