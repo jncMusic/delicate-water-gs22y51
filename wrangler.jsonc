@@ -5,8 +5,16 @@
   "compatibility_date": "2025-09-01",
   "assets": {
     "directory": "./build",
-    // 없는 주소는 index.html 로 넘겨 앱이 직접 처리하게 한다.
-    // kbaband.kr/about/intro 같은 주소로 바로 들어와도 열린다.
+    // 빌드할 때 미리 그려 둔 about/intro.html 을 /about/intro 주소로 내준다.
+    // (scripts/prerender.js 가 만든다. 끝에 / 가 붙어 들어오면 없는 쪽으로 넘긴다.)
+    //
+    // 적지 않으면 기본값 auto-trailing-slash 가 쓰이는데, 지금 파일 구성에서는
+    // 결과가 같다. 그래도 sitemap.xml 에 적은 주소 모양(끝에 / 없음)과
+    // 어긋나지 않도록 기본값에 기대지 않고 분명히 적어 둔다.
+    "html_handling": "drop-trailing-slash",
+
+    // 위에서 못 찾은 주소는 index.html 로 넘겨 앱이 직접 처리하게 한다.
+    // 게시글 상세처럼 주소가 그때그때 만들어지는 쪽이 여기에 걸린다.
     //
     // Pages 방식의 public/_redirects 에 같은 규칙을 두면 Workers 가
     // 이것을 무한 반복으로 보고 업로드를 거부한다. 그래서 그 파일은 두지 않는다.
