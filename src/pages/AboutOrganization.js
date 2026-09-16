@@ -60,7 +60,7 @@ function Chart({ chart }) {
     /* 좁은 화면에서는 감사 칸이 밖으로 밀린다. 모양을 무너뜨리는 대신
        옆으로 밀어 볼 수 있게 두는 편이 조직도로서 읽기 낫다. */
     <div className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 px-5 py-12">
-      <div className="mx-auto grid min-w-[42rem] max-w-3xl grid-cols-[1fr_11rem_1fr] justify-items-center gap-y-0">
+      <div className="mx-auto grid min-w-[34rem] max-w-3xl grid-cols-[1fr_11rem_1fr] justify-items-center gap-y-0">
         {spine.map((role, index) => {
           const branching = aside && aside.after === role;
           return (
