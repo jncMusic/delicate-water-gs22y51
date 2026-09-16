@@ -2,6 +2,7 @@
  * 빌드 뒤 처리.
  * - index.html 의 %SITE_URL% 을 실제 주소로 채운다(공유 정보는 절대 주소여야 한다).
  * - 검색엔진용 sitemap.xml 과 robots.txt 를 만든다.
+ * - 화면마다 미리 그린 HTML 을 만든다(scripts/prerender.js).
  *
  * 주소는 .env 의 REACT_APP_SITE_URL 에서 가져온다.
  */
@@ -50,9 +51,37 @@ const sitemap =
 fs.writeFileSync(path.join(BUILD, "sitemap.xml"), sitemap);
 
 // 3) robots — 관리자 화면은 색인에서 제외
+//    네이버(Yeti)와 다음(Daumoa)은 규칙이 자기 이름으로 적혀 있으면 그쪽을 먼저 본다.
+//    * 와 같은 내용이지만, 막혀 있지 않다는 것을 분명히 해 두려고 따로 적는다.
 fs.writeFileSync(
   path.join(BUILD, "robots.txt"),
-  ["User-agent: *", "Allow: /", "Disallow: /admin", "", `Sitemap: ${siteUrl}/sitemap.xml`, ""].join("\n")
+  [
+    "User-agent: *",
+    "Allow: /",
+    "Disallow: /admin",
+    "",
+    "User-agent: Yeti",
+    "Allow: /",
+    "Disallow: /admin",
+    "",
+    "User-agent: Daumoa",
+    "Allow: /",
+    "Disallow: /admin",
+    "",
+    `Sitemap: ${siteUrl}/sitemap.xml`,
+    "",
+  ].join("\n")
 );
 
 console.log(`[postbuild] ${siteUrl} · sitemap ${paths.length}개 경로 · robots.txt 생성`);
+
+// 4) 프리렌더 — 자바스크립트를 돌리지 않는 검색엔진(네이버 Yeti 등)을 위해
+//    화면마다 진짜 HTML 을 만들어 둔다. 여기서 실패해도 빌드는 그대로 끝낸다.
+//    그러면 예전처럼 SPA 로 배포될 뿐, 홈페이지가 안 열리지는 않는다.
+require("./prerender")({ siteUrl, hashMode })
+  .then((routes) => {
+    console.log(`[postbuild] 프리렌더 ${routes.length}개 화면`);
+  })
+  .catch((err) => {
+    console.warn(`[postbuild] 프리렌더를 건너뜁니다: ${err.message}`);
+  });

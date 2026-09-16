@@ -25,9 +25,11 @@ function DefaultHero() {
         <p className="font-display text-xs font-semibold tracking-[0.2em] text-accent-300">
           {org.nameEn}
         </p>
-        <h2 className="mt-4 font-serif text-3xl font-bold leading-tight sm:text-5xl">
+        {/* 첫 화면의 대표 제목이다. 검색엔진은 h1 을 그 쪽이 무엇에 관한
+            쪽인지 알려 주는 표식으로 읽으므로 협회 이름을 h1 으로 둔다. */}
+        <h1 className="mt-4 font-serif text-3xl font-bold leading-tight sm:text-5xl">
           {org.name}
-        </h2>
+        </h1>
         {/*
           협회 이름·창설 연도·목적 문장은 바로 아래 ABOUT 칸이 통계와 함께
           더 자세히 말한다. 여기서 또 적으면 같은 말이 두 번 나온다.
