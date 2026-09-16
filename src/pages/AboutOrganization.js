@@ -1,15 +1,110 @@
+import { Link } from "../lib/router";
 import { branchList, branchSummary, branchTotals, executives, organization } from "../data/site";
 import { Card, Container, PageHeader, SectionTitle } from "../components/ui";
 
-function Node({ role, name, tone = "light" }) {
-  const styles =
-    tone === "dark"
-      ? "bg-brand-800 text-white border-brand-800"
-      : "bg-white text-brand-900 border-slate-300";
+/**
+ * 조직도.
+ *
+ * 줄기(spine)를 세로로 내리고, 감사만 옆으로 뺀 뒤, 맨 아래에서 두 칸으로
+ * 갈라진다. 칸에는 직책만 넣는다 — 이름은 「임원 소개」에 있다.
+ *
+ * 줄은 모두 같은 회색 실선이고, 갈라지는 자리에만 점을 찍어 눈이 따라가기
+ * 쉽게 했다.
+ */
+
+const LINE = "bg-slate-300";
+
+function Box({ label, tone = "light" }) {
+  const styles = {
+    dark: "bg-brand-900 text-white border-brand-900",
+    mid: "bg-brand-500 text-white border-brand-500",
+    light: "bg-white text-brand-900 border-slate-300",
+    accent: "bg-accent-500 text-brand-950 border-accent-500",
+  }[tone];
   return (
-    <div className={`rounded-lg border px-6 py-3 text-center shadow-sm ${styles}`}>
-      <p className="text-sm font-bold">{role}</p>
-      <p className={`text-xs ${tone === "dark" ? "text-brand-200" : "text-slate-500"}`}>{name}</p>
+    <div className={`w-full rounded-lg border px-4 py-3 text-center shadow-sm ${styles}`}>
+      <span className="text-sm font-bold">{label}</span>
+    </div>
+  );
+}
+
+/** 갈라지는 자리에 찍는 점. */
+function Joint() {
+  return (
+    <span
+      aria-hidden="true"
+      className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-accent-500 bg-white"
+    />
+  );
+}
+
+/** 줄기를 따라 내려오는 세로줄. joint 를 켜면 가운데에 점이 찍힌다. */
+function Stem({ joint = false }) {
+  return (
+    <div className="relative h-10">
+      <span aria-hidden="true" className={`absolute left-1/2 h-full w-0.5 -translate-x-1/2 ${LINE}`} />
+      {joint && <Joint />}
+    </div>
+  );
+}
+
+function Chart({ chart }) {
+  const { spine, aside, leaves } = chart;
+
+  return (
+    /* 좁은 화면에서는 감사 칸이 밖으로 밀린다. 모양을 무너뜨리는 대신
+       옆으로 밀어 볼 수 있게 두는 편이 조직도로서 읽기 낫다. */
+    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 px-5 py-12">
+      <div className="mx-auto grid min-w-[30rem] max-w-3xl grid-cols-[1fr_11rem_1fr] justify-items-center gap-y-0">
+        {spine.map((role, index) => {
+          const branching = aside && aside.after === role;
+          return (
+            <div key={role} className="col-span-3 grid w-full grid-cols-[1fr_11rem_1fr] justify-items-center">
+              {/* 직책 칸 */}
+              <span />
+              <Box label={role} tone={index === 0 ? "dark" : index === spine.length - 1 ? "mid" : "light"} />
+              <span />
+
+              {/* 아래로 내려가는 줄. 마지막 칸 뒤는 갈래 줄이 대신한다. */}
+              {index < spine.length - 1 && (
+                <>
+                  <span />
+                  <div className="w-full">
+                    <Stem joint={branching} />
+                  </div>
+                  {branching ? (
+                    // 감사는 줄기 옆으로 빠진다. 가로줄이 점에서 칸까지 이어진다.
+                    <div className="flex w-full items-center self-center pr-2">
+                      <span aria-hidden="true" className={`h-0.5 flex-1 ${LINE}`} />
+                      <div className="w-24 shrink-0 sm:w-32">
+                        <Box label={aside.label} />
+                      </div>
+                    </div>
+                  ) : (
+                    <span />
+                  )}
+                </>
+              )}
+            </div>
+          );
+        })}
+
+        {/* 맨 아래 갈래 */}
+        <div className="col-span-3 w-full max-w-md">
+          <div className="relative h-12">
+            <span aria-hidden="true" className={`absolute left-1/2 top-0 h-1/2 w-0.5 -translate-x-1/2 ${LINE}`} />
+            <Joint />
+            <span aria-hidden="true" className={`absolute left-1/4 right-1/4 top-1/2 h-0.5 ${LINE}`} />
+            <span aria-hidden="true" className={`absolute left-1/4 top-1/2 h-1/2 w-0.5 -translate-x-1/2 ${LINE}`} />
+            <span aria-hidden="true" className={`absolute right-1/4 top-1/2 h-1/2 w-0.5 translate-x-1/2 ${LINE}`} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {leaves.map((leaf) => (
+              <Box key={leaf} label={leaf} tone="accent" />
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -24,31 +119,32 @@ export default function AboutOrganization() {
       <Container>
         <SectionTitle>조직 구성</SectionTitle>
 
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-5 py-12">
-          <div className="flex flex-col items-center">
-            <Node role={organization.top.role} name={organization.top.name} tone="dark" />
-            <span aria-hidden="true" className="h-8 w-0.5 bg-slate-300" />
+        <Chart chart={organization.chart} />
 
-            <div className="flex flex-wrap items-stretch justify-center gap-4">
-              {organization.second.map((node) => (
-                <Node key={node.role} role={node.role} name={node.name} />
-              ))}
-            </div>
+        <p className="mt-4 text-sm leading-relaxed text-slate-600">
+          사무국 구성 — {organization.office}. 임원 명단은{" "}
+          <Link to="/about/executives" className="text-brand-700 underline hover:text-brand-800">
+            임원 소개
+          </Link>
+          에서 보실 수 있습니다.
+        </p>
 
-            <span aria-hidden="true" className="h-8 w-0.5 bg-slate-300" />
-            <Node role={organization.office.role} name={organization.office.name} tone="dark" />
-            <span aria-hidden="true" className="h-8 w-0.5 bg-slate-300" />
-
-            <div className="grid w-full gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              {organization.departments.map((dept) => (
-                <div
-                  key={dept.name}
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-3 text-center"
-                >
-                  <p className="text-sm font-bold text-brand-900">{dept.name}</p>
-                </div>
-              ))}
-            </div>
+        <div className="mt-16">
+          <SectionTitle>사업본부</SectionTitle>
+          <div className="grid gap-5 sm:grid-cols-2">
+            {organization.divisions.map((division) => (
+              <Card key={division.name}>
+                <h3 className="font-serif text-lg font-bold text-brand-900">{division.name}</h3>
+                <ul className="mt-3 space-y-1.5">
+                  {division.duties.map((duty) => (
+                    <li key={duty} className="flex gap-2 text-sm text-slate-600">
+                      <span aria-hidden="true" className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent-500" />
+                      {duty}
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            ))}
           </div>
         </div>
 
@@ -103,25 +199,6 @@ export default function AboutOrganization() {
               </li>
             ))}
           </ul>
-        </div>
-
-        <div className="mt-16">
-          <SectionTitle>부서별 담당 업무</SectionTitle>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {organization.departments.map((dept) => (
-              <Card key={dept.name}>
-                <h3 className="font-serif text-lg font-bold text-brand-900">{dept.name}</h3>
-                <ul className="mt-3 space-y-1.5">
-                  {dept.duties.map((duty) => (
-                    <li key={duty} className="flex gap-2 text-sm text-slate-600">
-                      <span aria-hidden="true" className="mt-2 h-1 w-1 shrink-0 rounded-full bg-accent-500" />
-                      {duty}
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            ))}
-          </div>
         </div>
       </Container>
     </>
