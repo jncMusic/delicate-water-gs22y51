@@ -11,6 +11,7 @@ import {
   DEMO_FILE_LIMIT,
 } from "../../lib/store";
 import { boardList } from "../../data/boards";
+import { postTemplates } from "../../data/postTemplates";
 import { isImageFile } from "../../lib/fileType";
 import {
   Badge,
@@ -129,6 +130,17 @@ export default function AdminBoards() {
   };
 
   const togglePin = (post) => saveDoc(board.collection, post.id, { pinned: !post.pinned });
+
+  /** 본문을 서식으로 채운다. 쓰던 글이 있으면 먼저 물어본다. */
+  const applyTemplate = (template) => {
+    if (
+      draft.body.trim() &&
+      !window.confirm("지금 쓰고 계신 내용을 지우고 서식으로 바꿀까요?")
+    ) {
+      return;
+    }
+    setDraft((prev) => ({ ...prev, body: template.body }));
+  };
 
   return (
     <div>
@@ -281,9 +293,28 @@ export default function AdminBoards() {
                 <Input value={draft.author} onChange={set("author")} />
               </Field>
             </div>
-            <Field label="내용">
-              <Textarea rows={12} value={draft.body} onChange={set("body")} />
-            </Field>
+            <div>
+              <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-brand-900">내용</span>
+                <span className="text-xs text-slate-500">서식 불러오기</span>
+                {postTemplates.map((template) => (
+                  <button
+                    key={template.key}
+                    type="button"
+                    onClick={() => applyTemplate(template)}
+                    className="rounded-full border border-slate-300 px-2.5 py-0.5 text-xs text-brand-800 hover:bg-slate-50"
+                  >
+                    {template.label}
+                  </button>
+                ))}
+              </div>
+              <Textarea
+                rows={14}
+                value={draft.body}
+                onChange={set("body")}
+                aria-label="내용"
+              />
+            </div>
 
             <Field
               label="그림"
