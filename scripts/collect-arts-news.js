@@ -303,7 +303,8 @@ async function signIn() {
   );
   const data = await res.json();
   if (!res.ok) throw new Error(`로그인 실패: ${data.error?.message || res.status}`);
-  return data.idToken;
+  // localId 가 이 계정의 UID 다. admins 에 넣어야 하는 값이라 함께 돌려준다.
+  return { idToken: data.idToken, uid: data.localId };
 }
 
 /** 자바스크립트 값을 Firestore REST 가 받는 모양으로 바꾼다. */
@@ -408,16 +409,33 @@ async function main() {
   }
 
   const projectId = env("FIREBASE_PROJECT_ID");
-  const idToken = await signIn();
+  const { idToken, uid } = await signIn();
 
   let added = 0;
+  let denied = 0;
   for (const post of finalPosts) {
     try {
       const result = await createIfAbsent(post, idToken, projectId);
       if (result === "새로 담음") added += 1;
     } catch (err) {
+      if (err.message.includes("403")) denied += 1;
       console.log(`    ✗ 저장 실패 (${post.title}): ${err.message}`);
     }
+  }
+
+  // 403 은 로그인은 됐는데 쓸 권한이 없다는 뜻이다. 보안 규칙이 admins 에
+  // 이 계정의 UID 로 된 문서를 요구하므로, 그 값을 찍어 바로 맞춰 볼 수 있게 한다.
+  // UID 는 비밀값이 아니다. 이것만으로는 로그인도 쓰기도 되지 않는다.
+  if (denied > 0) {
+    console.log("");
+    console.log("전부 권한 없음(403)으로 막혔습니다. 로그인은 됐으니 비밀번호 문제는 아닙니다.");
+    console.log("Firestore 의 admins 컬렉션에 아래 UID 를 '문서 id' 로 하는 문서가 있어야 합니다.");
+    console.log("이메일이 아니라 UID 여야 합니다.");
+    console.log("");
+    console.log(`    봇 계정 UID : ${uid}`);
+    console.log(`    프로젝트    : ${projectId}`);
+    console.log("");
+    return;
   }
 
   console.log(`새로 담은 것 ${added}건. 관리자 화면에서 확인하고 공개해 주세요.`);
