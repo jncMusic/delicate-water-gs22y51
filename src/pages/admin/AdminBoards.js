@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertCircle, ImagePlus, Lock, Pencil, Pin, Plus, Trash2, X } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, ImagePlus, Lock, Pencil, Pin, Plus, Trash2, X } from "lucide-react";
 import { useCollection } from "../../lib/useCollection";
 import {
   createDoc,
@@ -131,6 +131,20 @@ export default function AdminBoards() {
     await removeDoc(board.collection, post.id);
   };
 
+  /**
+   * 검토 대기 <-> 공개 전환.
+   * 자동으로 긁어온 예술계 소식은 hidden 으로 들어온다. 여기서 눈 표시를
+   * 눌러야 홈페이지에 나온다. 사람이 쓴 글은 애초에 hidden 이 없어 늘 공개다.
+   */
+  const toggleHidden = async (post) => {
+    try {
+      await saveDoc(board.collection, post.id, { hidden: !post.hidden });
+    } catch (err) {
+      console.error(err);
+      window.alert("공개 상태를 바꾸지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    }
+  };
+
   const togglePin = async (post) => {
     try {
       await saveDoc(board.collection, post.id, { pinned: !post.pinned });
@@ -220,8 +234,14 @@ export default function AdminBoards() {
                           className="h-9 w-7 shrink-0 rounded border border-slate-200 object-cover"
                         />
                       )}
+                      {post.hidden && (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500">
+                          <EyeOff size={11} />
+                          검토 대기
+                        </span>
+                      )}
                       {post.closed && <Badge tone="종료">종료</Badge>}
-                      {post.title}
+                      <span className={post.hidden ? "text-slate-500" : undefined}>{post.title}</span>
                     </span>
                   </td>
                   <td className="px-3 py-3 text-center text-slate-600">{post.author}</td>
@@ -242,6 +262,17 @@ export default function AdminBoards() {
                       </span>
                     ) : (
                       <div className="flex justify-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => toggleHidden(post)}
+                          aria-label={post.hidden ? "홈페이지에 공개" : "홈페이지에서 숨김"}
+                          title={post.hidden ? "홈페이지에 공개" : "홈페이지에서 숨김"}
+                          className={`rounded p-1.5 hover:bg-slate-100 ${
+                            post.hidden ? "text-slate-400" : "text-emerald-600"
+                          }`}
+                        >
+                          {post.hidden ? <EyeOff size={15} /> : <Eye size={15} />}
+                        </button>
                         <button
                           type="button"
                           onClick={() => togglePin(post)}

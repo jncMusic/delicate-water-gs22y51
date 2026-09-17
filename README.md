@@ -284,6 +284,71 @@ Cloudflare Workers 에는 `_redirects` 를 두지 않습니다. 같은 규칙을
 > 들어갑니다. 새 글은 사람이 볼 때 자바스크립트가 채워 넣고, 검색엔진에는 다음
 > 배포 때 반영됩니다.
 
+## 예술계 소식 자동 수집
+
+`관악정보 → 예술계 소식` 게시판은 하루 한 번 저절로 채워집니다.
+GitHub Actions 가 `scripts/collect-arts-news.js` 를 돌려, 정해 둔 곳에서 소식을
+받아 Firestore 에 넣습니다.
+
+**바로 공개되지 않습니다.** 받아 온 글은 「검토 대기」로 들어가고, 사무국이
+관리자 화면에서 눈 표시(👁)를 눌러야 홈페이지에 나옵니다. 남의 기사 제목이
+협회 이름을 달고 저절로 나가지 않도록 한 것입니다.
+
+저작권 때문에 본문은 담지 않습니다. 제목·날짜·한 줄 요약·원문 링크·출처만
+담고, 읽는 사람은 원문으로 보냅니다.
+
+### 어디서 가져오는지 바꾸려면
+
+`scripts/arts-sources.json` 만 고치면 됩니다. 파일 안에 설명이 들어 있습니다.
+
+- `kind: "googleNews"` — 구글 뉴스에서 `query` 로 검색한 결과를 받습니다.
+- `kind: "rss"` — 기관이 주는 RSS 주소(`url`)를 그대로 읽습니다.
+- `keywords` — 제목이나 요약에 이 말이 하나라도 있어야 담습니다.
+- `enabled: false` — 그 곳은 건너뜁니다.
+
+기관 RSS 주소는 바뀌는 일이 잦습니다. 한 곳이 실패해도 나머지는 그대로
+돌아가고, 어디가 실패했는지는 Actions 실행 기록에 남습니다.
+
+### 처음 한 번 해 둘 일
+
+수집기가 Firestore 에 쓰려면 전용 계정이 필요합니다. 사무국 계정을 쓰지 않는
+이유는, 자동으로 도는 것과 사람이 쓰는 것을 나눠 두어야 문제가 생겼을 때
+어느 쪽인지 가릴 수 있고 그 계정만 막을 수 있기 때문입니다.
+
+1. **Firebase 콘솔 → Authentication → 사용자 추가**
+   예: `bot@kbaband.kr` — 비밀번호는 길고 복잡하게 만들어 주세요.
+2. **Firestore → `admins` 컬렉션 → 문서 추가**
+   문서 id 를 방금 만든 계정의 **UID** 로 합니다(내용은 비어 있어도 됩니다).
+   이렇게 해야 보안 규칙의 `isAdmin()` 을 통과합니다.
+3. **GitHub 저장소 → Settings → Secrets and variables → Actions** 에서
+   New repository secret 으로 네 개를 넣습니다.
+
+   | 이름 | 값 |
+   | --- | --- |
+   | `FIREBASE_API_KEY` | `.env` 의 `REACT_APP_FIREBASE_API_KEY` 와 같은 값 |
+   | `FIREBASE_PROJECT_ID` | `.env` 의 `REACT_APP_FIREBASE_PROJECT_ID` 와 같은 값 |
+   | `KBA_BOT_EMAIL` | 1번에서 만든 계정 |
+   | `KBA_BOT_PASSWORD` | 그 계정 비밀번호 |
+
+4. **Actions 탭 → 「예술계 소식 수집」 → Run workflow** 로 한 번 돌려 봅니다.
+   `dry_run` 이 기본값 `true` 라 받아 보기만 하고 저장하지 않습니다.
+   실행 기록에서 어디가 되고 어디가 안 되는지 확인한 뒤, `false` 로 돌리면
+   실제로 담깁니다. 그 뒤로는 매일 오전 9시에 저절로 돕니다.
+
+### 손으로 돌려보기
+
+```bash
+node scripts/collect-arts-news.js --dry-run   # 받아 보기만 함
+node scripts/collect-arts-news.js             # 저장까지 함(환경변수 필요)
+```
+
+> 같은 기사를 두 번 담지 않습니다. 원문 링크에서 늘 같은 문서 id 를 만들고,
+> 이미 있으면 건드리지 않습니다. 그래서 사무국이 제목을 고쳐 두어도
+> 다음 수집 때 덮어쓰지 않습니다.
+
+> 저장소에 60일 동안 아무 변화가 없으면 GitHub 이 정기 실행을 멈춥니다.
+> 그럴 때는 Actions 탭에서 다시 켜 주세요.
+
 ## 폴더 구조
 
 ```
@@ -298,7 +363,7 @@ src/
     auth.js           관리자 로그인
     router.js         해시 기반 라우터
     seed.js           데모 모드 예시 데이터
-    useCollection.js  컬렉션 실시간 구독 훅
+    useCollection.js  컬렉션 실시간 구독 훅 (공개 화면은 usePublicCollection)
     download.js       파일 내려받기 도우미
   components/
     Header.js         대메뉴·타일 드롭다운·전체메뉴·모바일 서랍

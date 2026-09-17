@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { subscribe } from "./store";
 import { builtinRows } from "../data/posts";
 
@@ -32,4 +32,17 @@ export function useCollection(name) {
   }, [name]);
 
   return { rows, loading };
+}
+
+/**
+ * 공개 화면에서 쓰는 훅.
+ *
+ * hidden 이 붙은 글은 빼고 준다. 자동으로 긁어온 예술계 소식이 그렇게 들어오는데,
+ * 사무국이 관리자 화면에서 보고 「공개」로 바꾸기 전에는 홈페이지에 나오면 안 된다.
+ * 관리자 화면은 이 훅을 쓰지 않는다 — 거기서는 검토 대기 중인 글도 보여야 한다.
+ */
+export function usePublicCollection(name) {
+  const { rows, loading } = useCollection(name);
+  const visible = useMemo(() => rows.filter((row) => !row.hidden), [rows]);
+  return { rows: visible, loading };
 }

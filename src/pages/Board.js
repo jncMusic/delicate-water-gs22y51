@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, Search } from "lucide-react";
 import { Link, navigate } from "../lib/router";
-import { useCollection } from "../lib/useCollection";
+import { usePublicCollection } from "../lib/useCollection";
 import { pinnedFirst } from "../data/boards";
 import { bumpCounter } from "../lib/store";
 import {
@@ -34,7 +34,7 @@ function PostThumb({ post, className = "" }) {
 
 /** 게시판 목록. boards.js 의 정의를 받아 어느 게시판이든 같은 화면으로 그린다. */
 export default function Board({ board }) {
-  const { rows, loading } = useCollection(board.collection);
+  const { rows, loading } = usePublicCollection(board.collection);
   const [keyword, setKeyword] = useState("");
   const [category, setCategory] = useState("전체");
   const [page, setPage] = useState(1);
@@ -180,7 +180,7 @@ export default function Board({ board }) {
 
 /** 게시글 상세. */
 export function BoardDetail({ board, id }) {
-  const { rows, loading } = useCollection(board.collection);
+  const { rows, loading } = usePublicCollection(board.collection);
   const counted = useRef(null);
 
   const index = rows.findIndex((row) => row.id === id);
