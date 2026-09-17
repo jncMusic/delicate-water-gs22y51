@@ -30,13 +30,17 @@ const crypto = require("crypto");
 const DRY_RUN = process.argv.includes("--dry-run");
 const COLLECTION = "artsNews";
 
-/** 한 곳에서 가져올 최대 개수. 너무 많으면 검토가 일이 된다. */
-const PER_SOURCE_LIMIT = 8;
+/**
+ * 한 곳에서 가져올 최대 개수.
+ * 첫 수집 때 8로 두었더니 정책 한 곳에서만 8건이 들어와, 사무국이 볼 것이
+ * 한꺼번에 쌓였다. 비슷한 기사를 걷어내고도 남는 것만 이만큼 담는다.
+ */
+const PER_SOURCE_LIMIT = 4;
 /** 이보다 오래된 것은 담지 않는다(일). */
 const MAX_AGE_DAYS = 14;
 
 const sourcesFile = path.join(__dirname, "arts-sources.json");
-const { sources } = JSON.parse(fs.readFileSync(sourcesFile, "utf8"));
+const { sources, excludeAlways = [] } = JSON.parse(fs.readFileSync(sourcesFile, "utf8"));
 
 /* ───────────────────────────── 받아오기 ───────────────────────────── */
 
@@ -165,6 +169,90 @@ function matches(item, keywords) {
   return keywords.some((word) => haystack.includes(word));
 }
 
+/**
+ * 버릴 것 걸러내기.
+ *
+ * '관악' 은 음악 말고 서울 관악구·관악갑 이라는 지명이기도 하다. 첫 수집에서
+ * 선거구 기사가 그대로 딸려 들어왔다. 이런 말이 보이면 관악 음악 이야기가
+ * 아니라고 보고 버린다.
+ */
+function excluded(item, source) {
+  const haystack = `${item.title} ${item.summary}`;
+  return [...excludeAlways, ...(source.exclude || [])].some((word) =>
+    haystack.includes(word)
+  );
+}
+
+/**
+ * 제목을 보고 분류를 다시 정한다.
+ *
+ * 분류를 출처마다 하나로 고정해 두었더니 '공모·지원' 으로 검색한 자리에
+ * 연주회 소식이 들어와도 공모로 붙었다. 제목이 더 정확한 단서다.
+ * 짚이는 것이 없으면 출처에 적어 둔 분류를 그대로 쓴다.
+ */
+const CATEGORY_HINTS = [
+  ["공모·지원", ["공모", "모집", "접수", "선정", "지원사업", "공고", "지원 대상", "장학"]],
+  ["공연", ["연주회", "공연", "축제", "무대", "콘서트", "리사이틀", "정기연주", "개막", "성료"]],
+  ["정책", ["정책", "예산", "장관", "위원회", "문체부", "제도", "법안", "계획 발표"]],
+];
+
+function classify(item, source) {
+  const haystack = `${item.title} ${item.summary}`;
+  for (const [category, words] of CATEGORY_HINTS) {
+    if (words.some((word) => haystack.includes(word))) return category;
+  }
+  return source.category;
+}
+
+/** 제목에서 두 글자씩 끊어 모은다. 한국어는 이 방식이 겹침을 잘 잡아낸다. */
+function bigrams(title) {
+  const clean = title.replace(/[^가-힣a-zA-Z0-9]/g, "");
+  const set = new Set();
+  for (let i = 0; i < clean.length - 1; i += 1) set.add(clean.slice(i, i + 2));
+  return set;
+}
+
+function similarity(a, b) {
+  const [x, y] = [bigrams(a), bigrams(b)];
+  if (x.size === 0 || y.size === 0) return 0;
+  let shared = 0;
+  x.forEach((gram) => {
+    if (y.has(gram)) shared += 1;
+  });
+  return shared / (x.size + y.size - shared);
+}
+
+/**
+ * 같은 일을 다룬 기사인지.
+ *
+ * 겹치는 비율만 본다. 한때 '긴 덩어리가 통째로 겹치면 같은 일' 이라는 규칙을
+ * 함께 두었는데, 실제 수집 결과로 맞춰 보니 해로웠다. 길게 겹치는 것은 사건이
+ * 아니라 단체·기관 이름이었다. 'FUN윈드오케스트라' 장학금 소식과 연주회 소식이,
+ * '문화예술정책자문위원회' 기초예술 분과와 대중문화 분과 회의가 각각 한 건으로
+ * 묶여 버렸다.
+ *
+ * 문턱을 높게 잡아 덜 합치는 쪽을 고른다. 이 글들은 「검토 대기」로 들어가
+ * 사무국이 눈으로 고르기 때문이다. 잘못 합치면 사무국이 볼 기회조차 없이 소식이
+ * 사라지지만, 덜 합치면 하나 고르고 나머지를 지우면 된다.
+ */
+function sameStory(a, b) {
+  return similarity(a, b) >= 0.45;
+}
+
+/**
+ * 같은 일을 여러 언론사가 쓴 것을 하나만 남긴다.
+ *
+ * 첫 수집에서 '관악 공연' 4건이 전부 태백관악대축제 한 행사였다. 링크가 달라
+ * id 로는 걸러지지 않는다. 제목이 얼마나 겹치는지로 판단한다.
+ */
+function dropSimilar(posts) {
+  const kept = [];
+  for (const post of posts) {
+    if (!kept.some((other) => sameStory(post.title, other.title))) kept.push(post);
+  }
+  return kept;
+}
+
 /** 같은 기사를 두 번 담지 않도록, 링크에서 늘 같은 id 를 만든다. */
 const idFor = (link) => `auto-${crypto.createHash("sha1").update(link).digest("hex").slice(0, 20)}`;
 
@@ -177,7 +265,7 @@ function toPost(item, source) {
   return {
     id: idFor(item.link),
     title: item.title.slice(0, 200),
-    category: source.category,
+    category: classify(item, source),
     author: item.publisher ? item.publisher.slice(0, 40) : "자동 수집",
     createdAt,
     pinned: false,
@@ -285,26 +373,37 @@ async function main() {
       continue;
     }
 
-    const picked = items
-      .map(splitPublisher)
-      .filter((item) => item.title && item.link)
-      .filter((item) => withinAge(item.published))
-      .filter((item) => matches(item, source.keywords))
-      .slice(0, PER_SOURCE_LIMIT)
-      .map((item) => toPost(item, source))
-      .filter((post) => !seen.has(post.id) && seen.add(post.id));
+    // 비슷한 기사를 걷어낸 뒤에 개수를 자른다. 먼저 자르면 같은 행사 기사로
+    // 자리가 다 차 버린다.
+    const picked = dropSimilar(
+      items
+        .map(splitPublisher)
+        .filter((item) => item.title && item.link)
+        .filter((item) => withinAge(item.published))
+        .filter((item) => matches(item, source.keywords))
+        .filter((item) => !excluded(item, source))
+        .map((item) => toPost(item, source))
+        .filter((post) => !seen.has(post.id) && seen.add(post.id))
+    ).slice(0, PER_SOURCE_LIMIT);
 
     console.log(`    받은 것 ${items.length}건 → 고른 것 ${picked.length}건`);
     picked.forEach((post) => console.log(`      · [${post.category}] ${post.title}`));
     collected.push(...picked);
   }
 
-  console.log(`\n합계 ${collected.length}건 · 실패한 곳 ${failed}곳`);
+  // 출처가 달라도 같은 일을 다룬 기사가 있다(예: 정책 검색과 공연 검색에 같은 축제).
+  const finalPosts = dropSimilar(collected);
+  const merged = collected.length - finalPosts.length;
+  console.log(
+    `\n합계 ${finalPosts.length}건` +
+      (merged > 0 ? ` (비슷한 기사 ${merged}건 제외)` : "") +
+      ` · 실패한 곳 ${failed}곳`
+  );
 
-  if (DRY_RUN || collected.length === 0) {
+  if (DRY_RUN || finalPosts.length === 0) {
     if (DRY_RUN) console.log("받아 보기라서 저장하지 않았습니다.");
     // 모든 곳이 실패했으면 눈에 띄게 알린다. 한두 곳 실패는 정상으로 본다.
-    if (failed > 0 && collected.length === 0) process.exitCode = 1;
+    if (failed > 0 && finalPosts.length === 0) process.exitCode = 1;
     return;
   }
 
@@ -312,7 +411,7 @@ async function main() {
   const idToken = await signIn();
 
   let added = 0;
-  for (const post of collected) {
+  for (const post of finalPosts) {
     try {
       const result = await createIfAbsent(post, idToken, projectId);
       if (result === "새로 담음") added += 1;
@@ -333,4 +432,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { parseFeed, splitPublisher, toPost, toFields, plain, withinAge, matches, decode, idFor };
+module.exports = { parseFeed, splitPublisher, toPost, toFields, classify, excluded, dropSimilar, similarity, sameStory, plain, withinAge, matches, decode, idFor };
