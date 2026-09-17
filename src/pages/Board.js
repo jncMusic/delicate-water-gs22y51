@@ -27,6 +27,12 @@ function PostThumb({ post, className = "" }) {
       src={image.thumb || image.url}
       alt=""
       loading="lazy"
+      // 남의 사이트에 있는 사진은 어디서 불렀는지 알리지 않는 편이 잘 열린다.
+      // 그래도 안 열리는 곳이 있어, 깨진 그림 자리가 남지 않도록 지운다.
+      referrerPolicy={image.linked ? "no-referrer" : undefined}
+      onError={(e) => {
+        e.currentTarget.style.display = "none";
+      }}
       className={`h-11 w-8 shrink-0 rounded border border-slate-200 object-cover ${className}`}
     />
   );
@@ -256,17 +262,45 @@ export function BoardDetail({ board, id }) {
                   <img
                     src={image.url}
                     alt={image.alt || post.title}
+                    referrerPolicy={image.linked ? "no-referrer" : undefined}
+                    onError={(e) => {
+                      e.currentTarget.parentElement.style.display = "none";
+                    }}
                     className="mx-auto w-full max-w-2xl rounded-lg border border-slate-200"
                   />
                   <figcaption className="mt-3 text-center">
-                    <a
-                      href={image.url}
-                      download={image.name}
-                      className="inline-flex items-center gap-1.5 text-sm text-brand-700 hover:underline"
-                    >
-                      <Download size={14} />
-                      원본 내려받기
-                    </a>
+                    {/*
+                      걸어 둔 남의 사진에는 내려받기를 달지 않는다. 협회가 가진
+                      자료가 아니라 언론사 사진이라, 가져가라고 할 것이 못 된다.
+                      대신 어디 사진인지 밝히고 원문으로 보낸다.
+                    */}
+                    {image.linked ? (
+                      <span className="text-xs text-slate-500">
+                        사진 {image.credit || "원문"}
+                        {post.link && (
+                          <>
+                            {" · "}
+                            <a
+                              href={post.link}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-brand-700 hover:underline"
+                            >
+                              원문에서 보기
+                            </a>
+                          </>
+                        )}
+                      </span>
+                    ) : (
+                      <a
+                        href={image.url}
+                        download={image.name}
+                        className="inline-flex items-center gap-1.5 text-sm text-brand-700 hover:underline"
+                      >
+                        <Download size={14} />
+                        원본 내려받기
+                      </a>
+                    )}
                   </figcaption>
                 </figure>
               ))}
