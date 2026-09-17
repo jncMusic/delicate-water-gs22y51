@@ -205,14 +205,18 @@ const CATEGORY_HINTS = {
   // 관악계 소식은 어디 이야기인지로 나눈다. 해외를 먼저 보는 이유는
   // '일본 고교 밴드' 같은 소식이 학교보다 해외 쪽에 더 맞기 때문이다.
   sceneNews: [
-    ["해외", ["해외", "국제", "미국", "일본", "중국", "유럽", "독일", "프랑스", "아시아", "세계"]],
+    // '세계' 는 넣지 않는다. 언론사 이름(세계일보·로컬세계)에 걸려 국내 소식이
+    // 해외로 분류된 일이 있었다. 태백관악대축제가 '해외' 로 붙었다.
+    ["해외", ["해외", "국제", "미국", "일본", "중국", "유럽", "독일", "프랑스", "아시아"]],
     ["학교", ["초등", "중학교", "고등학교", "대학교", "학생", "교육청", "관악부", "밴드부"]],
     ["국내", []],
   ],
 };
 
 function classify(item, source) {
-  const haystack = `${item.title} ${item.summary}`;
+  // 제목만 본다. 구글 뉴스의 요약은 제목과 언론사 이름을 되풀이할 뿐이라,
+  // 같이 보면 언론사 이름이 분류를 틀어 놓는다.
+  const haystack = item.title;
   for (const [category, words] of CATEGORY_HINTS[boardOf(source)] || []) {
     // 낱말이 비어 있으면 '나머지는 다 여기' 라는 뜻이다.
     if (words.length === 0 || words.some((word) => haystack.includes(word))) return category;
@@ -271,6 +275,26 @@ function dropSimilar(posts) {
 
 const boardOf = (source) => source.board || DEFAULT_BOARD;
 
+/**
+ * 쓸 만한 요약인지.
+ *
+ * 구글 뉴스의 description 은 <a>제목</a> 언론사 라는 링크 조각이다. 태그를
+ * 걷으면 제목만 남아, 그대로 담으면 본문이 제목을 두 번 적은 꼴이 된다.
+ * 제목과 겹치는 부분이 대부분이면 요약이 아니라고 본다.
+ */
+function usefulSummary(summary, title) {
+  const text = (summary || "").trim();
+  if (text.length < 30) return "";
+
+  const bare = (value) => value.replace(/[^가-힣a-zA-Z0-9]/g, "");
+  if (!bare(text).includes(bare(title))) return text;
+
+  // 제목을 품고 있어도, 그 뒤로 할 말이 넉넉히 더 있으면 요약으로 친다.
+  // 기사 첫 문장이 제목으로 시작하는 언론사가 적지 않다. 제목을 품었다는
+  // 이유만으로 버리면 그런 곳의 요약이 통째로 날아간다.
+  return text.length >= title.length + 40 ? text : "";
+}
+
 /** 같은 기사를 두 번 담지 않도록, 링크에서 늘 같은 id 를 만든다. */
 const idFor = (link) => `auto-${crypto.createHash("sha1").update(link).digest("hex").slice(0, 20)}`;
 
@@ -292,10 +316,76 @@ function toPost(item, source) {
     views: 0,
     link: item.link,
     source: source.label,
+    publisher: item.publisher || "",
+    summary: usefulSummary(item.summary, item.title),
+  };
+}
+
+/**
+ * 원문을 한 번 열어 공유용 설명을 가져온다.
+ *
+ * og:description 은 카카오톡·페이스북에 링크를 붙였을 때 보이라고 언론사가
+ * 직접 넣어 둔 한두 문장이다. 기사 본문을 퍼오는 것이 아니라 그 문장만 쓰고,
+ * 읽는 사람은 원문으로 보낸다.
+ *
+ * 덤으로 진짜 주소를 얻는다. 구글 뉴스가 주는 링크는 news.google.com 으로
+ * 돌아가는 주소라 사람이 봐도 어디 기사인지 알 수 없다.
+ * 다만 문서 id 는 처음 받은 링크로 이미 정해 두었으므로 바뀌지 않는다.
+ *
+ * 열리지 않는 곳이 있다. 그래도 제목·날짜·링크는 이미 있으니 그대로 둔다.
+ */
+const DESCRIPTION_TAGS = [
+  /<meta[^>]+property=["']og:description["'][^>]*content=["']([^"']+)["']/i,
+  /<meta[^>]+content=["']([^"']+)["'][^>]*property=["']og:description["']/i,
+  /<meta[^>]+name=["']twitter:description["'][^>]*content=["']([^"']+)["']/i,
+  /<meta[^>]+name=["']description["'][^>]*content=["']([^"']+)["']/i,
+];
+
+/**
+ * HTML 에서 공유용 설명을 뽑는다. 태그 안 순서가 제각각이라 여러 모양을 본다.
+ *
+ * 여기서는 plain() 을 쓰지 않는다. meta 의 content 는 이미 한 번만 감싼 글이라
+ * 엔티티만 풀면 된다. plain() 은 푼 다음 태그를 한 번 더 걷는데, 그러면
+ * &lt;제4회 태백관악대축제&gt; 같은 꺾쇠 제목이 태그로 보여 통째로 사라진다.
+ */
+function pickDescription(html) {
+  const found = DESCRIPTION_TAGS.map((re) => html.match(re)?.[1]).find(Boolean);
+  return decodeEntities(found || "").replace(/\s+/g, " ").trim();
+}
+
+async function enrich(post) {
+  try {
+    const res = await fetch(post.link, {
+      headers: {
+        "user-agent": "Mozilla/5.0 (compatible; KBA-news-collector/1.0; +https://kbaband.kr)",
+        accept: "text/html,application/xhtml+xml",
+      },
+      redirect: "follow",
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return post;
+
+    const html = decode(await res.arrayBuffer(), res.headers.get("content-type"));
+    const summary = usefulSummary(pickDescription(html), post.title);
+
+    return {
+      ...post,
+      link: res.url || post.link,
+      summary: summary || post.summary,
+    };
+  } catch {
+    return post;
+  }
+}
+
+/** 화면에 보일 본문. 요약 한 문단과 원문으로 가는 안내만 담는다. */
+function withBody(post) {
+  return {
+    ...post,
     body:
-      (item.summary ? `${item.summary}\n\n` : "") +
-      `원문 보기: ${item.link}` +
-      (item.publisher ? `\n출처: ${item.publisher}` : ""),
+      (post.summary ? `${post.summary}\n\n` : "") +
+      `원문 보기: ${post.link}` +
+      (post.publisher ? `\n출처: ${post.publisher}` : ""),
   };
 }
 
@@ -330,8 +420,9 @@ async function signIn() {
 function toFields(post) {
   const fields = {};
   for (const [key, value] of Object.entries(post)) {
-    // id 는 문서 이름이고 board 는 어느 컬렉션에 넣을지 고르는 값이라 담지 않는다.
-    if (key === "id" || key === "board") continue;
+    // id 는 문서 이름, board 는 어느 컬렉션에 넣을지 고르는 값,
+    // summary·publisher 는 body 로 합쳐 넣으므로 따로 담지 않는다.
+    if (["id", "board", "summary", "publisher"].includes(key)) continue;
     if (typeof value === "string") fields[key] = { stringValue: value };
     else if (typeof value === "number") fields[key] = { integerValue: String(value) };
     else if (typeof value === "boolean") fields[key] = { booleanValue: value };
@@ -441,10 +532,26 @@ async function main() {
       ` · 실패한 곳 ${failed}곳`
   );
 
-  if (DRY_RUN || finalPosts.length === 0) {
+  // 원문을 열어 요약을 채운다. 한 건씩 차례로 여는 이유는 한꺼번에 몰아치면
+  // 막는 곳이 있어서다. 열리지 않아도 제목·날짜·링크는 이미 있으니 그냥 둔다.
+  process.stdout.write("\n원문에서 요약을 가져오는 중");
+  const enriched = [];
+  for (const post of finalPosts) {
+    enriched.push(withBody(await enrich(post)));
+    process.stdout.write(".");
+  }
+  const gotSummary = enriched.filter((post) => post.summary).length;
+  console.log(`\n요약을 얻은 것 ${gotSummary}/${enriched.length}건`);
+  enriched.forEach((post) => {
+    const mark = post.summary ? "✓" : "·";
+    console.log(`  ${mark} ${post.title.slice(0, 34)}`);
+    if (post.summary) console.log(`      ${post.summary.slice(0, 80)}`);
+  });
+
+  if (DRY_RUN || enriched.length === 0) {
     if (DRY_RUN) console.log("받아 보기라서 저장하지 않았습니다.");
     // 모든 곳이 실패했으면 눈에 띄게 알린다. 한두 곳 실패는 정상으로 본다.
-    if (failed > 0 && finalPosts.length === 0) process.exitCode = 1;
+    if (failed > 0 && enriched.length === 0) process.exitCode = 1;
     return;
   }
 
@@ -453,7 +560,7 @@ async function main() {
 
   let added = 0;
   let denied = 0;
-  for (const post of finalPosts) {
+  for (const post of enriched) {
     try {
       const result = await createIfAbsent(post, idToken, projectId);
       if (result === "새로 담음") added += 1;
@@ -490,4 +597,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { parseFeed, splitPublisher, toPost, toFields, classify, excluded, dropSimilar, similarity, sameStory, plain, withinAge, matches, decode, idFor };
+module.exports = { parseFeed, splitPublisher, toPost, toFields, classify, excluded, dropSimilar, similarity, sameStory, usefulSummary, withBody, pickDescription, plain, withinAge, matches, decode, idFor };
