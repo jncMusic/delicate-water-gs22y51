@@ -353,6 +353,32 @@ function pickDescription(html) {
   return decodeEntities(found || "").replace(/\s+/g, " ").trim();
 }
 
+const IMAGE_TAGS = [
+  /<meta[^>]+property=["']og:image["'][^>]*content=["']([^"']+)["']/i,
+  /<meta[^>]+content=["']([^"']+)["'][^>]*property=["']og:image["']/i,
+  /<meta[^>]+name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i,
+];
+
+/**
+ * 기사 대표 사진의 주소를 뽑는다.
+ *
+ * 사진을 내려받아 협회 저장소에 담지는 않는다. 언론사 사진이므로 주소만 두고
+ * 볼 때 그 쪽에서 불러온다. 링크를 붙였을 때 보이라고 내어 둔 사진이라,
+ * 출처를 밝히고 원문으로 보내는 선에서 쓴다.
+ *
+ * 상대 주소로 적어 두는 곳이 있어 기사 주소를 기준으로 절대 주소로 바꾼다.
+ */
+function pickImage(html, baseUrl) {
+  const found = IMAGE_TAGS.map((re) => html.match(re)?.[1]).find(Boolean);
+  if (!found) return "";
+  try {
+    const url = new URL(decodeEntities(found).trim(), baseUrl);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
 async function enrich(post) {
   try {
     const res = await fetch(post.link, {
@@ -367,11 +393,13 @@ async function enrich(post) {
 
     const html = decode(await res.arrayBuffer(), res.headers.get("content-type"));
     const summary = usefulSummary(pickDescription(html), post.title);
+    const link = res.url || post.link;
 
     return {
       ...post,
-      link: res.url || post.link,
+      link,
       summary: summary || post.summary,
+      image: pickImage(html, link),
     };
   } catch {
     return post;
@@ -382,6 +410,11 @@ async function enrich(post) {
 function withBody(post) {
   return {
     ...post,
+    // linked 는 '협회 것이 아니라 남의 자료를 주소로만 걸어 둔 사진' 이라는 표시다.
+    // 화면이 이걸 보고 내려받기 단추 대신 출처와 원문 링크를 낸다.
+    images: post.image
+      ? [{ url: post.image, alt: post.title, linked: true, credit: post.publisher || post.source }]
+      : [],
     body:
       (post.summary ? `${post.summary}\n\n` : "") +
       `원문 보기: ${post.link}` +
@@ -422,12 +455,30 @@ function toFields(post) {
   for (const [key, value] of Object.entries(post)) {
     // id 는 문서 이름, board 는 어느 컬렉션에 넣을지 고르는 값,
     // summary·publisher 는 body 로 합쳐 넣으므로 따로 담지 않는다.
-    if (["id", "board", "summary", "publisher"].includes(key)) continue;
-    if (typeof value === "string") fields[key] = { stringValue: value };
-    else if (typeof value === "number") fields[key] = { integerValue: String(value) };
-    else if (typeof value === "boolean") fields[key] = { booleanValue: value };
+    if (["id", "board", "summary", "publisher", "image"].includes(key)) continue;
+    const encoded = toValue(value);
+    if (encoded) fields[key] = encoded;
   }
   return fields;
+}
+
+/** 값 하나를 Firestore REST 가 받는 모양으로 바꾼다. 목록과 묶음도 다룬다. */
+function toValue(value) {
+  if (typeof value === "string") return { stringValue: value };
+  if (typeof value === "number") return { integerValue: String(value) };
+  if (typeof value === "boolean") return { booleanValue: value };
+  if (Array.isArray(value)) {
+    return { arrayValue: { values: value.map(toValue).filter(Boolean) } };
+  }
+  if (value && typeof value === "object") {
+    const fields = {};
+    for (const [key, item] of Object.entries(value)) {
+      const encoded = toValue(item);
+      if (encoded) fields[key] = encoded;
+    }
+    return { mapValue: { fields } };
+  }
+  return null;
 }
 
 /**
@@ -541,11 +592,15 @@ async function main() {
     process.stdout.write(".");
   }
   const gotSummary = enriched.filter((post) => post.summary).length;
-  console.log(`\n요약을 얻은 것 ${gotSummary}/${enriched.length}건`);
+  const gotImage = enriched.filter((post) => post.images.length > 0).length;
+  console.log(
+    `\n요약을 얻은 것 ${gotSummary}/${enriched.length}건 · 사진 ${gotImage}/${enriched.length}건`
+  );
   enriched.forEach((post) => {
-    const mark = post.summary ? "✓" : "·";
-    console.log(`  ${mark} ${post.title.slice(0, 34)}`);
-    if (post.summary) console.log(`      ${post.summary.slice(0, 80)}`);
+    console.log(
+      `  ${post.summary ? "요약" : "  "}${post.images.length ? "사진" : "  "} ${post.title.slice(0, 32)}`
+    );
+    if (post.summary) console.log(`        ${post.summary.slice(0, 78)}`);
   });
 
   if (DRY_RUN || enriched.length === 0) {
@@ -597,4 +652,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { parseFeed, splitPublisher, toPost, toFields, classify, excluded, dropSimilar, similarity, sameStory, usefulSummary, withBody, pickDescription, plain, withinAge, matches, decode, idFor };
+module.exports = { parseFeed, splitPublisher, toPost, toFields, classify, excluded, dropSimilar, similarity, sameStory, usefulSummary, withBody, pickDescription, pickImage, toValue, plain, withinAge, matches, decode, idFor };
