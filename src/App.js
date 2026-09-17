@@ -17,6 +17,7 @@ import AboutCI from "./pages/AboutCI";
 import AboutLocation from "./pages/AboutLocation";
 import Programs from "./pages/Programs";
 import Events from "./pages/Events";
+import ContestHistory from "./pages/ContestHistory";
 import MembersGuide from "./pages/MembersGuide";
 import MembersApply from "./pages/MembersApply";
 import Branches from "./pages/Branches";
@@ -40,6 +41,7 @@ const ROUTES = {
   "/about/location": AboutLocation,
 
   "/events/programs": Programs,
+  "/events/contest-history": ContestHistory,
   "/events/schedule": Events,
 
   "/members/guide": MembersGuide,
