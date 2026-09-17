@@ -1,9 +1,13 @@
 #!/usr/bin/env node
 /**
- * 예술계 소식 자동 수집.
+ * 관악계·예술계 소식 자동 수집.
  *
  * scripts/arts-sources.json 에 적은 곳에서 최근 소식을 받아, 관악·문화예술과
- * 관계있는 것만 골라 Firestore 의 artsNews 에 넣는다.
+ * 관계있는 것만 골라 Firestore 에 넣는다.
+ *
+ * 어느 게시판으로 갈지는 출처마다 board 로 정한다. 관악 이야기는 관악계 소식
+ * (sceneNews), 문화예술 전반은 예술계 소식(artsNews)으로 간다. 연주회 소식과
+ * 회원동향은 회원·단체의 소식이라 사무국이 직접 올린다.
  *
  * 저작권 때문에 본문은 담지 않는다. 제목·날짜·한 줄 요약·원문 링크·출처만
  * 담고, 읽는 사람은 원문으로 보내 준다.
@@ -28,7 +32,9 @@ const path = require("path");
 const crypto = require("crypto");
 
 const DRY_RUN = process.argv.includes("--dry-run");
-const COLLECTION = "artsNews";
+
+/** board 를 적어 두지 않은 출처가 갈 곳. */
+const DEFAULT_BOARD = "artsNews";
 
 /**
  * 한 곳에서 가져올 최대 개수.
@@ -190,16 +196,26 @@ function excluded(item, source) {
  * 연주회 소식이 들어와도 공모로 붙었다. 제목이 더 정확한 단서다.
  * 짚이는 것이 없으면 출처에 적어 둔 분류를 그대로 쓴다.
  */
-const CATEGORY_HINTS = [
-  ["공모·지원", ["공모", "모집", "접수", "선정", "지원사업", "공고", "지원 대상", "장학"]],
-  ["공연", ["연주회", "공연", "축제", "무대", "콘서트", "리사이틀", "정기연주", "개막", "성료"]],
-  ["정책", ["정책", "예산", "장관", "위원회", "문체부", "제도", "법안", "계획 발표"]],
-];
+const CATEGORY_HINTS = {
+  artsNews: [
+    ["공모·지원", ["공모", "모집", "접수", "선정", "지원사업", "공고", "지원 대상", "장학"]],
+    ["공연", ["연주회", "공연", "축제", "무대", "콘서트", "리사이틀", "정기연주", "개막", "성료"]],
+    ["정책", ["정책", "예산", "장관", "위원회", "문체부", "제도", "법안", "계획 발표"]],
+  ],
+  // 관악계 소식은 어디 이야기인지로 나눈다. 해외를 먼저 보는 이유는
+  // '일본 고교 밴드' 같은 소식이 학교보다 해외 쪽에 더 맞기 때문이다.
+  sceneNews: [
+    ["해외", ["해외", "국제", "미국", "일본", "중국", "유럽", "독일", "프랑스", "아시아", "세계"]],
+    ["학교", ["초등", "중학교", "고등학교", "대학교", "학생", "교육청", "관악부", "밴드부"]],
+    ["국내", []],
+  ],
+};
 
 function classify(item, source) {
   const haystack = `${item.title} ${item.summary}`;
-  for (const [category, words] of CATEGORY_HINTS) {
-    if (words.some((word) => haystack.includes(word))) return category;
+  for (const [category, words] of CATEGORY_HINTS[boardOf(source)] || []) {
+    // 낱말이 비어 있으면 '나머지는 다 여기' 라는 뜻이다.
+    if (words.length === 0 || words.some((word) => haystack.includes(word))) return category;
   }
   return source.category;
 }
@@ -253,6 +269,8 @@ function dropSimilar(posts) {
   return kept;
 }
 
+const boardOf = (source) => source.board || DEFAULT_BOARD;
+
 /** 같은 기사를 두 번 담지 않도록, 링크에서 늘 같은 id 를 만든다. */
 const idFor = (link) => `auto-${crypto.createHash("sha1").update(link).digest("hex").slice(0, 20)}`;
 
@@ -264,6 +282,7 @@ function toPost(item, source) {
 
   return {
     id: idFor(item.link),
+    board: boardOf(source),
     title: item.title.slice(0, 200),
     category: classify(item, source),
     author: item.publisher ? item.publisher.slice(0, 40) : "자동 수집",
@@ -311,7 +330,8 @@ async function signIn() {
 function toFields(post) {
   const fields = {};
   for (const [key, value] of Object.entries(post)) {
-    if (key === "id") continue;
+    // id 는 문서 이름이고 board 는 어느 컬렉션에 넣을지 고르는 값이라 담지 않는다.
+    if (key === "id" || key === "board") continue;
     if (typeof value === "string") fields[key] = { stringValue: value };
     else if (typeof value === "number") fields[key] = { integerValue: String(value) };
     else if (typeof value === "boolean") fields[key] = { booleanValue: value };
@@ -327,7 +347,7 @@ function toFields(post) {
 async function createIfAbsent(post, idToken, projectId) {
   const url =
     `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/` +
-    `${COLLECTION}/${post.id}?currentDocument.exists=false`;
+    `${post.board}/${post.id}?currentDocument.exists=false`;
 
   const res = await fetch(url, {
     method: "PATCH",
@@ -344,6 +364,9 @@ async function createIfAbsent(post, idToken, projectId) {
 }
 
 /* ───────────────────────────── 실행 ───────────────────────────── */
+
+/** 로그에 컬렉션 이름 대신 사람이 읽는 이름을 쓴다. */
+const BOARD_NAMES = { sceneNews: "관악계 소식", artsNews: "예술계 소식" };
 
 function feedUrl(source) {
   if (source.kind === "googleNews") {
@@ -362,7 +385,7 @@ async function main() {
 
   for (const source of sources) {
     if (!source.enabled) continue;
-    process.stdout.write(`▸ ${source.label}\n`);
+    process.stdout.write(`▸ ${source.label}  → ${BOARD_NAMES[boardOf(source)] || boardOf(source)}\n`);
 
     let items;
     try {
@@ -392,12 +415,29 @@ async function main() {
     collected.push(...picked);
   }
 
-  // 출처가 달라도 같은 일을 다룬 기사가 있다(예: 정책 검색과 공연 검색에 같은 축제).
-  const finalPosts = dropSimilar(collected);
+  // 출처가 달라도 같은 일을 다룬 기사가 있다. 다만 게시판이 다르면 합치지 않는다.
+  // 관악계 소식과 예술계 소식은 읽는 자리가 달라서, 한쪽에 있다고 다른 쪽에서
+  // 빼 버리면 그 게시판에는 그 소식이 아예 없는 셈이 된다.
+  const finalPosts = Object.values(
+    collected.reduce((groups, post) => {
+      (groups[post.board] = groups[post.board] || []).push(post);
+      return groups;
+    }, {})
+  ).flatMap((group) => dropSimilar(group));
+
   const merged = collected.length - finalPosts.length;
+  const perBoard = finalPosts.reduce((counts, post) => {
+    counts[post.board] = (counts[post.board] || 0) + 1;
+    return counts;
+  }, {});
+  const breakdown = Object.entries(perBoard)
+    .map(([board, count]) => `${BOARD_NAMES[board] || board} ${count}건`)
+    .join(" · ");
+
   console.log(
     `\n합계 ${finalPosts.length}건` +
-      (merged > 0 ? ` (비슷한 기사 ${merged}건 제외)` : "") +
+      (breakdown ? ` (${breakdown})` : "") +
+      (merged > 0 ? ` · 비슷한 기사 ${merged}건 제외` : "") +
       ` · 실패한 곳 ${failed}곳`
   );
 

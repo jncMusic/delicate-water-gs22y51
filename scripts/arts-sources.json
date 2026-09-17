@@ -1,16 +1,22 @@
 {
   "_설명": [
-    "예술계 소식을 긁어올 곳 목록입니다. 이 파일만 고치면 대상이 바뀝니다.",
+    "관악·예술계 소식을 긁어올 곳 목록입니다. 이 파일만 고치면 대상이 바뀝니다.",
     "",
     "kind 는 두 가지입니다.",
     "  rss        - 기관이 직접 주는 RSS 주소를 그대로 읽습니다.",
     "  googleNews - 구글 뉴스에서 query 로 검색한 결과를 RSS 로 받습니다.",
     "",
+    "board     받은 글을 어느 게시판에 넣을지. boards.js 의 collection 이름입니다.",
+    "          sceneNews = 관악계 소식, artsNews = 예술계 소식.",
+    "          관악 이야기는 관악계 소식으로, 문화예술 전반은 예술계 소식으로 갑니다.",
     "keywords  제목·요약에 이 말이 하나라도 있어야 담습니다. 비우면 전부 담습니다.",
     "exclude   이 말이 하나라도 있으면 버립니다. 아래 excludeAlways 에 더해서 봅니다.",
-    "category  boards.js 의 예술계 소식 분류와 같아야 합니다. 다만 제목을 보고",
-    "          더 맞는 분류가 있으면 그쪽으로 바뀝니다(collect-arts-news.js 의 classify).",
+    "category  분류. 게시판마다 쓰는 분류가 다르니 board 에 맞는 값을 적어야 합니다.",
+    "          제목을 보고 더 맞는 분류가 있으면 그쪽으로 바뀝니다(classify).",
     "enabled   false 로 두면 그 곳은 건너뜁니다.",
+    "",
+    "연주회 소식·회원동향은 자동으로 채우지 않습니다. 회원과 단체의 소식이라",
+    "사무국이 직접 아는 내용이고, 기사로 긁어올 수 있는 것이 아닙니다.",
     "",
     "주의: 기관 RSS 주소는 바뀌는 일이 잦습니다. 실패해도 나머지는 그대로",
     "돌아가고, 어디가 실패했는지는 GitHub Actions 실행 기록에 남습니다."
@@ -20,8 +26,9 @@
       "id": "google-wind-contest",
       "label": "구글뉴스 · 관악 공모·경연",
       "kind": "googleNews",
+      "board": "sceneNews",
       "query": "관악 OR 윈드오케스트라 OR 브라스밴드 공모 OR 경연대회",
-      "category": "공모·지원",
+      "category": "국내",
       "keywords": [
         "관악",
         "윈드",
@@ -36,6 +43,7 @@
       "id": "google-arts-grant",
       "label": "구글뉴스 · 문화예술 지원사업",
       "kind": "googleNews",
+      "board": "artsNews",
       "query": "문화예술 지원사업 공모 한국문화예술위원회",
       "category": "공모·지원",
       "keywords": [
@@ -50,6 +58,7 @@
       "id": "google-arts-policy",
       "label": "구글뉴스 · 문화예술 정책",
       "kind": "googleNews",
+      "board": "artsNews",
       "query": "문화체육관광부 문화예술 정책",
       "category": "정책",
       "keywords": [
@@ -65,8 +74,9 @@
       "id": "google-wind-concert",
       "label": "구글뉴스 · 관악 공연",
       "kind": "googleNews",
+      "board": "sceneNews",
       "query": "관악 연주회 OR 윈드오케스트라 공연",
-      "category": "공연",
+      "category": "국내",
       "keywords": [
         "관악",
         "윈드",
@@ -80,6 +90,7 @@
       "id": "mcst-press",
       "label": "문화체육관광부 보도자료",
       "kind": "rss",
+      "board": "artsNews",
       "url": "https://www.mcst.go.kr/rss/mcst_news.jsp",
       "category": "정책",
       "keywords": [
