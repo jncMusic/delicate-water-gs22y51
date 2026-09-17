@@ -379,6 +379,41 @@ function pickImage(html, baseUrl) {
   }
 }
 
+/** 구글 뉴스 자체 쪽인지. 여기서 뽑은 설명·사진은 기사 것이 아니다. */
+const isGoogleNews = (url) => /(^|\.)news\.google\.com$/i.test(new URL(url).hostname);
+
+/**
+ * 구글 뉴스가 내주는 중간 쪽에서 진짜 기사 주소를 찾는다.
+ *
+ * 구글 뉴스의 기사 주소는 HTTP 로 넘기지 않고 자바스크립트로 넘긴다. 그래서
+ * 그냥 받아오면 언론사가 아니라 구글 뉴스 쪽에서 멈춘다. 실제로 한 번 돌렸더니
+ * 열한 건의 요약이 모두 "Comprehensive up-to-date news coverage..." 라는
+ * 구글 뉴스 소개글이었다.
+ *
+ * 주소 안에 기사 주소가 박혀 있지도 않다. 풀어 보면 구글 내부 토큰뿐이다.
+ * 그래서 중간 쪽 안에 남아 있는 흔적을 찾아본다. 못 찾으면 그냥 둔다.
+ */
+function findRealUrl(html) {
+  const candidates = [
+    // 따옴표가 닫힐 때까지 가져온다. 세미콜론에서 끊으면 &amp; 의 세미콜론에
+    // 걸려 주소 뒷부분이 잘린다.
+    html.match(/<meta[^>]+http-equiv=["']refresh["'][^>]*content=["'][^"']*url=([^"']+)/i)?.[1],
+    html.match(/data-n-au=["']([^"']+)["']/i)?.[1],
+    html.match(/<a[^>]+href=["'](https?:\/\/(?!\w*\.?google\.)[^"']+)["']/i)?.[1],
+  ];
+
+  for (const raw of candidates) {
+    if (!raw) continue;
+    try {
+      const url = new URL(decodeEntities(raw.trim()));
+      if (!isGoogleNews(url.href) && !/\.google\.com$/i.test(url.hostname)) return url.href;
+    } catch {
+      // 주소 모양이 아니면 다음 후보로 넘어간다.
+    }
+  }
+  return "";
+}
+
 async function enrich(post) {
   try {
     const res = await fetch(post.link, {
@@ -391,14 +426,33 @@ async function enrich(post) {
     });
     if (!res.ok) return post;
 
-    const html = decode(await res.arrayBuffer(), res.headers.get("content-type"));
-    const summary = usefulSummary(pickDescription(html), post.title);
-    const link = res.url || post.link;
+    let html = decode(await res.arrayBuffer(), res.headers.get("content-type"));
+    let link = res.url || post.link;
+
+    // 구글 뉴스 쪽에서 멈췄으면 진짜 기사 주소를 찾아 한 번 더 간다.
+    if (isGoogleNews(link)) {
+      const real = findRealUrl(html);
+      if (!real) return post; // 못 찾았으면 구글 소개글을 담지 않고 그대로 둔다.
+
+      const again = await fetch(real, {
+        headers: {
+          "user-agent": "Mozilla/5.0 (compatible; KBA-news-collector/1.0; +https://kbaband.kr)",
+          accept: "text/html,application/xhtml+xml",
+        },
+        redirect: "follow",
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!again.ok) return post;
+
+      html = decode(await again.arrayBuffer(), again.headers.get("content-type"));
+      link = again.url || real;
+      if (isGoogleNews(link)) return post;
+    }
 
     return {
       ...post,
       link,
-      summary: summary || post.summary,
+      summary: usefulSummary(pickDescription(html), post.title) || post.summary,
       image: pickImage(html, link),
     };
   } catch {
@@ -652,4 +706,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { parseFeed, splitPublisher, toPost, toFields, classify, excluded, dropSimilar, similarity, sameStory, usefulSummary, withBody, pickDescription, pickImage, toValue, plain, withinAge, matches, decode, idFor };
+module.exports = { parseFeed, splitPublisher, toPost, toFields, classify, excluded, dropSimilar, similarity, sameStory, usefulSummary, withBody, pickDescription, pickImage, toValue, findRealUrl, isGoogleNews, plain, withinAge, matches, decode, idFor };
