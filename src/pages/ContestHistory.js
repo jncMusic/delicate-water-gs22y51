@@ -84,10 +84,6 @@ export default function ContestHistory() {
           ))}
         </ul>
 
-        <p className="mt-6 text-sm leading-relaxed text-slate-500">
-          제49회는 참가 단위가 학교가 아닌 팀으로 집계되어 그대로 적었습니다. 제44회(2019년)
-          다음 대회는 제45회(2021년)로, 2020년 개최 기록은 협회 자료에 없습니다.
-        </p>
       </Container>
     </>
   );
