@@ -45,6 +45,7 @@ export const menus = [
     label: "협회행사",
     children: [
       { label: "주요 사업", path: "/events/programs" },
+      { label: "관악경연대회 연혁", path: "/events/contest-history" },
       { label: "행사일정", path: "/events/schedule" },
     ],
   },
@@ -386,6 +387,7 @@ export const programs = [
       "부산 관악 페스티벌과 연계하여 운영합니다.",
       "제49회(2025년)는 경기도 여주 세종국악당에서 50개 팀 2,532명이 참가했습니다.",
     ],
+    link: { label: "제1회부터의 개최 기록 보기", path: "/events/contest-history" },
   },
   {
     name: "대한민국 관악콩쿠르",
@@ -407,6 +409,84 @@ export const programs = [
  * 회원 구분과 권리. 정관 제6조(회원의 자격)와 제7조(회원의 권리)를 그대로 따릅니다.
  * 원로회원·평생회원은 정관 제6조 6항에 따라 정회원에 포함됩니다.
  */
+/* ──────────────────── 대한민국 관악경연대회 연혁 ──────────────────── */
+
+/**
+ * 제1회(1976년)부터의 개최 기록. 협회 문서 「별지 2」를 그대로 옮긴 것이다.
+ *
+ * entries 를 숫자로 바꾸지 않고 문자열로 둔 이유가 있다. 제49회만 '개팀' 이고
+ * 나머지는 '개교' 다. 단위를 하나로 맞추면 원래 자료와 달라진다.
+ *
+ * 제44회(2019년) 다음이 제45회(2021년)로, 2020년 기록은 이 자료에 없다.
+ */
+export const contestHistory = [
+  { round: 1, date: "1976.10.31", venue: "서울 KBS 공개홀", entries: "4개교" },
+  { round: 2, date: "1977.10.23", venue: "서울 KBS 공개홀", entries: "8개교" },
+  { round: 3, date: "1978.10.23", venue: "서울 KBS 공개홀", entries: "9개교" },
+  { round: 4, date: "1979.09.06", venue: "서울 KBS 공개홀", entries: "6개교" },
+  { round: 5, date: "1980.09.20", venue: "서울 KBS 공개홀", entries: "8개교" },
+  { round: 6, date: "1981.09.06", venue: "서울 KBS 공개홀", entries: "9개교" },
+  { round: 7, date: "1982.09.19", venue: "서울 KBS 공개홀", entries: "17개교" },
+  { round: 8, date: "1983.09.11", venue: "서울 KBS 공개홀", entries: "24개교" },
+  { round: 9, date: "1984.09.30", venue: "서울 KBS 공개홀", entries: "22개교" },
+  { round: 10, date: "1985.09.13", venue: "서울 국립중앙극장", entries: "20개교" },
+  { round: 11, date: "1986.09.13", venue: "서울 예술의전당", entries: "19개교" },
+  { round: 12, date: "1987.10.31", venue: "서울 국립중앙극장", entries: "18개교" },
+  { round: 13, date: "1988.09.15", venue: "서울 예술의전당", entries: "8개교" },
+  { round: 14, date: "1989.09.02", venue: "서울 리틀엔젤스회관", entries: "18개교" },
+  { round: 15, date: "1990.09.10", venue: "서울 KBS 공개홀", entries: "15개교" },
+  { round: 16, date: "1991.09.11", venue: "서울 서초구민회관", entries: "9개교" },
+  { round: 17, date: "1992.09.15", venue: "서울 올림픽 제3체육관", entries: "17개교" },
+  { round: 18, date: "1993.08.13", venue: "서울 올림픽 제3체육관", entries: "13개교" },
+  { round: 19, date: "1994.09.25", venue: "대전시 우송예술관", entries: "21개교" },
+  { round: 20, date: "1995.09.02", venue: "전주시 전북학생회관", entries: "34개교" },
+  { round: 21, date: "1996.09.07", venue: "대구시 문화예술회관", entries: "42개교" },
+  { round: 22, date: "1997.09.05", venue: "춘천시 문화예술회관", entries: "47개교" },
+  { round: 23, date: "1998.09.03~04", venue: "청주시 예술의전당", entries: "48개교" },
+  { round: 24, date: "1999.09.02", venue: "대전시 우송예술회관", entries: "47개교" },
+  { round: 25, date: "2000.09.01~02", venue: "부산시 문화회관", entries: "47개교" },
+  { round: 26, date: "2001.09.07~08", venue: "원주시 치악예술관", entries: "54개교" },
+  { round: 27, date: "2002.09.06~07", venue: "춘천시 문화예술회관", entries: "60개교" },
+  { round: 28, date: "2003.09.04~05", venue: "구미시 문화예술회관", entries: "67개교" },
+  { round: 29, date: "2004.09.02~03", venue: "포항시 문화예술회관", entries: "67개교" },
+  { round: 30, date: "2005.09.01~02", venue: "익산시 원광대 학생회관", entries: "49개교" },
+  { round: 31, date: "2006.09.04~06", venue: "동해시 문화예술회관", entries: "74개교" },
+  { round: 32, date: "2007.09.03~05", venue: "거제시 문화예술회관", entries: "88개교" },
+  { round: 33, date: "2008.08.26~28", venue: "구미시 문화예술회관", entries: "71개교" },
+  { round: 34, date: "2009.09.08~10", venue: "춘천시 문화예술회관", entries: "85개교" },
+  { round: 35, date: "2010.09.08~10", venue: "부안군 예술회관", entries: "77개교" },
+  { round: 36, date: "2011.08.31~09.02", venue: "울산시 문화예술회관 대공연장", entries: "60개교" },
+  { round: 37, date: "2012.08.30~09.01", venue: "대전시 우송예술회관 대강당", entries: "88개교" },
+  { round: 38, date: "2013.09.04~07", venue: "순천시 문화예술회관 대극장", entries: "100개교" },
+  { round: 39, date: "2014.08.26~30", venue: "청주시 한국교원대학교 교원문화관", entries: "110개교" },
+  { round: 40, date: "2015.08.24~28", venue: "대전시 국립중앙과학관 사이언스홀", entries: "113개교" },
+  { round: 41, date: "2016.08.29~09.03", venue: "부산시 을숙도문화회관 대공연장", entries: "115개교" },
+  { round: 42, date: "2017.08.21~26", venue: "함양군 문화예술회관", entries: "112개교" },
+  { round: 43, date: "2018.08.20~25", venue: "김해 서부문화센터", entries: "86개교" },
+  { round: 44, date: "2019.08.18~23", venue: "김해 문화의전당", entries: "117개교" },
+  { round: 45, date: "2021.10.29~30", venue: "제주특별자치도 서귀포시 김정문화회관", entries: "59개교" },
+  { round: 46, date: "2022.10.08~10", venue: "충청남도 예산군 윤봉길체육관", entries: "48개교" },
+  { round: 47, date: "2023.08.10~15", venue: "태백시 문화예술회관 및 야외특설무대", entries: "37개교" },
+  { round: 48, date: "2024.08.10~13", venue: "대전 국립중앙과학관", entries: "63개교" },
+  { round: 49, date: "2025.08.14~17", venue: "여주 세종국악당", entries: "50개팀" },
+  { round: 50, date: "2026.08.12~16", venue: "부산문화회관 · 부산시민회관", entries: "31개교" },
+];
+
+/** 표 위에 얹는 요약. 자료가 늘어나도 따로 고칠 것이 없도록 계산해서 쓴다. */
+export const contestSummary = (() => {
+  const first = contestHistory[0];
+  const latest = contestHistory[contestHistory.length - 1];
+  // "117개교" 처럼 단위가 붙어 있으므로 앞의 숫자만 떼어 견준다.
+  const size = (row) => parseInt(row.entries, 10) || 0;
+  const biggest = contestHistory.reduce((a, b) => (size(b) > size(a) ? b : a));
+  return {
+    total: contestHistory.length,
+    firstYear: first.date.slice(0, 4),
+    latestYear: latest.date.slice(0, 4),
+    biggest,
+  };
+})();
+
 export const memberTypes = [
   {
     type: "정회원",

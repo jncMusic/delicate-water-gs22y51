@@ -1,3 +1,4 @@
+import { Link } from "../lib/router";
 import { programs } from "../data/site";
 import { Container, PageHeader } from "../components/ui";
 
@@ -45,6 +46,14 @@ export default function Programs() {
                     </li>
                   ))}
                 </ul>
+                )}
+                {program.link && (
+                  <Link
+                    to={program.link.path}
+                    className="mt-4 inline-block text-sm font-medium text-brand-700 underline hover:text-brand-800"
+                  >
+                    {program.link.label} →
+                  </Link>
                 )}
               </div>
             </article>
