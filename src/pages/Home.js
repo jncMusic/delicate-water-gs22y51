@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { ArrowRight, CalendarDays } from "lucide-react";
 import { Link } from "../lib/router";
-import { useCollection } from "../lib/useCollection";
+import { useCollection, usePublicCollection } from "../lib/useCollection";
 import HeroSlider from "../components/HeroSlider";
 import { boards, pinnedFirst } from "../data/boards";
 import { branchSummary, branchTotals, missions, org, overview, programs } from "../data/site";
@@ -47,7 +47,7 @@ function TabCard({ tabs, active, onChange, moreTo, children }) {
 
 /** 날짜가 왼쪽, 제목이 오른쪽에 오는 홈 전용 목록. */
 function PostList({ board }) {
-  const { rows } = useCollection(board.collection);
+  const { rows } = usePublicCollection(board.collection);
   const sorted = pinnedFirst(rows);
 
   if (sorted.length === 0) return <EmptyState message="등록된 글이 없습니다." />;
@@ -84,8 +84,8 @@ function PostList({ board }) {
  * 한 장도 없으면 띠 자체를 그리지 않는다. 빈 칸을 남기느니 없는 편이 낫다.
  */
 function PosterStrip() {
-  const notices = useCollection(boards.notice.collection);
-  const concerts = useCollection(boards.concert.collection);
+  const notices = usePublicCollection(boards.notice.collection);
+  const concerts = usePublicCollection(boards.concert.collection);
   const resources = useCollection("resources");
 
   const posters = useMemo(() => {
@@ -167,7 +167,7 @@ function PosterStrip() {
  * 크게 보여 주는 편이 눈에 들어온다. 그림이 없으면 글 목록으로 물러난다.
  */
 function PosterHighlight({ board }) {
-  const { rows } = useCollection(board.collection);
+  const { rows } = usePublicCollection(board.collection);
   const sorted = pinnedFirst(rows);
 
   if (sorted.length === 0) return <EmptyState message="등록된 소식이 없습니다." />;
