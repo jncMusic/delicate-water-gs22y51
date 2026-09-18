@@ -1,0 +1,81 @@
+# 바뀐 주소를 네이버에 알린다(IndexNow).
+#
+# 크롤러가 찾아올 때까지 기다리지 않고 "여기가 바뀌었다" 고 먼저 알리는
+# 방식이다. 네이버가 2023년 7월부터 지원한다.
+#
+# main 에 올라가면 Cloudflare 가 새로 배포하므로, 배포가 끝날 때를 기다렸다가
+# sitemap.xml 에 적힌 주소를 한 번에 보낸다.
+#
+# 키는 서치어드바이저에서 받아 scripts/indexnow-key.txt 에 넣는다. 이 키는
+# "이 주소가 정말 네 것이냐" 를 확인하는 용도라 비밀이 아니다. 그래서 저장소에
+# 그대로 두고, 빌드가 사이트 뿌리(/indexnow-key.txt)로 옮겨 놓는다.
+# 키 파일이 없으면 이 워크플로는 아무것도 하지 않고 끝난다.
+name: 네이버에 바뀐 주소 알리기
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "scripts/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 배포가 끝나기를 기다린다
+        # Cloudflare 빌드가 보통 1~2분 걸린다. 먼저 알리면 네이버가 예전 내용을
+        # 가져가므로 넉넉히 기다린다.
+        run: sleep 180
+
+      - name: 알리기
+        env:
+          SITE: https://kbaband.kr
+        run: |
+          KEY_FILE=scripts/indexnow-key.txt
+          if [ ! -s "$KEY_FILE" ]; then
+            echo "키 파일이 없습니다. 서치어드바이저에서 받은 키를 $KEY_FILE 에 넣어 주세요."
+            echo "아무것도 보내지 않고 끝냅니다."
+            exit 0
+          fi
+          KEY=$(tr -d '[:space:]' < "$KEY_FILE")
+
+          # 보낼 주소는 sitemap.xml 에서 가져온다. 사이트맵이 곧 "알릴 주소
+          # 목록" 이라서, 화면이 늘어도 여기를 고칠 필요가 없다.
+          curl -sS --fail --max-time 30 "$SITE/sitemap.xml" -o sitemap.xml
+
+          # 키와 주소는 환경 변수로 넘긴다. 문자열에 끼워 넣으면 값에 따옴표가
+          # 하나만 섞여도 JSON 이 깨진다.
+          INDEXNOW_KEY="$KEY" SITE="$SITE" python3 - > body.json <<'PY'
+          import re, json, io, os
+          site = os.environ["SITE"].rstrip("/")
+          xml = io.open("sitemap.xml", encoding="utf-8").read()
+          urls = re.findall(r"<loc>(.*?)</loc>", xml)
+          urls.append(f"{site}/rss.xml")
+          print(json.dumps({
+              "host": site.split("//", 1)[-1],
+              "key": os.environ["INDEXNOW_KEY"],
+              "keyLocation": f"{site}/indexnow-key.txt",
+              "urlList": urls,
+          }, ensure_ascii=False))
+          print(f"{len(urls)} 개 주소를 보냅니다.", file=__import__("sys").stderr)
+          PY
+
+          # 네이버 창구. 실패해도 워크플로를 빨갛게 만들지 않는다 —
+          # 알림이 한 번 실패한 것이 배포가 잘못됐다는 뜻은 아니다.
+          CODE=$(curl -sS -o response.txt -w "%{http_code}" --max-time 30 \
+            -X POST -H "Content-Type: application/json" \
+            -d @body.json https://api.searchadvisor.naver.com/indexnow) || CODE=000
+          echo "네이버 응답: $CODE"
+          cat response.txt || true
+          case "$CODE" in
+            200|202) echo "받아들여졌습니다." ;;
+            *) echo "::warning::네이버가 $CODE 를 돌려주었습니다. 키와 키 파일 주소를 확인해 주세요." ;;
+          esac

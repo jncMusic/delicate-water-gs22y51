@@ -1,8 +1,9 @@
-# 예술계 소식 자동 수집.
+# 관악계·예술계 소식 자동 수집.
 #
-# 하루 한 번 scripts/arts-sources.json 에 적은 곳에서 소식을 받아
-# Firestore 의 artsNews 에 「검토 대기」로 넣는다. 홈페이지에는 바로 나오지
-# 않고, 사무국이 관리자 화면에서 눈 표시를 눌러 공개한 것만 나온다.
+# 하루 한 번 scripts/arts-sources.json 에 적은 곳에서 소식을 받아 Firestore 에
+# 「검토 대기」로 넣는다. 관악 이야기는 관악계 소식(sceneNews), 문화예술 전반은
+# 예술계 소식(artsNews)으로 간다. 홈페이지에는 바로 나오지 않고, 사무국이
+# 관리자 화면에서 눈 표시를 눌러 공개한 것만 나온다.
 #
 # 손으로 돌릴 때는 Actions 탭 → 이 워크플로 → Run workflow 를 누른다.
 # 그때 dry_run 이 기본값 true 라서 받아 보기만 하고 저장하지 않는다.
@@ -11,16 +12,21 @@ name: 예술계 소식 수집
 
 on:
   schedule:
-    # 한국시간 오전 9시 23분(00:23 UTC).
+    # 네 번 걸어 둔다. 하루 네 번 담으려는 것이 아니라, GitHub 이 예약 실행을
+    # 자주 거르기 때문이다.
     #
-    # 정각(0 0 * * *)으로 두었더니 한 번도 돌지 않았다. GitHub 의 예약 실행은
-    # 붐비면 밀리거나 건너뛰는데, 정각은 모두가 쓰는 시각이라 가장 붐빈다.
-    # 그래서 어중간한 분으로 옮겼다.
-    - cron: "23 0 * * *"
+    # 정각(0 0 * * *)으로 두었을 때 한 번도 돌지 않아 어중간한 분으로 옮겼는데,
+    # 옮긴 뒤에도 15:23 창을 그대로 걸렀다(71분 지나도록 실행 기록 없음).
+    # GitHub 의 예약 실행은 붐비면 밀리고, 밀리다 못하면 그냥 건너뛴다.
+    # 늦게라도 한 번만 돌면 그날 치는 다 담기므로, 시각을 늘려 확률을 올린다.
     #
-    # 그래도 건너뛸 수 있어 오후 3시 23분에 한 번 더 돈다. 이미 담은 기사는
-    # 다시 담지 않으므로, 아침에 잘 돌았으면 이 실행은 하는 일이 거의 없다.
-    - cron: "23 6 * * *"
+    # 이미 담은 기사는 다시 담지 않는다(링크로 만든 문서 id 에 "없을 때만
+    # 만들라"를 걸어 둔다). 그래서 앞의 실행이 잘 돌았으면 뒤의 실행은 하는
+    # 일이 거의 없고, 사무국이 볼 것이 네 배로 늘지도 않는다.
+    - cron: "23 0 * * *"  # 09:23 KST
+    - cron: "37 3 * * *"  # 12:37 KST
+    - cron: "23 6 * * *"  # 15:23 KST
+    - cron: "47 10 * * *" # 19:47 KST
     #
     # 참고: 저장소에 60일 동안 아무 변화가 없으면 GitHub 이 정기 실행을 멈춘다.
     # 그럴 때는 Actions 탭에서 다시 켜 주면 된다.
@@ -51,6 +57,17 @@ jobs:
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           KBA_BOT_EMAIL: ${{ secrets.KBA_BOT_EMAIL }}
           KBA_BOT_PASSWORD: ${{ secrets.KBA_BOT_PASSWORD }}
+          # 아래 한 쌍이라도 차 있으면 네이버 뉴스 검색으로 받는다. 구글 뉴스와
+          # 달리 언론사 주소와 기사 앞 문장을 그대로 주므로 요약과 사진이 채워진다.
+          # 비어 있으면 전처럼 구글 뉴스로 받는다. 워크플로가 멈추지는 않는다.
+          #
+          # 지금 새로 받을 수 있는 것은 HUB 키뿐이다. 2026-07-31 부터
+          # developers.naver.com 에서는 검색 API 를 신청할 수 없다.
+          NAVER_API_KEY_ID: ${{ secrets.NAVER_API_KEY_ID }}
+          NAVER_API_KEY: ${{ secrets.NAVER_API_KEY }}
+          # 2026-07-25 이전에 developers.naver.com 에서 받아 둔 키가 있을 때만.
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
         run: |
           if [ "${{ inputs.dry_run }}" = "true" ]; then
             node scripts/collect-arts-news.js --dry-run

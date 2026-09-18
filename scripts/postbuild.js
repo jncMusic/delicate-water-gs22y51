@@ -1,7 +1,8 @@
 /**
  * 빌드 뒤 처리.
  * - index.html 의 %SITE_URL% 을 실제 주소로 채운다(공유 정보는 절대 주소여야 한다).
- * - 검색엔진용 sitemap.xml 과 robots.txt 를 만든다.
+ * - 검색엔진용 sitemap.xml 과 robots.txt, rss.xml 을 만든다.
+ * - IndexNow 확인용 키 파일을 놓는다(scripts/indexnow-key.txt 가 있을 때만).
  * - 화면마다 미리 그린 HTML 을 만든다(scripts/prerender.js).
  *
  * 주소는 .env 의 REACT_APP_SITE_URL 에서 가져온다.
@@ -73,15 +74,42 @@ fs.writeFileSync(
   ].join("\n")
 );
 
+// 3-1) IndexNow 확인용 키 파일.
+//      네이버가 "이 주소는 정말 네 것이냐" 를 확인하는 용도라서 비밀이 아니다.
+//      그래서 저장소에 그대로 두고, 빌드할 때 사이트 뿌리로 옮긴다.
+const keyFile = path.join(__dirname, "indexnow-key.txt");
+if (fs.existsSync(keyFile)) {
+  const key = fs.readFileSync(keyFile, "utf8").trim();
+  if (key) {
+    fs.writeFileSync(path.join(BUILD, "indexnow-key.txt"), `${key}\n`);
+    console.log("[postbuild] IndexNow 키 파일을 놓았습니다.");
+  }
+}
+
 console.log(`[postbuild] ${siteUrl} · sitemap ${paths.length}개 경로 · robots.txt 생성`);
 
-// 4) 프리렌더 — 자바스크립트를 돌리지 않는 검색엔진(네이버 Yeti 등)을 위해
+// 4) RSS — 네이버가 이것을 콘텐츠 피드로 보고 주기적으로 다시 찾아온다.
+//    여기서 실패해도 빌드는 그대로 끝낸다.
+const feedDone = require("./feed")({ siteUrl })
+  .then(({ count }) => {
+    if (count) console.log(`[postbuild] rss.xml ${count}건`);
+  })
+  .catch((err) => {
+    console.warn(`[postbuild] rss.xml 을 건너뜁니다: ${err.message}`);
+  });
+
+// 5) 프리렌더 — 자바스크립트를 돌리지 않는 검색엔진(네이버 Yeti 등)을 위해
 //    화면마다 진짜 HTML 을 만들어 둔다. 여기서 실패해도 빌드는 그대로 끝낸다.
 //    그러면 예전처럼 SPA 로 배포될 뿐, 홈페이지가 안 열리지는 않는다.
-require("./prerender")({ siteUrl, hashMode })
+const prerenderDone = require("./prerender")({ siteUrl, hashMode })
   .then((routes) => {
     console.log(`[postbuild] 프리렌더 ${routes.length}개 화면`);
   })
   .catch((err) => {
     console.warn(`[postbuild] 프리렌더를 건너뜁니다: ${err.message}`);
   });
+
+// 둘은 서로 건드리는 파일이 달라 함께 돌아도 된다. 따로 기다리지 않는 것은
+// node 가 진행 중인 입출력이 끝날 때까지 프로세스를 붙잡아 두기 때문이다.
+void feedDone;
+void prerenderDone;
