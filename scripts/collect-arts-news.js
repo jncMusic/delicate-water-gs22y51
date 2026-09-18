@@ -28,11 +28,14 @@
  * --dry-run 일 때는 넷 다 없어도 된다.
  *
  * 있으면 더 좋은 것 (없어도 돌아간다)
- *   NAVER_CLIENT_ID       네이버 검색 API 키
+ *   NAVER_API_KEY_ID      NAVER API HUB 키 아이디   ← 지금 발급되는 것
+ *   NAVER_API_KEY         그 비밀값
+ * 또는 (2026-07-25 이전에 developers.naver.com 에서 받아 둔 키가 있을 때만)
+ *   NAVER_CLIENT_ID       네이버 개발자센터 검색 API 키
  *   NAVER_CLIENT_SECRET   그 비밀값
- * 이 둘이 있으면 네이버 뉴스 검색으로 받는다. 구글 뉴스와 달리 언론사 주소와
- * 기사 앞 문장을 그대로 주기 때문에 요약과 사진이 채워진다. 없으면 전처럼
- * 구글 뉴스로 받고, 그때는 제목·날짜·링크만 남는다.
+ * 둘 중 하나가 있으면 네이버 뉴스 검색으로 받는다. 구글 뉴스와 달리 언론사
+ * 주소와 기사 앞 문장을 그대로 주기 때문에 요약과 사진이 채워진다. 없으면
+ * 전처럼 구글 뉴스로 받고, 그때는 제목·날짜·링크만 남는다.
  */
 const fs = require("fs");
 const path = require("path");
@@ -65,10 +68,37 @@ const { sources, excludeAlways = [] } = JSON.parse(fs.readFileSync(sourcesFile, 
  *
  * 키가 없으면 전처럼 구글 뉴스로 받는다. 제목·날짜·링크만 남지만, 사무국이
  * 눌러서 원문을 보는 데는 그것으로도 쓸 수 있다.
+ *
+ * 그 키를 받는 창구가 둘이다.
+ *
+ * 2026-07-31 부터 developers.naver.com 에서는 검색 API 를 새로 신청할 수 없다.
+ * 네이버클라우드의 NAVER API HUB 로 옮겨 갔다. 그래서 애플리케이션 등록 화면의
+ * 「사용 API」 목록에 검색이 아예 없다. 개인 아이디든 단체 아이디든 마찬가지다.
+ * 예전 키는 2027-06-30 까지만 예전 주소로 돈다.
+ *
+ * 그래서 어느 키가 들어왔는지 보고 주소와 헤더를 맞춘다. 새로 받는 키는
+ * HUB 것뿐이므로 둘 다 있으면 HUB 를 쓴다.
  */
-const NAVER_ID = process.env.NAVER_CLIENT_ID || "";
-const NAVER_SECRET = process.env.NAVER_CLIENT_SECRET || "";
-const hasNaver = Boolean(NAVER_ID && NAVER_SECRET);
+const NAVER_HUB = {
+  id: process.env.NAVER_API_KEY_ID || "",
+  secret: process.env.NAVER_API_KEY || "",
+  url: "https://naverapihub.apigw.ntruss.com/search/v1/news",
+  idHeader: "X-NCP-APIGW-API-KEY-ID",
+  secretHeader: "X-NCP-APIGW-API-KEY",
+  label: "NAVER API HUB",
+};
+
+const NAVER_OLD = {
+  id: process.env.NAVER_CLIENT_ID || "",
+  secret: process.env.NAVER_CLIENT_SECRET || "",
+  url: "https://openapi.naver.com/v1/search/news.json",
+  idHeader: "X-Naver-Client-Id",
+  secretHeader: "X-Naver-Client-Secret",
+  label: "네이버 개발자센터",
+};
+
+const naverKey = [NAVER_HUB, NAVER_OLD].find((k) => k.id && k.secret) || null;
+const hasNaver = Boolean(naverKey);
 
 /**
  * 어느 출처를 돌릴지.
@@ -158,22 +188,29 @@ async function fetchNaverNews(source) {
     sort: "date", // 최근 것부터. 아래에서 MAX_AGE_DAYS 로 한 번 더 거른다.
   });
 
-  const res = await fetch(`https://openapi.naver.com/v1/search/news.json?${params}`, {
+  const res = await fetch(`${naverKey.url}?${params}`, {
     headers: {
-      "X-Naver-Client-Id": NAVER_ID,
-      "X-Naver-Client-Secret": NAVER_SECRET,
+      [naverKey.idHeader]: naverKey.id,
+      [naverKey.secretHeader]: naverKey.secret,
     },
   });
 
   if (!res.ok) {
     const body = await res.text().catch(() => "");
-    // 401 은 키가 틀렸거나 그 애플리케이션에 검색 권한이 없다는 뜻이다.
-    // 네이버가 이유를 본문에 적어 주므로 함께 보여 준다.
-    throw new Error(`HTTP ${res.status} ${body.slice(0, 200)}`.trim());
+    // 401 은 키가 틀렸거나, 그 키를 다른 창구 주소로 보냈다는 뜻이다.
+    // 어느 창구로 보냈는지와 네이버가 적어 준 이유를 함께 보여 준다.
+    throw new Error(`HTTP ${res.status} (${naverKey.label}) ${body.slice(0, 200)}`.trim());
   }
 
   const data = await res.json();
-  return (data.items || []).map((item) => ({
+
+  // HUB 로 옮겨 가며 응답 모양이 달라졌는지는 키를 받아 한 번 돌려 봐야 안다.
+  // 달라졌으면 조용히 0건이 되지 않고 여기서 멈춰 실행 기록에 남는다.
+  if (!Array.isArray(data.items)) {
+    throw new Error(`items 가 없다 (${naverKey.label}): ${JSON.stringify(data).slice(0, 200)}`);
+  }
+
+  return data.items.map((item) => ({
     title: plain(unhighlight(item.title)),
     link: item.originallink || item.link || "",
     published: plain(item.pubDate || ""),
@@ -723,8 +760,9 @@ async function main() {
   console.log(DRY_RUN ? "받아 보기만 합니다(저장하지 않음)" : "수집해서 저장합니다");
   console.log(
     hasNaver
-      ? "네이버 뉴스 검색으로 받습니다. 언론사 주소를 주므로 요약과 사진을 얻을 수 있습니다.\n"
-      : "구글 뉴스로 받습니다. NAVER_CLIENT_ID·NAVER_CLIENT_SECRET 을 넣으면\n" +
+      ? `네이버 뉴스 검색으로 받습니다(${naverKey.label}).\n` +
+          "언론사 주소를 주므로 요약과 사진을 얻을 수 있습니다.\n"
+      : "구글 뉴스로 받습니다. NAVER_API_KEY_ID·NAVER_API_KEY 를 넣으면\n" +
           "네이버로 받아 요약과 사진까지 채웁니다.\n"
   );
 

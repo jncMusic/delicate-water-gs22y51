@@ -4,7 +4,7 @@
     "",
     "kind 는 세 가지입니다.",
     "  naverNews  - 네이버 뉴스 검색. 요약과 사진까지 얻을 수 있어 이쪽이 낫습니다.",
-    "               NAVER_CLIENT_ID·NAVER_CLIENT_SECRET 이 있어야 돌아갑니다.",
+    "               NAVER_API_KEY_ID·NAVER_API_KEY 가 있어야 돌아갑니다.",
     "  googleNews - 구글 뉴스에서 query 로 검색한 결과를 RSS 로 받습니다.",
     "               키가 필요 없지만 제목·날짜·링크만 남습니다. 구글이 기사 주소를",
     "               자바스크립트로 넘겨서 원문에 닿지 못하기 때문입니다.",
