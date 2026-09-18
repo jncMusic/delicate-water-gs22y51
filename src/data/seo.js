@@ -50,22 +50,40 @@ const DESCRIPTIONS = {
   "/policy/email": "한국관악협회 이메일 주소 무단수집을 거부합니다.",
 };
 
-/** 주소에 맞는 문서 제목. 브라우저 탭·방문 기록·검색 결과에 쓰인다. */
-export function titleFor(path) {
+/**
+ * 주소에 맞는 문서 제목. 브라우저 탭·방문 기록·검색 결과에 쓰인다.
+ *
+ * post 는 게시글 상세 쪽을 미리 그릴 때만 넘어온다. 글마다 제목이 달라야 한다 —
+ * 게시판 이름을 그대로 쓰면 글 수십 개가 같은 제목을 달게 되고, 검색엔진이
+ * 같은 쪽이 여럿이라고 보고 하나만 남긴다.
+ */
+export function titleFor(path, post) {
   if (path === "/") return `${org.name} (${org.abbr}) | ${org.nameEn} 공식 홈페이지`;
+
+  // 글이 있으면 글 제목이 먼저다. 상세 주소(/community/notice/<id>)도 메뉴에
+  // 걸리므로, 아래 findMenu 보다 앞에 두지 않으면 게시판 이름에 가려진다.
+  const board = boardByPath(path);
+  if (board && post) return `${post.title} | ${board.label} | ${org.name}`;
 
   const found = findMenu(path);
   if (found) return `${found.child.label} | ${org.name}`;
 
-  const board = boardByPath(path);
   if (board) return `${board.label} | ${org.name}`;
 
   if (path === "/admin") return `관리자 | ${org.name}`;
   return org.name;
 }
 
-/** 주소에 맞는 설명 한 줄. */
-export function descriptionFor(path) {
+/** 주소에 맞는 설명 한 줄. post 는 게시글 상세 쪽에서만 넘어온다. */
+export function descriptionFor(path, post) {
+  // 글이 있으면 본문 앞을 쓴다. 본문이 없는 글은 제목으로 버틴다.
+  if (post) {
+    const text = String(post.body || post.summary || "").replace(/\s+/g, " ").trim();
+    if (text) return text.length > 160 ? `${text.slice(0, 160)}…` : text;
+    const board = boardByPath(path);
+    return `${org.name} ${board ? board.label : ""} — ${post.title}`.replace(/\s+/g, " ");
+  }
+
   const fixed = DESCRIPTIONS[path];
   if (fixed) return fixed;
 
@@ -77,6 +95,6 @@ export function descriptionFor(path) {
 }
 
 /** 프리렌더와 화면이 함께 쓰는 한 벌. */
-export function seoFor(path) {
-  return { title: titleFor(path), description: descriptionFor(path) };
+export function seoFor(path, post) {
+  return { title: titleFor(path, post), description: descriptionFor(path, post) };
 }

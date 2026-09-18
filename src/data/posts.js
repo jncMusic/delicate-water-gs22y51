@@ -120,10 +120,33 @@ export const builtinResources = [
   },
 ];
 
+/**
+ * 미리 그리기(scripts/prerender.js)가 저장소에서 읽어 온 글을 여기에 넣는다.
+ * 브라우저에서는 늘 비어 있다.
+ *
+ * 왜 이런 자리가 필요한가. 화면을 미리 그릴 때는 효과(useEffect)가 돌지 않아서
+ * useCollection 의 구독이 한 번도 불리지 않는다. 처음 값에 들어 있는 것만
+ * 그려진다. 그래서 저장소에서 읽어 온 글도 처음 값에 함께 넣어 준다.
+ */
+const prerenderRows = {};
+
+/** 미리 그리기에서만 부른다. { 게시판이름: [글] } */
+export function seedPrerender(rows) {
+  Object.assign(prerenderRows, rows);
+}
+
 /** 게시판·자료실 목록에 섞어 넣을 기본 게시물을 꺼낸다. */
 export function builtinRows(collection) {
   if (collection === "resources") return builtinResources;
-  return builtinPosts[collection] || [];
+
+  const mine = builtinPosts[collection] || [];
+  const seeded = prerenderRows[collection];
+  if (!seeded) return mine;
+
+  // 같은 id 가 저장소에도 있으면 저장소 쪽을 남긴다. store.js 의 withBuiltin 과
+  // 같은 규칙이라, 미리 그린 쪽과 사람이 보는 쪽이 어긋나지 않는다.
+  const taken = new Set(seeded.map((row) => row.id));
+  return [...seeded, ...mine.filter((row) => !taken.has(row.id))];
 }
 
 const builtinIds = new Set(

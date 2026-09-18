@@ -31,10 +31,10 @@ fs.writeFileSync(indexPath, html);
 
 // 2) sitemap — 메뉴 정의에서 경로를 가져온다(해시 라우터라 주소에 # 가 들어간다)
 const site = fs.readFileSync(path.join(__dirname, "..", "src", "data", "site.js"), "utf8");
-const paths = ["/", ...new Set(site.match(/path: "(\/[^"]*)"/g).map((m) => m.slice(7, -1)))];
+const menuPaths = ["/", ...new Set(site.match(/path: "(\/[^"]*)"/g).map((m) => m.slice(7, -1)))];
 const today = new Date().toISOString().slice(0, 10);
 
-const sitemap =
+const sitemapXml = (paths) =>
   '<?xml version="1.0" encoding="UTF-8"?>\n' +
   '<urlset xmlns="http://www.sitemap.org/schemas/sitemap/0.9">\n'.replace(
     "www.sitemap.org",
@@ -49,7 +49,11 @@ const sitemap =
     )
     .join("\n") +
   "\n</urlset>\n";
-fs.writeFileSync(path.join(BUILD, "sitemap.xml"), sitemap);
+
+// 게시글 상세 주소는 저장소를 읽어 봐야 알 수 있어서 아래에서 다시 쓴다.
+// 먼저 메뉴 주소만으로 한 벌 써 두는 것은, 저장소를 못 읽더라도 사이트맵이
+// 아예 없는 일은 없도록 하기 위해서다.
+fs.writeFileSync(path.join(BUILD, "sitemap.xml"), sitemapXml(menuPaths));
 
 // 3) robots — 관리자 화면은 색인에서 제외
 //    네이버(Yeti)와 다음(Daumoa)은 규칙이 자기 이름으로 적혀 있으면 그쪽을 먼저 본다.
@@ -86,30 +90,50 @@ if (fs.existsSync(keyFile)) {
   }
 }
 
-console.log(`[postbuild] ${siteUrl} · sitemap ${paths.length}개 경로 · robots.txt 생성`);
+console.log(`[postbuild] ${siteUrl} · sitemap ${menuPaths.length}개 경로 · robots.txt 생성`);
 
-// 4) RSS — 네이버가 이것을 콘텐츠 피드로 보고 주기적으로 다시 찾아온다.
-//    여기서 실패해도 빌드는 그대로 끝낸다.
-const feedDone = require("./feed")({ siteUrl })
-  .then(({ count }) => {
+/*
+ * 4) 게시글을 한 번 읽어 RSS·프리렌더·사이트맵에 함께 쓴다.
+ *
+ * 여기서부터는 저장소를 부르므로 실패할 수 있다. 무엇이 실패하든 빌드는 그대로
+ * 끝낸다. 그러면 위에서 이미 만들어 둔 사이트맵·robots 로 배포될 뿐이고,
+ * 홈페이지가 안 열리지는 않는다.
+ */
+(async () => {
+  let posts = { boards: [], byBoard: {}, all: [] };
+  try {
+    posts = await require("./posts").readPublicPosts();
+    console.log(`[postbuild] 공개된 글 ${posts.all.length}건`);
+  } catch (err) {
+    console.warn(`[postbuild] 글을 읽지 못했습니다: ${err.message}`);
+  }
+
+  // RSS — 네이버가 이것을 콘텐츠 피드로 보고 주기적으로 다시 찾아온다.
+  try {
+    const { count } = await require("./feed")({ siteUrl, posts: posts.all });
     if (count) console.log(`[postbuild] rss.xml ${count}건`);
-  })
-  .catch((err) => {
+  } catch (err) {
     console.warn(`[postbuild] rss.xml 을 건너뜁니다: ${err.message}`);
-  });
+  }
 
-// 5) 프리렌더 — 자바스크립트를 돌리지 않는 검색엔진(네이버 Yeti 등)을 위해
-//    화면마다 진짜 HTML 을 만들어 둔다. 여기서 실패해도 빌드는 그대로 끝낸다.
-//    그러면 예전처럼 SPA 로 배포될 뿐, 홈페이지가 안 열리지는 않는다.
-const prerenderDone = require("./prerender")({ siteUrl, hashMode })
-  .then((routes) => {
+  // 프리렌더 — 자바스크립트를 돌리지 않는 검색엔진(네이버 Yeti 등)을 위해
+  // 화면마다 진짜 HTML 을 만들어 둔다.
+  let routes = [];
+  try {
+    routes = await require("./prerender")({ siteUrl, hashMode, posts });
     console.log(`[postbuild] 프리렌더 ${routes.length}개 화면`);
-  })
-  .catch((err) => {
+  } catch (err) {
     console.warn(`[postbuild] 프리렌더를 건너뜁니다: ${err.message}`);
-  });
+  }
 
-// 둘은 서로 건드리는 파일이 달라 함께 돌아도 된다. 따로 기다리지 않는 것은
-// node 가 진행 중인 입출력이 끝날 때까지 프로세스를 붙잡아 두기 때문이다.
-void feedDone;
-void prerenderDone;
+  // 사이트맵을 다시 쓴다. 미리 그려 둔 쪽만 넣는다 — 그리지 못한 주소를 적으면
+  // 검색엔진을 빈 껍데기로 보내는 셈이다.
+  const detail = posts.all
+    .map((post) => `${post.board.path}/${post.id}`)
+    .filter((route) => routes.includes(route));
+
+  if (detail.length) {
+    fs.writeFileSync(path.join(BUILD, "sitemap.xml"), sitemapXml([...menuPaths, ...detail]));
+    console.log(`[postbuild] sitemap 에 게시글 ${detail.length}개를 더했습니다.`);
+  }
+})();

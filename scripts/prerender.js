@@ -15,6 +15,18 @@
  * 브라우저로 들어온 사람에게는 React 가 같은 자리를 다시 그리므로 보이는
  * 화면은 전과 똑같다.
  *
+ * 게시글 상세 쪽도 그린다
+ * -----------------------
+ * RSS 에 실어 내보내는 주소가 바로 이 상세 쪽이다. 네이버가 RSS 를 보고
+ * 찾아왔는데 빈 껍데기를 만나면 읽을 것이 없는 주소가 된다. 그래서 공개된
+ * 글마다 한 쪽씩 그려 둔다.
+ *
+ * 저장소의 글을 어떻게 넣는가
+ * ---------------------------
+ * 미리 그릴 때는 효과(useEffect)가 돌지 않는다. useCollection 의 구독이 한 번도
+ * 불리지 않으므로, 처음 값에 들어 있는 것만 그려진다. 그래서 저장소에서 읽어 온
+ * 글을 src/data/posts.js 의 seedPrerender 로 처음 값에 넣어 준다.
+ *
  * 왜 build/about/intro.html 인가
  * ------------------------------
  * Cloudflare Workers 의 정적 파일 규칙(html_handling 기본값)이
@@ -130,7 +142,7 @@ function pageHtml(template, { url, title, description, markup }) {
   return html;
 }
 
-module.exports = async function prerender({ siteUrl, hashMode }) {
+module.exports = async function prerender({ siteUrl, hashMode, posts }) {
   if (hashMode) {
     console.log("[prerender] 해시 라우터에서는 주소마다 파일을 만들 수 없어 건너뜁니다.");
     return [];
@@ -146,9 +158,11 @@ module.exports = async function prerender({ siteUrl, hashMode }) {
         const React = require("react");
         const App = require("./src/App").default;
         const { seoFor } = require("./src/data/seo");
+        const { seedPrerender } = require("./src/data/posts");
         module.exports = {
           render: () => renderToStaticMarkup(React.createElement(App)),
           seoFor,
+          seedPrerender,
         };
       `,
       resolveDir: ROOT,
@@ -181,8 +195,15 @@ module.exports = async function prerender({ siteUrl, hashMode }) {
   installBrowserGlobals();
   const app = require(bundlePath);
 
-  // 3) 미리 그릴 주소 — 메뉴에 있는 쪽만. 관리자와 게시글 상세는 뺀다.
+  //    저장소에서 읽어 온 글을 처음 값에 넣는다. 미리 그릴 때는 효과가 돌지
+  //    않아 구독이 한 번도 불리지 않으므로, 이렇게 넣지 않으면 게시판과 상세
+  //    쪽이 빈 채로 그려진다.
+  app.seedPrerender((posts && posts.byBoard) || {});
+
+  // 3) 미리 그릴 주소 — 메뉴에 있는 쪽과, 공개된 게시글 상세.
+  //    관리자 쪽은 넣지 않는다(robots.txt 에서도 막아 두었다).
   const routes = collectRoutes();
+  const detail = (posts && posts.all) || [];
 
   const template = fs.readFileSync(path.join(BUILD, "index.html"), "utf8");
   const written = [];
@@ -214,8 +235,42 @@ module.exports = async function prerender({ siteUrl, hashMode }) {
     written.push(route);
   }
 
+  // 4) 게시글 상세. 제목과 설명은 seoFor 가 글에서 뽑는다 — 게시판 이름을 그대로
+  //    쓰면 글마다 제목이 같아져서 검색엔진이 한 쪽만 남긴다.
+  for (const post of detail) {
+    const route = `${post.board.path}/${post.id}`;
+
+    // 글 id 가 파일 이름이 되므로, build 밖으로 나가는 주소는 건너뛴다.
+    // Firestore 의 id 는 이런 모양이 될 수 없지만, 여기서 막아 두면 나중에
+    // id 를 손으로 정하는 글이 생겨도 탈이 나지 않는다.
+    if (!/^[A-Za-z0-9._~-]+$/.test(post.id) || post.id === "." || post.id === "..") {
+      console.warn(`[prerender] ${route} 는 파일로 만들 수 없는 주소라 건너뜁니다.`);
+      continue;
+    }
+
+    global.window.location.pathname = route;
+    global.window.location.href = `${siteUrl}${route}`;
+
+    let markup;
+    try {
+      markup = app.render();
+    } catch (err) {
+      console.warn(`[prerender] ${route} 를 그리지 못했습니다: ${err.message}`);
+      continue;
+    }
+
+    const { title, description } = app.seoFor(route, post);
+    const html = pageHtml(template, { url: `${siteUrl}${route}`, title, description, markup });
+
+    const file = path.join(BUILD, `${route.slice(1)}.html`);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, html);
+    written.push(route);
+  }
+
   return written;
 };
+
 
 /** src/data/site.js 의 메뉴 정의에서 미리 그릴 주소를 뽑는다. */
 function collectRoutes() {
