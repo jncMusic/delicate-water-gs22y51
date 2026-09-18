@@ -1,8 +1,9 @@
-# 예술계 소식 자동 수집.
+# 관악계·예술계 소식 자동 수집.
 #
-# 하루 한 번 scripts/arts-sources.json 에 적은 곳에서 소식을 받아
-# Firestore 의 artsNews 에 「검토 대기」로 넣는다. 홈페이지에는 바로 나오지
-# 않고, 사무국이 관리자 화면에서 눈 표시를 눌러 공개한 것만 나온다.
+# 하루 한 번 scripts/arts-sources.json 에 적은 곳에서 소식을 받아 Firestore 에
+# 「검토 대기」로 넣는다. 관악 이야기는 관악계 소식(sceneNews), 문화예술 전반은
+# 예술계 소식(artsNews)으로 간다. 홈페이지에는 바로 나오지 않고, 사무국이
+# 관리자 화면에서 눈 표시를 눌러 공개한 것만 나온다.
 #
 # 손으로 돌릴 때는 Actions 탭 → 이 워크플로 → Run workflow 를 누른다.
 # 그때 dry_run 이 기본값 true 라서 받아 보기만 하고 저장하지 않는다.
@@ -51,6 +52,11 @@ jobs:
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           KBA_BOT_EMAIL: ${{ secrets.KBA_BOT_EMAIL }}
           KBA_BOT_PASSWORD: ${{ secrets.KBA_BOT_PASSWORD }}
+          # 이 둘이 있으면 네이버 뉴스 검색으로 받는다. 구글 뉴스와 달리
+          # 언론사 주소와 기사 앞 문장을 그대로 주므로 요약과 사진이 채워진다.
+          # 없으면 전처럼 구글 뉴스로 받는다. 워크플로가 멈추지는 않는다.
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
         run: |
           if [ "${{ inputs.dry_run }}" = "true" ]; then
             node scripts/collect-arts-news.js --dry-run

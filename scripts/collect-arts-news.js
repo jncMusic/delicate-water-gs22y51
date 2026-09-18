@@ -26,6 +26,13 @@
  *   KBA_BOT_EMAIL         수집 전용 계정
  *   KBA_BOT_PASSWORD      그 계정 비밀번호
  * --dry-run 일 때는 넷 다 없어도 된다.
+ *
+ * 있으면 더 좋은 것 (없어도 돌아간다)
+ *   NAVER_CLIENT_ID       네이버 검색 API 키
+ *   NAVER_CLIENT_SECRET   그 비밀값
+ * 이 둘이 있으면 네이버 뉴스 검색으로 받는다. 구글 뉴스와 달리 언론사 주소와
+ * 기사 앞 문장을 그대로 주기 때문에 요약과 사진이 채워진다. 없으면 전처럼
+ * 구글 뉴스로 받고, 그때는 제목·날짜·링크만 남는다.
  */
 const fs = require("fs");
 const path = require("path");
@@ -47,6 +54,34 @@ const MAX_AGE_DAYS = 14;
 
 const sourcesFile = path.join(__dirname, "arts-sources.json");
 const { sources, excludeAlways = [] } = JSON.parse(fs.readFileSync(sourcesFile, "utf8"));
+
+/**
+ * 네이버 검색 API 를 쓸 수 있는지.
+ *
+ * 쓸 수 있으면 네이버로 받는다. 구글 뉴스는 기사 주소를 자바스크립트로 넘겨서
+ * 받아오면 언론사가 아니라 구글 쪽에서 멈춘다. 그래서 요약도 사진도 못 얻고,
+ * 열한 건을 받아 요약 0건·사진 0건이었다. 네이버는 originallink 로 언론사
+ * 주소를 그대로 주고 description 으로 기사 앞 문장을 준다.
+ *
+ * 키가 없으면 전처럼 구글 뉴스로 받는다. 제목·날짜·링크만 남지만, 사무국이
+ * 눌러서 원문을 보는 데는 그것으로도 쓸 수 있다.
+ */
+const NAVER_ID = process.env.NAVER_CLIENT_ID || "";
+const NAVER_SECRET = process.env.NAVER_CLIENT_SECRET || "";
+const hasNaver = Boolean(NAVER_ID && NAVER_SECRET);
+
+/**
+ * 어느 출처를 돌릴지.
+ *
+ * when 이 적혀 있으면 네이버 키가 있을 때만 / 없을 때만 돌린다. 같은 주제를
+ * 두 곳에서 겹쳐 받지 않기 위한 것이다. when 이 없으면 늘 돌린다.
+ */
+function sourceEnabled(source) {
+  if (!source.enabled) return false;
+  if (source.when === "naver") return hasNaver;
+  if (source.when === "no-naver") return !hasNaver;
+  return true;
+}
 
 /* ───────────────────────────── 받아오기 ───────────────────────────── */
 
@@ -84,6 +119,67 @@ async function fetchFeed(url) {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const buffer = await res.arrayBuffer();
   return decode(buffer, res.headers.get("content-type"));
+}
+
+/**
+ * 검색한 낱말을 굵게 표시한 <b> 를 먼저 걷어낸다.
+ *
+ * plain() 에 그대로 맡기면 안 된다. plain() 은 태그를 빈칸으로 바꾸는데,
+ * RSS 의 <p>첫째</p><p>둘째</p> 를 붙여 버리지 않으려고 그렇게 해 두었다.
+ * 그런데 네이버의 <b> 는 낱말 가운데에 들어온다.
+ *
+ *   "호서중 <b>관악부</b>, 전국"  →  "호서중 관악부 , 전국"
+ *
+ * 조사와 쉼표 앞이 벌어진다. 이 태그는 빈칸 없이 지워야 한다.
+ */
+const unhighlight = (value) => (value || "").replace(/<\/?(b|strong|em)>/gi, "");
+
+/**
+ * 네이버 뉴스 검색에서 한 번에 받아 오는 개수.
+ * 이 가운데서 낱말로 거르고 비슷한 기사를 걷어낸 다음 PER_SOURCE_LIMIT 만큼만
+ * 담으므로, 받는 개수는 넉넉해야 한다.
+ */
+const NAVER_DISPLAY = 20;
+
+/**
+ * 네이버 검색 API 로 뉴스를 받아 피드와 같은 모양으로 돌려준다.
+ *
+ * 돌려주는 것 가운데 originallink 가 언론사 주소, link 는 네이버 뉴스 주소다.
+ * 언론사 주소를 쓴다. 기사가 네이버에서 내려가도 남아 있고, 사진과 요약을
+ * 언론사 쪽에서 얻을 수 있고, 읽는 사람도 어디 기사인지 알 수 있다.
+ *
+ * title 과 description 에는 검색한 낱말이 <b> 로 감싸여 온다. unhighlight 로
+ * 먼저 걷어낸 뒤 plain() 에 넘긴다.
+ */
+async function fetchNaverNews(source) {
+  const params = new URLSearchParams({
+    query: source.query,
+    display: String(NAVER_DISPLAY),
+    sort: "date", // 최근 것부터. 아래에서 MAX_AGE_DAYS 로 한 번 더 거른다.
+  });
+
+  const res = await fetch(`https://openapi.naver.com/v1/search/news.json?${params}`, {
+    headers: {
+      "X-Naver-Client-Id": NAVER_ID,
+      "X-Naver-Client-Secret": NAVER_SECRET,
+    },
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    // 401 은 키가 틀렸거나 그 애플리케이션에 검색 권한이 없다는 뜻이다.
+    // 네이버가 이유를 본문에 적어 주므로 함께 보여 준다.
+    throw new Error(`HTTP ${res.status} ${body.slice(0, 200)}`.trim());
+  }
+
+  const data = await res.json();
+  return (data.items || []).map((item) => ({
+    title: plain(unhighlight(item.title)),
+    link: item.originallink || item.link || "",
+    published: plain(item.pubDate || ""),
+    summary: plain(unhighlight(item.description || "")).slice(0, 300),
+    publisher: "", // 네이버는 언론사 이름을 주지 않는다. 원문에서 알아낸다.
+  }));
 }
 
 /* ───────────────────────────── 읽어내기 ───────────────────────────── */
@@ -379,6 +475,37 @@ function pickImage(html, baseUrl) {
   }
 }
 
+const SITE_NAME_TAGS = [
+  /<meta[^>]+property=["']og:site_name["'][^>]*content=["']([^"']+)["']/i,
+  /<meta[^>]+content=["']([^"']+)["'][^>]*property=["']og:site_name["']/i,
+];
+
+/**
+ * 언론사 이름을 뽑는다.
+ *
+ * 구글 뉴스는 제목 끝에 " - 언론사" 를 붙여 주지만 네이버 검색 API 는 언론사
+ * 이름을 아예 주지 않는다. 사진 아래에 「사진 ○○」 으로 밝혀야 하고 글쓴이
+ * 자리에도 들어가므로, 원문 쪽의 og:site_name 에서 얻는다.
+ *
+ * 없으면 주소에서 만든다. chosun.com → chosun 처럼 알아볼 수 있는 정도다.
+ * 한글 이름만 못하지만 '자동 수집' 보다는 어디 기사인지 알 수 있다.
+ */
+function pickSiteName(html) {
+  const found = SITE_NAME_TAGS.map((re) => html.match(re)?.[1]).find(Boolean);
+  return decodeEntities(found || "").replace(/\s+/g, " ").trim().slice(0, 40);
+}
+
+function hostLabel(url) {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./i, "");
+    // news.chosun.com → chosun. 끝의 co.kr·or.kr·com 따위는 이름이 아니다.
+    const parts = host.split(".").filter((part) => !/^(com|net|org|kr|co|or|go|news)$/i.test(part));
+    return parts[parts.length - 1] || host;
+  } catch {
+    return "";
+  }
+}
+
 /** 구글 뉴스 자체 쪽인지. 여기서 뽑은 설명·사진은 기사 것이 아니다. */
 const isGoogleNews = (url) => /(^|\.)news\.google\.com$/i.test(new URL(url).hostname);
 
@@ -454,25 +581,35 @@ async function enrich(post) {
       link,
       summary: usefulSummary(pickDescription(html), post.title) || post.summary,
       image: pickImage(html, link),
+      // 네이버로 받은 것은 언론사 이름이 비어 있다. 원문에서 채운다.
+      publisher: post.publisher || pickSiteName(html) || hostLabel(link),
     };
   } catch {
     return post;
   }
 }
 
-/** 화면에 보일 본문. 요약 한 문단과 원문으로 가는 안내만 담는다. */
+/**
+ * 화면에 보일 본문. 요약 한 문단과 원문으로 가는 안내만 담는다.
+ *
+ * 글쓴이 자리를 여기서 다시 정한다. toPost 는 원문을 열기 전에 만들어지는데,
+ * 네이버로 받은 것은 그때 언론사 이름이 비어 있다. enrich 가 원문에서 채워
+ * 주므로 그것을 반영해야 '자동 수집' 으로 남지 않는다.
+ */
 function withBody(post) {
+  const publisher = post.publisher || hostLabel(post.link);
   return {
     ...post,
+    author: publisher ? publisher.slice(0, 40) : "자동 수집",
     // linked 는 '협회 것이 아니라 남의 자료를 주소로만 걸어 둔 사진' 이라는 표시다.
     // 화면이 이걸 보고 내려받기 단추 대신 출처와 원문 링크를 낸다.
     images: post.image
-      ? [{ url: post.image, alt: post.title, linked: true, credit: post.publisher || post.source }]
+      ? [{ url: post.image, alt: post.title, linked: true, credit: publisher || post.source }]
       : [],
     body:
       (post.summary ? `${post.summary}\n\n` : "") +
       `원문 보기: ${post.link}` +
-      (post.publisher ? `\n출처: ${post.publisher}` : ""),
+      (publisher ? `\n출처: ${publisher}` : ""),
   };
 }
 
@@ -572,20 +709,36 @@ function feedUrl(source) {
   return source.url;
 }
 
+/** 출처 한 곳에서 기사 목록을 받는다. 어디서 받는지는 kind 가 정한다. */
+async function fetchItems(source) {
+  if (source.kind === "naverNews") return fetchNaverNews(source);
+
+  const items = parseFeed(await fetchFeed(feedUrl(source)));
+  // 제목 끝의 " - 언론사" 를 떼는 것은 구글 뉴스만 그렇게 주기 때문이다.
+  // 다른 곳에 대고 하면 "관악부 창단 - 그 뒤의 이야기" 같은 제목이 잘린다.
+  return source.kind === "googleNews" ? items.map(splitPublisher) : items;
+}
+
 async function main() {
-  console.log(DRY_RUN ? "받아 보기만 합니다(저장하지 않음)\n" : "수집해서 저장합니다\n");
+  console.log(DRY_RUN ? "받아 보기만 합니다(저장하지 않음)" : "수집해서 저장합니다");
+  console.log(
+    hasNaver
+      ? "네이버 뉴스 검색으로 받습니다. 언론사 주소를 주므로 요약과 사진을 얻을 수 있습니다.\n"
+      : "구글 뉴스로 받습니다. NAVER_CLIENT_ID·NAVER_CLIENT_SECRET 을 넣으면\n" +
+          "네이버로 받아 요약과 사진까지 채웁니다.\n"
+  );
 
   const collected = [];
   const seen = new Set();
   let failed = 0;
 
   for (const source of sources) {
-    if (!source.enabled) continue;
+    if (!sourceEnabled(source)) continue;
     process.stdout.write(`▸ ${source.label}  → ${BOARD_NAMES[boardOf(source)] || boardOf(source)}\n`);
 
     let items;
     try {
-      items = parseFeed(await fetchFeed(feedUrl(source)));
+      items = await fetchItems(source);
     } catch (err) {
       // 한 곳이 막혀도 나머지는 계속한다. 기관 주소는 자주 바뀐다.
       console.log(`    ✗ 실패: ${err.message}`);
@@ -597,7 +750,6 @@ async function main() {
     // 자리가 다 차 버린다.
     const picked = dropSimilar(
       items
-        .map(splitPublisher)
         .filter((item) => item.title && item.link)
         .filter((item) => withinAge(item.published))
         .filter((item) => matches(item, source.keywords))
@@ -706,4 +858,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { parseFeed, splitPublisher, toPost, toFields, classify, excluded, dropSimilar, similarity, sameStory, usefulSummary, withBody, pickDescription, pickImage, toValue, findRealUrl, isGoogleNews, plain, withinAge, matches, decode, idFor };
+module.exports = { parseFeed, splitPublisher, toPost, toFields, classify, excluded, dropSimilar, similarity, sameStory, usefulSummary, withBody, pickDescription, pickImage, pickSiteName, hostLabel, toValue, findRealUrl, isGoogleNews, plain, withinAge, matches, decode, idFor, sourceEnabled, feedUrl, fetchNaverNews, unhighlight };
