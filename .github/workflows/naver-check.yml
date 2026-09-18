@@ -1,0 +1,67 @@
+# 네이버 검색 API 가 이 계정에서 되는지 한 번 확인한다.
+#
+# 단체 아이디로 발급받은 키로 검색이 호출되는지 알 길이 없어서 만든 일회용이다.
+# 결과를 보고 판단이 끝나면 이 파일은 지운다.
+#
+# 쓰기 전에 저장소 Settings → Secrets and variables → Actions 에 두 개를 넣는다.
+#   NAVER_CLIENT_ID
+#   NAVER_CLIENT_SECRET
+name: 네이버 검색 API 확인
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 검색 API 호출
+        env:
+          ID: ${{ secrets.NAVER_CLIENT_ID }}
+          SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+        run: |
+          if [ -z "$ID" ] || [ -z "$SECRET" ]; then
+            echo "NAVER_CLIENT_ID 또는 NAVER_CLIENT_SECRET 이 Secrets 에 없습니다."
+            exit 1
+          fi
+
+          # 관악은 좁은 말, 문화예술 지원사업은 넓은 말이다.
+          # 두 게시판에 쓸 만큼 결과가 나오는지 함께 본다.
+          for q in "관악 윈드오케스트라" "문화예술 지원사업"; do
+            echo "──────────────────────────────────────────────"
+            echo "검색어: $q"
+
+            code=$(curl -sS -o /tmp/out.json -w "%{http_code}" -G \
+              --data-urlencode "query=$q" \
+              --data-urlencode "display=3" \
+              --data-urlencode "sort=date" \
+              -H "X-Naver-Client-Id: $ID" \
+              -H "X-Naver-Client-Secret: $SECRET" \
+              "https://openapi.naver.com/v1/search/news.json" || echo "000")
+
+            echo "HTTP $code"
+
+            if [ "$code" = "200" ]; then
+              # 제목과 요약이 실제로 쓸 만한지가 핵심이다. 그대로 찍어 본다.
+              node -e '
+                const d = JSON.parse(require("fs").readFileSync("/tmp/out.json", "utf8"));
+                const plain = (s) => s.replace(/<[^>]*>/g, "").replace(/&quot;/g, "\"").replace(/&amp;/g, "&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&#39;/g,"'"'"'");
+                console.log("  전체 " + d.total + "건 중 " + d.items.length + "건");
+                d.items.forEach((it) => {
+                  const desc = plain(it.description);
+                  console.log("");
+                  console.log("  제목 : " + plain(it.title));
+                  console.log("  날짜 : " + it.pubDate);
+                  console.log("  링크 : " + it.originallink);
+                  console.log("  요약 : " + desc + "   (" + desc.length + "자)");
+                });
+              '
+            else
+              echo "  응답 본문:"
+              sed "s/^/    /" /tmp/out.json
+            fi
+            echo ""
+          done
