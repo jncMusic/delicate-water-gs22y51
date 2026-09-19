@@ -768,37 +768,68 @@ async function main() {
 
   const collected = [];
   const seen = new Set();
-  let failed = 0;
 
-  for (const source of sources) {
-    if (!sourceEnabled(source)) continue;
-    process.stdout.write(`▸ ${source.label}  → ${BOARD_NAMES[boardOf(source)] || boardOf(source)}\n`);
+  /** 한 묶음을 차례로 돌며 collected 에 담는다. 답하지 않은 곳 수를 돌려준다. */
+  async function collectFrom(list) {
+    let failed = 0;
 
-    let items;
-    try {
-      items = await fetchItems(source);
-    } catch (err) {
-      // 한 곳이 막혀도 나머지는 계속한다. 기관 주소는 자주 바뀐다.
-      console.log(`    ✗ 실패: ${err.message}`);
-      failed += 1;
-      continue;
+    for (const source of list) {
+      process.stdout.write(`▸ ${source.label}  → ${BOARD_NAMES[boardOf(source)] || boardOf(source)}\n`);
+
+      let items;
+      try {
+        items = await fetchItems(source);
+      } catch (err) {
+        // 한 곳이 막혀도 나머지는 계속한다. 기관 주소는 자주 바뀐다.
+        console.log(`    ✗ 실패: ${err.message}`);
+        failed += 1;
+        continue;
+      }
+
+      // 비슷한 기사를 걷어낸 뒤에 개수를 자른다. 먼저 자르면 같은 행사 기사로
+      // 자리가 다 차 버린다.
+      const picked = dropSimilar(
+        items
+          .filter((item) => item.title && item.link)
+          .filter((item) => withinAge(item.published))
+          .filter((item) => matches(item, source.keywords))
+          .filter((item) => !excluded(item, source))
+          .map((item) => toPost(item, source))
+          .filter((post) => !seen.has(post.id) && seen.add(post.id))
+      ).slice(0, PER_SOURCE_LIMIT);
+
+      console.log(`    받은 것 ${items.length}건 → 고른 것 ${picked.length}건`);
+      picked.forEach((post) => console.log(`      · [${post.category}] ${post.title}`));
+      collected.push(...picked);
     }
 
-    // 비슷한 기사를 걷어낸 뒤에 개수를 자른다. 먼저 자르면 같은 행사 기사로
-    // 자리가 다 차 버린다.
-    const picked = dropSimilar(
-      items
-        .filter((item) => item.title && item.link)
-        .filter((item) => withinAge(item.published))
-        .filter((item) => matches(item, source.keywords))
-        .filter((item) => !excluded(item, source))
-        .map((item) => toPost(item, source))
-        .filter((post) => !seen.has(post.id) && seen.add(post.id))
-    ).slice(0, PER_SOURCE_LIMIT);
+    return failed;
+  }
 
-    console.log(`    받은 것 ${items.length}건 → 고른 것 ${picked.length}건`);
-    picked.forEach((post) => console.log(`      · [${post.category}] ${post.title}`));
-    collected.push(...picked);
+  const primary = sources.filter(sourceEnabled);
+  let failed = await collectFrom(primary);
+
+  /*
+   * 네이버가 한 곳도 답하지 않으면 구글 뉴스로 물러선다.
+   *
+   * 키가 있으면 네이버 쪽만 돌린다. 그런데 키가 막히면 — 검색 권한이 없거나,
+   * 개발자센터 키가 기한(2027-06-30)을 넘기거나, 네이버가 잠시 멈추면 —
+   * 다섯 곳이 다 같은 이유로 떨어지고 그날은 아무것도 담지 못한 채 끝난다.
+   * 키를 넣기 전에는 구글 뉴스로 받던 곳이니, 그날치는 그쪽에서라도 담는다.
+   *
+   * 한두 곳만 실패한 것은 그 언론사 쪽 사정이므로 물러서지 않는다. 나머지가
+   * 답했다면 구글 뉴스로 같은 소식을 한 번 더 받아 오는 셈이 된다.
+   */
+  const allFailed = primary.length > 0 && failed === primary.length;
+  if (hasNaver && allFailed) {
+    const backup = sources.filter((source) => source.enabled && source.when === "no-naver");
+    if (backup.length > 0) {
+      console.log(
+        `\n네이버가 ${failed}곳 모두 답하지 않아 구글 뉴스로 받습니다.` +
+          "\n키가 막혔는지 확인해 주세요. 요약과 사진은 덜 채워집니다.\n"
+      );
+      failed += await collectFrom(backup);
+    }
   }
 
   // 출처가 달라도 같은 일을 다룬 기사가 있다. 다만 게시판이 다르면 합치지 않는다.
