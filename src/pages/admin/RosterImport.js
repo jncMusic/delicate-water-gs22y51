@@ -1,10 +1,56 @@
 import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
-import { AlertTriangle, FileSpreadsheet } from "lucide-react";
+import { AlertTriangle, Download, FileSpreadsheet } from "lucide-react";
 import { createMany } from "../../lib/store";
+import { downloadBlob } from "../../lib/download";
 import { readRoster } from "../../lib/roster";
 import { memberTypes } from "../../data/site";
 import { Button, Modal } from "../../components/ui";
+
+/**
+ * 빈 양식을 만들어 내려 준다.
+ *
+ * 파일을 저장소에 넣어 두지 않는 이유가 있다. 읽는 쪽(roster.js)이 받아 주는
+ * 머리글이 바뀌면 양식도 같이 바뀌어야 하는데, 넣어 둔 파일은 따라오지 않는다.
+ * 여기서 만들면 늘 맞는다.
+ *
+ * 첫 장에는 머리글만 둔다. 보기를 같이 넣으면 지우지 않고 그대로 올리는 일이
+ * 생긴다. 보기는 둘째 장에 따로 둔다.
+ */
+function downloadTemplate() {
+  const book = XLSX.utils.book_new();
+
+  const sheet = XLSX.utils.aoa_to_sheet([["이름", "구분", "연락처"]]);
+  sheet["!cols"] = [{ wch: 16 }, { wch: 12 }, { wch: 18 }];
+  XLSX.utils.book_append_sheet(book, sheet, "명부");
+
+  const guide = XLSX.utils.aoa_to_sheet([
+    ["회원 명부 양식 — 적는 법"],
+    [],
+    ["1", "첫 장(명부)의 둘째 줄부터 한 줄에 한 분씩 적어 주세요."],
+    ["2", "이름은 반드시 있어야 합니다. 비어 있으면 그 줄은 넘어갑니다."],
+    ["3", "구분은 아래 다섯 가지 중 하나로 적어 주세요."],
+    ["", memberTypes.map((item) => item.type).join(" · ")],
+    ["4", "연락처는 010-1234-5678 처럼 적으셔도 되고 숫자만 적으셔도 됩니다."],
+    ["5", "연락처가 없어도 담깁니다. 다만 중복 확인이 되지 않습니다."],
+    [],
+    ["보기"],
+    ["이름", "구분", "연락처"],
+    ["홍길동", "정회원", "010-1234-5678"],
+    ["김철수", "평생회원", "01098765432"],
+    ["서울윈드오케스트라", "특별회원", "02-1234-5678"],
+    [],
+    ["이 장은 안내용입니다. 올릴 때는 첫 장만 읽으므로 그대로 두셔도 됩니다."],
+  ]);
+  guide["!cols"] = [{ wch: 20 }, { wch: 16 }, { wch: 20 }];
+  XLSX.utils.book_append_sheet(book, guide, "안내");
+
+  downloadBlob(
+    XLSX.write(book, { bookType: "xlsx", type: "array" }),
+    "한국관악협회_회원명부_양식.xlsx",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  );
+}
 
 /** 접힌 채로 시작하는 줄 목록. 길어질 수 있어 화면을 잡아먹지 않게 한다. */
 function Lines({ title, lines, tone }) {
@@ -105,6 +151,11 @@ export default function RosterImport({ open, onClose, existing }) {
           담긴 분은 <strong className="font-semibold text-brand-900">승인</strong> 상태에 가입경로
           「명부」로 들어갑니다. 생년월일·주소는 받지 않습니다.
         </div>
+
+        <Button variant="secondary" onClick={downloadTemplate}>
+          <Download size={15} />
+          빈 양식 내려받기
+        </Button>
 
         <div>
           <input
