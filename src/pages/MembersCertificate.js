@@ -11,7 +11,22 @@ import {
 } from "../data/site";
 import { Button, Field, Input, SidebarPage, Select, Textarea } from "../components/ui";
 
-const EMPTY = { name: "", phone: "", type: certificateTypes[0] || "", purpose: "", note: "" };
+const EMPTY = {
+  name: "",
+  phone: "",
+  type: certificateTypes[0] || "",
+  purpose: "",
+  note: "",
+  // 지도자 확인서에만 쓰는 칸. 다른 증명서를 고르면 보내지 않는다.
+  teachingPlace: "",
+  teachingPeriod: "",
+  teachingRole: "",
+};
+
+/** 고른 증명서가 지도 활동을 적어야 하는 것인가. */
+function needsTeaching(type) {
+  return Boolean(certificates.find((item) => item.name === type)?.needsTeaching);
+}
 
 const onlyDigits = (value) => String(value || "").replace(/\D/g, "");
 
@@ -88,6 +103,11 @@ export default function MembersCertificate() {
     if (!form.name.trim()) return setError("성명을 입력해 주세요.");
     if (onlyDigits(form.phone).length < 9) return setError("연락처를 정확히 입력해 주세요.");
     if (!form.type) return setError("증명서 종류를 골라 주세요.");
+    if (needsTeaching(form.type)) {
+      if (!form.teachingPlace.trim()) return setError("지도 중인 단체나 학교를 적어 주세요.");
+      if (!form.teachingPeriod.trim()) return setError("지도 기간을 적어 주세요.");
+      if (!form.teachingRole.trim()) return setError("직위를 적어 주세요.");
+    }
 
     setError(null);
     setSaving(true);
@@ -98,6 +118,15 @@ export default function MembersCertificate() {
         type: form.type,
         purpose: form.purpose.trim(),
         note: form.note.trim(),
+        // 지도자 확인서가 아니면 빈 칸을 담지 않는다. 관리자 화면에서
+        // "적혀 있는데 비었다" 와 "물어보지도 않았다" 가 구별되어야 한다.
+        ...(needsTeaching(form.type)
+          ? {
+              teachingPlace: form.teachingPlace.trim(),
+              teachingPeriod: form.teachingPeriod.trim(),
+              teachingRole: form.teachingRole.trim(),
+            }
+          : {}),
         status: "접수",
       });
       setDone({ ...form });
@@ -152,6 +181,39 @@ export default function MembersCertificate() {
                 ))}
               </Select>
             </Field>
+            {needsTeaching(form.type) ? (
+              <div className="space-y-4 rounded-lg border border-accent-300 bg-slate-50 p-4">
+                <p className="text-sm leading-relaxed text-slate-700">
+                  지도자 확인서는{" "}
+                  <strong className="font-semibold text-brand-900">
+                    연회비를 납부한 정회원
+                  </strong>
+                  께만 발급합니다. 아래 내용을 협회가 확인한 뒤 확인서에 적습니다.
+                </p>
+                <Field label="지도 중인 단체 / 학교" required>
+                  <Input
+                    value={form.teachingPlace}
+                    onChange={set("teachingPlace")}
+                    placeholder="예) ○○중학교 관악부"
+                  />
+                </Field>
+                <Field label="지도 기간" required>
+                  <Input
+                    value={form.teachingPeriod}
+                    onChange={set("teachingPeriod")}
+                    placeholder="예) 2023년 3월 ~ 현재"
+                  />
+                </Field>
+                <Field label="직위" required>
+                  <Input
+                    value={form.teachingRole}
+                    onChange={set("teachingRole")}
+                    placeholder="예) 지도교사 · 강사 · 지휘자"
+                  />
+                </Field>
+              </div>
+            ) : null}
+
             <Field label="제출처 / 용도" hint="어디에 내실 것인지 적어 주시면 처리가 빠릅니다.">
               <Input value={form.purpose} onChange={set("purpose")} placeholder="예) ○○중학교 제출" />
             </Field>

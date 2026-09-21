@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Check, CircleAlert, CircleHelp, Trash2 } from "lucide-react";
 import { useCollection } from "../../lib/useCollection";
-import { matchMember } from "../../lib/members";
+import { issueCheck, matchMember } from "../../lib/members";
 import { removeDoc, saveDoc } from "../../lib/store";
 import { Badge, Button, EmptyState, Loading, Select, formatDate } from "../../components/ui";
 
@@ -61,7 +61,11 @@ export default function AdminCertificates() {
 
   /* 신청마다 명부를 한 번씩 맞춰 본다. 명부가 바뀌면 다시 센다. */
   const checked = useMemo(
-    () => rows.map((row) => ({ ...row, match: matchMember(row, members) })),
+    () =>
+      rows.map((row) => {
+        const match = matchMember(row, members);
+        return { ...row, match, issue: issueCheck(row, match.member) };
+      }),
     [rows, members]
   );
 
@@ -166,6 +170,32 @@ export default function AdminCertificates() {
                     {row.match.member.status}
                     {row.match.member.paidAt ? ` · 입금 ${row.match.member.paidAt}` : " · 미입금"}
                   </p>
+                ) : null}
+
+                {/* 명부에 있어도 회비를 안 냈으면 지도자 확인서는 나가면 안 된다.
+                    사무국이 표시만 보고 발급하지 않도록 이유를 적어 준다. */}
+                {row.match.member && !row.issue.ok ? (
+                  <p className="mt-2 flex gap-2 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-800">
+                    <CircleAlert size={13} className="mt-0.5 shrink-0" aria-hidden="true" />
+                    발급 조건에 맞지 않습니다 — {row.issue.reason}
+                  </p>
+                ) : null}
+
+                {row.teachingPlace ? (
+                  <dl className="mt-3 rounded-lg border border-slate-200 px-3 py-2.5 text-xs">
+                    <div className="flex gap-2 py-0.5">
+                      <dt className="w-16 shrink-0 text-slate-500">지도 단체</dt>
+                      <dd className="text-slate-700">{row.teachingPlace}</dd>
+                    </div>
+                    <div className="flex gap-2 py-0.5">
+                      <dt className="w-16 shrink-0 text-slate-500">기간</dt>
+                      <dd className="text-slate-700">{row.teachingPeriod || "-"}</dd>
+                    </div>
+                    <div className="flex gap-2 py-0.5">
+                      <dt className="w-16 shrink-0 text-slate-500">직위</dt>
+                      <dd className="text-slate-700">{row.teachingRole || "-"}</dd>
+                    </div>
+                  </dl>
                 ) : null}
 
                 {row.note ? (

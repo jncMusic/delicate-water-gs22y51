@@ -110,3 +110,26 @@ export function matchMember(request, members) {
   // 승인 전이면 아직 회원이 아니다. 발급 대상이 아니라고 알려야 한다.
   return { state: hit.status === "승인" ? "found" : "name", member: hit };
 }
+
+/**
+ * 이 증명서를 내줘도 되는 분인가.
+ *
+ * 회원임을 확인하는 것(matchMember)과 발급 자격은 다른 물음이다. 명부에
+ * 있어도 회비를 내지 않았으면 지도자 확인서는 나가면 안 된다.
+ *
+ * 지도자 확인서 — 연회비를 낸 정회원만. 협회가 학교에 내주는 문서라
+ * 자격이 흐릿한 채로 나가면 협회가 책임을 진다.
+ * 회원증 — 승인된 회원이면 된다. 회원이라는 사실만 적는 문서다.
+ */
+export function issueCheck(request, member) {
+  if (!member || member.status !== "승인") {
+    return { ok: false, reason: "승인된 회원이 아닙니다" };
+  }
+  if (!(request && request.type === "지도자 확인서")) return { ok: true, reason: "" };
+
+  if (member.memberType !== "정회원") {
+    return { ok: false, reason: `정회원만 받을 수 있습니다 (지금 ${member.memberType || "구분 없음"})` };
+  }
+  if (!isPaid(member)) return { ok: false, reason: "연회비 납부가 확인되지 않았습니다" };
+  return { ok: true, reason: "" };
+}
