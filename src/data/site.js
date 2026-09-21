@@ -583,7 +583,10 @@ export const branchList = [
   { region: "경기도", head: "강석진" },
   { region: "강원도", head: "이대건" },
   { region: "대전광역시", head: "이충원" },
-  { region: "충청남도", head: "이만우" },
+  // 이만우 지회장은 충청북도다. 전에 충청남도로 적혀 있던 것을 바로잡았고,
+  // 충청남도는 확인될 때까지 공석으로 둔다.
+  { region: "충청남도", head: "" },
+  { region: "충청북도", head: "이만우" },
   { region: "전라북도", head: "문정윤" },
   { region: "전라남도", head: "박이남" },
   { region: "광주광역시", head: "노진자" },
@@ -595,12 +598,28 @@ export const branchList = [
   { region: "해외", head: "" },
 ];
 
-export const branchTotals = { branches: 14, chapters: 7 };
+/**
+ * 시·군 지부와 지부장.
+ *
+ * 정관 제38조에 따라 지회는 특별시·광역시·도 단위로 하나씩, 지부는 그 밖의
+ * 시 또는 희망하는 지역에 둔다. 그래서 지회와 따로 적는다.
+ *
+ * 협회 집계로는 7곳인데 아래는 이름이 확인된 곳만 두었다. 나머지가 확인되면
+ * 여기에 줄을 더하면 화면과 숫자가 같이 따라간다.
+ */
+export const chapterList = [
+  { region: "용인", head: "하윤희" },
+  { region: "화성", head: "김기범", note: "전문이사 겸직" },
+  { region: "원주", head: "권오문" },
+  { region: "안동", head: "김승언" },
+];
+
+export const branchTotals = { branches: branchList.length, chapters: 7 };
 
 /** 지회 분포. 서울특별시 지회는 정관 제2조에 따라 본부가 겸합니다. */
 export const branchSummary = [
   { area: "광역시", count: 5 },
-  { area: "도", count: 7 },
+  { area: "도", count: 8 },
   { area: "특별자치도", count: 1 },
   { area: "해외", count: 1 },
 ];

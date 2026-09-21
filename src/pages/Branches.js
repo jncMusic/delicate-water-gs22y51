@@ -1,4 +1,4 @@
-import { branchList, branchSummary, branchTotals } from "../data/site";
+import { branchList, branchSummary, branchTotals, chapterList } from "../data/site";
 import { Card, Container, PageHeader, SectionTitle } from "../components/ui";
 
 export default function Branches() {
@@ -62,6 +62,43 @@ export default function Branches() {
             지회 연락처는 협회 사무국으로 문의해 주시기 바랍니다.
           </p>
         </div>
+
+        {chapterList.length > 0 && (
+          <div className="mt-14">
+            <SectionTitle>지부장</SectionTitle>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[420px] border-t-2 border-brand-800 text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-500">
+                    <th scope="col" className="py-3 text-left font-medium">지역</th>
+                    <th scope="col" className="w-40 py-3 font-medium">지부장</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {chapterList.map((chapter) => (
+                    <tr key={chapter.region} className="hover:bg-slate-50">
+                      <td className="py-3.5 font-medium text-brand-900">{chapter.region}</td>
+                      <td className="py-3.5 text-center text-slate-700">
+                        {chapter.head || <span className="text-slate-400">공석</span>}
+                        {chapter.note ? (
+                          <span className="ml-1.5 text-xs text-slate-500">({chapter.note})</span>
+                        ) : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {/* 협회 집계(7곳)보다 적게 적혀 있으면 그렇다고 알린다. 표만 보고
+                지부가 네 곳뿐이라고 읽히지 않게 한다. */}
+            {chapterList.length < branchTotals.chapters ? (
+              <p className="mt-4 text-xs text-slate-500">
+                지부 {branchTotals.chapters}곳 가운데 {chapterList.length}곳을 싣고 있습니다. 나머지는
+                확인되는 대로 올리겠습니다.
+              </p>
+            ) : null}
+          </div>
+        )}
       </Container>
     </>
   );
