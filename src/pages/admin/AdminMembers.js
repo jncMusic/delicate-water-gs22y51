@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import * as XLSX from "xlsx";
-import { Download, Pencil, Search, Trash2, UserCheck, Wallet } from "lucide-react";
+import { Download, Pencil, Search, Trash2, Upload, UserCheck, Wallet } from "lucide-react";
 import { useCollection } from "../../lib/useCollection";
 import { duplicateIds, isPaid } from "../../lib/members";
 import { removeDoc, saveDoc, saveMany } from "../../lib/store";
 import { downloadBlob } from "../../lib/download";
+import RosterImport from "./RosterImport";
 import { instruments, memberStatuses, memberTypes, regions } from "../../data/site";
 import {
   Badge,
@@ -25,6 +26,7 @@ const EXPORT_COLUMNS = [
   ["memberType", "회원구분"],
   ["status", "상태"],
   ["paidAt", "입금확인일"],
+  ["source", "가입경로"],
   ["instrument", "악기"],
   ["affiliation", "소속"],
   ["position", "직위"],
@@ -71,6 +73,7 @@ export default function AdminMembers() {
   const [view, setView] = useState("전체");
   const [selected, setSelected] = useState(() => new Set());
   const [editing, setEditing] = useState(null);
+  const [importing, setImporting] = useState(false);
 
   /*
    * 중복은 걸러내기 전 명단 전체에서 본다. 걸러진 것만 놓고 보면 짝이 화면
@@ -249,6 +252,10 @@ export default function AdminMembers() {
         </div>
 
         <div className="ml-auto flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => setImporting(true)}>
+            <Upload size={15} />
+            명부 올리기
+          </Button>
           <Button variant="secondary" onClick={exportExcel} disabled={filtered.length === 0}>
             <Download size={15} />
             엑셀 내려받기
@@ -307,6 +314,14 @@ export default function AdminMembers() {
                   <td className="px-3 py-3 font-medium text-brand-900">
                     <span className="flex items-center gap-1.5">
                       {member.name}
+                      {member.source === "명부" && (
+                        <span
+                          title="오프라인 명부에서 올린 회원입니다"
+                          className="rounded-full border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600"
+                        >
+                          명부
+                        </span>
+                      )}
                       {dupes.has(member.id) && (
                         <span
                           title="연락처나 이름·생년월일이 같은 분이 또 있습니다"
@@ -378,6 +393,12 @@ export default function AdminMembers() {
           </table>
         </div>
       )}
+
+      <RosterImport
+        open={importing}
+        onClose={() => setImporting(false)}
+        existing={rows}
+      />
 
       <Modal
         open={Boolean(editing)}
