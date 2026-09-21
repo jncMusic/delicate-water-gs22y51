@@ -152,7 +152,8 @@ service cloud.firestore {
 
     function isBoard(name) {
       return name in ['notices', 'press', 'disclosure',
-                      'sceneNews', 'concertNews', 'jobs'];
+                      'artsNews', 'sceneNews', 'memberNews',
+                      'concertNews', 'jobs'];
     }
 
     // 방문자가 올릴 수 있는 것은 숫자 하나뿐이고, 그것도 1씩만 늘릴 수 있다
@@ -186,8 +187,14 @@ service cloud.firestore {
 
     // 가입 신청은 누구나 넣을 수 있다. 다만 아무 값이나 넣지는 못하게 막는다.
     // 특히 스스로 '승인' 상태로 만들 수 없어야 한다.
+    //
+    // 사무국은 이 조건에 걸리지 않는다. 오프라인 명부를 올릴 때는 이미 회원인
+    // 분들이라 '승인' 으로 담고, 명부에 이메일이 없는 경우도 많다. 바깥에서
+    // 오는 신청에만 조건을 걸고 관리자는 그대로 통과시킨다. 관리자는 이미
+    // 회원 정보를 읽고 고치고 지울 수 있으니, 담는 권한만 빠져 있던 것이다.
     match /members/{doc} {
-      allow create: if request.resource.data.status == '대기'
+      allow create: if isAdmin() || (
+        request.resource.data.status == '대기'
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() < 100
@@ -195,7 +202,8 @@ service cloud.firestore {
         && request.resource.data.phone.size() < 30
         && request.resource.data.email is string
         && request.resource.data.email.size() < 200
-        && request.resource.data.keys().size() < 30;
+        && request.resource.data.keys().size() < 30
+      );
       allow read, update, delete: if isAdmin();
     }
 
