@@ -1,10 +1,19 @@
 import { useState } from "react";
-import { CalendarDays, FolderUp, Image, LogOut, Megaphone, Users } from "lucide-react";
+import {
+  CalendarDays,
+  FolderUp,
+  Image,
+  LogOut,
+  Megaphone,
+  MessageSquare,
+  Users,
+} from "lucide-react";
 import { useAdmin } from "../lib/auth";
 import { DEMO_MODE } from "../lib/store";
 import { Container, Loading, PageHeader } from "../components/ui";
 import AdminLogin from "./admin/AdminLogin";
 import AdminMembers from "./admin/AdminMembers";
+import AdminSms from "./admin/AdminSms";
 import AdminBoards from "./admin/AdminBoards";
 import AdminBanners from "./admin/AdminBanners";
 import AdminResources from "./admin/AdminResources";
@@ -12,6 +21,7 @@ import AdminEvents from "./admin/AdminEvents";
 
 const TABS = [
   { key: "members", label: "회원 관리", icon: Users, Panel: AdminMembers },
+  { key: "sms", label: "문자 문구", icon: MessageSquare, Panel: AdminSms },
   { key: "boards", label: "게시판 관리", icon: Megaphone, Panel: AdminBoards },
   { key: "resources", label: "자료실 관리", icon: FolderUp, Panel: AdminResources },
   { key: "events", label: "일정 관리", icon: CalendarDays, Panel: AdminEvents },

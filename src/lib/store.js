@@ -8,6 +8,7 @@ import {
   onSnapshot,
   query,
   orderBy,
+  writeBatch,
 } from "firebase/firestore";
 import {
   ref as storageRef,
@@ -116,6 +117,38 @@ export async function createDoc(name, data) {
 
   const res = await addDoc(collection(db, name), row);
   return res.id;
+}
+
+/**
+ * 여러 건을 한 번에 새로 담는다(회원 명부 올리기).
+ *
+ * 한 건씩 createDoc 을 부르면 수백 번 왕복한다. Firestore 는 한 묶음에
+ * 500건까지 담을 수 있어 그 단위로 끊어 보낸다.
+ *
+ * 묶음 중간에 실패하면 앞 묶음은 이미 들어가 있다. 되돌리지 않고 몇 건까지
+ * 들어갔는지 알려 준다. 반쯤 들어간 것을 지우려다 멀쩡한 것까지 지우는 편이
+ * 더 위험하다. 같은 파일을 다시 올리면 이미 있는 사람은 걸러진다.
+ */
+export async function createMany(name, list) {
+  const stamped = list.map((data) => ({ ...data, createdAt: new Date().toISOString() }));
+
+  if (DEMO_MODE) {
+    const rows = stamped.map((row) => ({ id: newId(), ...row }));
+    writeLocal(name, [...rows, ...readLocal(name)]);
+    return rows.length;
+  }
+
+  const LIMIT = 500;
+  let saved = 0;
+  for (let at = 0; at < stamped.length; at += LIMIT) {
+    const batch = writeBatch(db);
+    for (const row of stamped.slice(at, at + LIMIT)) {
+      batch.set(doc(collection(db, name)), row);
+    }
+    await batch.commit();
+    saved += Math.min(LIMIT, stamped.length - at);
+  }
+  return saved;
 }
 
 export async function saveDoc(name, id, patch) {
