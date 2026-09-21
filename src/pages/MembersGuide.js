@@ -1,6 +1,7 @@
 import { Check, FileText, HelpCircle, Wallet } from "lucide-react";
 import { Link } from "../lib/router";
 import {
+  applyDone,
   certificateProcess,
   certificates,
   feeGuide,
@@ -77,6 +78,7 @@ export default function MembersGuide() {
               <p className="mt-4 border-t border-slate-200 pt-4 text-sm leading-relaxed text-slate-600">
                 회비는 직위와 회원 구분에 따라 다릅니다. 오른쪽 표를 확인해 주세요.
               </p>
+              <p className="mt-3 text-sm leading-relaxed text-slate-600">{applyDone.depositor}</p>
             </Card>
             <Card>
               <h3 className="font-serif text-base font-bold text-brand-900">임원 회비</h3>

@@ -1,10 +1,13 @@
 import { useState } from "react";
-import { AlertCircle, Check, CheckCircle2, ShieldAlert } from "lucide-react";
+import { AlertCircle, Check, CheckCircle2, ShieldAlert, Wallet } from "lucide-react";
 import { Link } from "../lib/router";
 import { createDoc } from "../lib/store";
 import { useCollection } from "../lib/useCollection";
 import {
+  applyDone,
+  generalFee,
   instruments,
+  joinSteps,
   memberBenefits,
   memberSideMenu,
   applyMemberTypes,
@@ -386,20 +389,94 @@ function StepConfirm({ form, onBack, onSubmit, saving, error }) {
 }
 
 /* ── 05 신청완료 ── */
+
+/*
+ * 지금 어디까지 왔는지. 절차 이름은 site.js 의 joinSteps 에서 가져오고,
+ * 여기서는 그 옆에 붙일 상태만 둔다. 이름이 두 군데서 어긋나지 않는다.
+ */
+const PROGRESS = [
+  "접수되었습니다",
+  "위 계좌로 납부해 주세요",
+  "사무국 확인 후 이사회 승인",
+  "문자로 알려 드립니다",
+];
+
 function StepDone() {
   return (
-    <div className="mx-auto max-w-md text-center">
-      <CheckCircle2 size={48} className="mx-auto text-emerald-500" />
-      <h2 className="mt-5 font-serif text-xl font-bold text-brand-900">
-        가입 신청이 접수되었습니다
-      </h2>
-      <p className="mt-4 text-sm leading-relaxed text-slate-600">
-        사무국에서 신청 내용을 확인한 뒤 기재해 주신 연락처로 안내드리겠습니다.
-        승인 이후 안내드리는 계좌로 연회비를 납부하시면 가입이 완료됩니다.
+    <div className="mx-auto max-w-xl">
+      <div className="text-center">
+        <CheckCircle2 size={48} className="mx-auto text-emerald-500" />
+        <h2 className="mt-5 font-serif text-xl font-bold text-brand-900">{applyDone.title}</h2>
+        <p className="mt-4 text-sm leading-relaxed text-slate-600">{applyDone.lead}</p>
+      </div>
+
+      {/* 납부 계좌 — 이 화면에서 가장 먼저 눈에 들어와야 하는 것 */}
+      <div className="mt-7 rounded-xl border border-accent-300 bg-slate-50 p-5">
+        <h3 className="flex items-center gap-2 font-serif text-base font-bold text-brand-900">
+          <Wallet size={17} className="text-accent-600" />
+          납부 계좌
+        </h3>
+        <p className="mt-3 select-all text-base font-semibold leading-relaxed text-brand-900">
+          {org.bank || `계좌는 사무국(${org.phone})으로 문의해 주세요.`}
+        </p>
+        {generalFee ? (
+          <p className="mt-3 border-t border-slate-200 pt-3 text-sm text-slate-700">
+            연회비 <strong className="font-semibold text-brand-900">
+              {generalFee.toLocaleString("ko-KR")}원
+            </strong>{" "}
+            (일반회원)
+            <Link to="/members/guide" className="ml-1.5 text-accent-600 underline hover:text-accent-500">
+              직위별 회비 보기
+            </Link>
+          </p>
+        ) : null}
+      </div>
+
+      {/* 입금자명이 다르면 사무국이 누가 냈는지 알 수 없다. 가장 흔한 사고라 따로 뺀다. */}
+      <p className="mt-3 flex gap-2.5 rounded-lg bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900">
+        <AlertCircle size={17} className="mt-0.5 shrink-0 text-amber-600" aria-hidden="true" />
+        <span>{applyDone.depositor}</span>
       </p>
-      <p className="mt-5 rounded-lg bg-slate-50 px-4 py-3 text-sm text-brand-900">
-        {org.bank || `회비 문의 ${org.phone}`}
+
+      <h3 className="mt-9 font-serif text-base font-bold text-brand-900">앞으로의 절차</h3>
+      <ol className="mt-3 divide-y divide-slate-100 border-y border-slate-100">
+        {joinSteps.map((step, index) => {
+          const done = index === 0;
+          const now = index === 1;
+          return (
+            <li key={step.title} className="flex items-center gap-3 py-3">
+              <span
+                aria-hidden="true"
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                  done
+                    ? "bg-emerald-500 text-white"
+                    : now
+                      ? "bg-accent-600 text-white"
+                      : "bg-slate-100 text-slate-500"
+                }`}
+              >
+                {done ? <Check size={13} strokeWidth={3} /> : index + 1}
+              </span>
+              <span
+                className={`text-sm font-medium ${now ? "text-brand-900" : "text-slate-700"}`}
+              >
+                {step.title}
+              </span>
+              <span className="ml-auto text-right text-xs text-slate-500">{PROGRESS[index]}</span>
+            </li>
+          );
+        })}
+      </ol>
+
+      <p className="mt-5 rounded-lg bg-slate-50 px-4 py-3 text-sm leading-relaxed text-slate-700">
+        {applyDone.sms}
       </p>
+
+      <p className="mt-4 text-center text-sm text-slate-500">
+        문의 {org.phone}
+        {org.email ? ` · ${org.email}` : ""}
+      </p>
+
       <div className="mt-8 flex justify-center gap-2">
         <Link
           to="/"
