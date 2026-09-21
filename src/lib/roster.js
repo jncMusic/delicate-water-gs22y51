@@ -15,7 +15,40 @@ const HEADERS = {
   name: ["이름", "성명", "성명단체명", "성명또는단체명", "단체명", "회원명", "name"],
   memberType: ["구분", "회원구분", "회원종류", "종류", "membertype", "type"],
   phone: ["연락처", "전화", "전화번호", "휴대전화", "휴대폰", "핸드폰", "phone", "tel"],
+  region: ["지역", "활동지역", "시도", "지회", "region", "area"],
+  paidAt: ["입금일", "납부일", "입금사항", "입금확인일", "회비납부일", "납부", "입금"],
+  createdAt: ["신청일", "가입일", "등록일", "가입일자", "신청일자"],
 };
+
+/**
+ * 엑셀 날짜 칸을 YYYY-MM-DD 로 맞춘다.
+ *
+ * 세 가지 모양으로 들어온다.
+ * - Date — XLSX 를 cellDates 로 읽으면 이것으로 온다
+ * - "2026-03-15" · "2026.3.15" · "2026/3/15" — 손으로 친 것
+ * - 그 밖 — 날짜가 아니다. 빈 값으로 돌려보내 지어내지 않는다.
+ *
+ * 나라 시간대를 쓰지 않고 자리값을 그대로 읽는다. toISOString 을 쓰면 한국에서
+ * 찍은 3월 15일이 3월 14일로 하루 밀린다.
+ */
+export function toDate(value) {
+  if (!value) return "";
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
+  }
+
+  const text = String(value).trim();
+  const parts = text.match(/^(\d{4})[-./\s]+(\d{1,2})[-./\s]+(\d{1,2})\.?$/);
+  if (!parts) return "";
+
+  const [, year, month, day] = parts;
+  const m = Number(month);
+  const d = Number(day);
+  if (m < 1 || m > 12 || d < 1 || d > 31) return "";
+  return `${year}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
 
 /** 열 이름 비교용. "성명 / 단체명" 과 "성명단체명" 을 같게 본다. */
 function normalizeHeader(value) {
@@ -81,6 +114,12 @@ export function readRoster(table, existing, knownTypes = []) {
     const memberType = at(columns.memberType);
     const rawPhone = at(columns.phone);
     const phone = digits(rawPhone);
+    const region = at(columns.region);
+    // 날짜 칸은 Date 로 올 수 있으므로 at() 을 거치지 않고 원래 값을 본다.
+    const rawPaid = columns.paidAt === undefined ? "" : cells[columns.paidAt];
+    const rawJoined = columns.createdAt === undefined ? "" : cells[columns.createdAt];
+    const paidAt = toDate(rawPaid);
+    const joinedAt = toDate(rawJoined);
 
     // 이름이 없으면 줄이 아니다. 빈 줄도 여기서 걸러진다.
     if (!name) {
@@ -109,16 +148,32 @@ export function readRoster(table, existing, knownTypes = []) {
       result.warn.push({ line: line + 1, reason: `${name} — 모르는 구분입니다 (${memberType})` });
     }
 
-    result.rows.push({
+    // 날짜로 읽히지 않으면 알려 준다. 조용히 버리면 사무국은 담긴 줄 안다.
+    if (rawPaid && !paidAt) {
+      result.warn.push({ line: line + 1, reason: `${name} — 입금일을 날짜로 읽지 못했습니다 (${rawPaid})` });
+    }
+    if (rawJoined && !joinedAt) {
+      result.warn.push({ line: line + 1, reason: `${name} — 신청일을 날짜로 읽지 못했습니다 (${rawJoined})` });
+    }
+
+    const row = {
       name,
       memberType,
       // 적힌 그대로 담는다. 하이픈을 지우면 사무국이 보던 모양과 달라진다.
       phone: rawPhone,
-      // 명부에 있는 분은 이미 회원이다. 그래서 승인 상태로 담고,
-      // 입금 확인일은 비운다(언제 냈는지 모르므로 지어내지 않는다).
+      region,
+      // 명부에 있는 분은 이미 회원이므로 승인 상태로 담는다.
       status: "승인",
       source: "명부",
-    });
+    };
+
+    // 빈 값을 넣어 두면 화면에서 "적혀 있는데 비었다" 와 구별이 안 된다.
+    // 읽힌 것만 넣는다.
+    if (paidAt) row.paidAt = paidAt;
+    // 신청일이 적혀 있으면 그 날로 담는다. 없으면 store 가 올리는 날로 찍는다.
+    if (joinedAt) row.createdAt = `${joinedAt}T00:00:00+09:00`;
+
+    result.rows.push(row);
   }
 
   return result;
