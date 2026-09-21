@@ -130,7 +130,9 @@ export async function createDoc(name, data) {
  * 더 위험하다. 같은 파일을 다시 올리면 이미 있는 사람은 걸러진다.
  */
 export async function createMany(name, list) {
-  const stamped = list.map((data) => ({ ...data, createdAt: new Date().toISOString() }));
+  // 명부처럼 실제 가입일을 아는 경우가 있다. 적혀 있으면 그것을 살린다.
+  const now = new Date().toISOString();
+  const stamped = list.map((data) => ({ createdAt: now, ...data }));
 
   if (DEMO_MODE) {
     const rows = stamped.map((row) => ({ id: newId(), ...row }));
