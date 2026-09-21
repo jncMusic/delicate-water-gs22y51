@@ -20,6 +20,7 @@ import Events from "./pages/Events";
 import ContestHistory from "./pages/ContestHistory";
 import MembersGuide from "./pages/MembersGuide";
 import MembersApply from "./pages/MembersApply";
+import MembersCertificate from "./pages/MembersCertificate";
 import Branches from "./pages/Branches";
 import Resources from "./pages/Resources";
 import Board, { BoardDetail } from "./pages/Board";
@@ -47,6 +48,7 @@ const ROUTES = {
   "/members/guide": MembersGuide,
   "/members/apply": MembersApply,
   "/members/branches": Branches,
+  "/members/certificate": MembersCertificate,
 
   "/info/arts": () => <Board board={boards.arts} />,
   "/info/scene": () => <Board board={boards.scene} />,

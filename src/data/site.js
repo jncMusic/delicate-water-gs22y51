@@ -55,6 +55,7 @@ export const menus = [
       { label: "회원 안내", path: "/members/guide" },
       { label: "가입 신청", path: "/members/apply" },
       { label: "지회·지부", path: "/members/branches" },
+      { label: "증명서 발급", path: "/members/certificate" },
     ],
   },
   {
@@ -83,6 +84,7 @@ export const memberSideMenu = {
   label: "회원정보",
   children: [
     { label: "정/준회원 가입신청", path: "/members/apply" },
+    { label: "증명서 발급 신청", path: "/members/certificate" },
     { label: "서비스 이용약관", path: "/policy/terms" },
     { label: "개인정보 처리방침", path: "/policy/privacy" },
     { label: "이메일 무단수집 거부", path: "/policy/email" },
@@ -656,10 +658,30 @@ export const feeGuide = {
 
 /** 회원에게 발급하는 증명서 종류와 절차. */
 /** 발급 가능한 증명서. 확인된 목록이 없어 비워 둡니다. */
-export const certificates = [];
+export const certificates = [
+  {
+    name: "회원증",
+    use: "한국관악협회 회원임을 확인하는 증서입니다. 회원 자격이 유지되는 동안 발급받으실 수 있습니다.",
+  },
+  {
+    // 회원이라는 사실만으로 지도자임이 따라 나오지 않는다. 정관 제6조의
+    // 정회원은 '관악을 전공한 자' 도 포함하므로, 지도하지 않는 회원이 있다.
+    // 협회가 확인하지 않은 것을 확인했다고 적지 않는다. 발급 조건은 사무국이
+    // 정한 뒤 여기에 적는다.
+    name: "지도자 확인서",
+    use: "관악 지도 활동에 관한 확인서입니다. 발급 조건과 필요한 서류는 사무국으로 문의해 주세요.",
+  },
+];
 
-/** 증명서 발급 절차. 확인된 내용이 없어 비워 둡니다. */
-export const certificateProcess = [];
+/** 증명서 종류 이름만. 신청 화면의 고르는 칸에 쓴다. */
+export const certificateTypes = certificates.map((item) => item.name);
+
+export const certificateProcess = [
+  "홈페이지에서 발급 신청서를 작성해 제출합니다.",
+  "사무국이 회원 명부와 대조해 회원 자격을 확인합니다.",
+  "확인이 끝나면 적어 주신 연락처로 안내드립니다.",
+  "발급 방법과 소요 기간은 사무국으로 문의해 주세요.",
+];
 
 /**
  * 홈페이지 운영에 쓰는 외부 서비스. 개인정보 처리방침의 위탁·국외 이전 항목에 씁니다.

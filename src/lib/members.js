@@ -83,3 +83,30 @@ export function smsGroups(rows) {
     duplicate: rows.filter((row) => dupes.has(row.id) && row.status !== "탈퇴"),
   };
 }
+
+/**
+ * 증명서 신청자가 회원 명부에 있는지 본다.
+ *
+ * 연락처를 열쇠로 삼는다. 이름은 동명이인이 있어 혼자서는 못 믿는다.
+ * 번호가 맞으면 이름까지 같은지 함께 본다.
+ *
+ * 돌려주는 값
+ *   found  명부에 있고 승인된 회원 — 발급해도 되는 분
+ *   name   번호는 맞는데 이름이 다름 — 사람이 봐야 하는 경우
+ *   none   명부에 없음
+ */
+export function matchMember(request, members) {
+  const phone = digits(request && request.phone);
+  if (phone.length < 9) return { state: "none", member: null };
+
+  const hit = members.find(
+    (row) => digits(row.phone) === phone && row.status !== "탈퇴"
+  );
+  if (!hit) return { state: "none", member: null };
+
+  const same = String(hit.name || "").trim() === String(request.name || "").trim();
+  if (!same) return { state: "name", member: hit };
+
+  // 승인 전이면 아직 회원이 아니다. 발급 대상이 아니라고 알려야 한다.
+  return { state: hit.status === "승인" ? "found" : "name", member: hit };
+}
