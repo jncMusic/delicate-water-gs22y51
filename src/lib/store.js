@@ -5,6 +5,7 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  getDoc,
   onSnapshot,
   query,
   orderBy,
@@ -107,6 +108,22 @@ export function subscribe(name, callback) {
   );
 }
 
+/**
+ * 문서 한 건만 읽는다.
+ *
+ * 목록을 훑지 않고 id 를 아는 한 건만 가져온다. 증명서를 신청한 분이 접수할
+ * 때 받은 주소로 자기 것을 확인하는 데 쓴다. 보안 규칙도 get 만 열어 두었다.
+ *
+ * 없으면 null. 없는 것은 오류가 아니다.
+ */
+export async function readDoc(name, id) {
+  if (DEMO_MODE) {
+    return readLocal(name).find((row) => row.id === id) || null;
+  }
+  const snap = await getDoc(doc(db, name, id));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
 export async function createDoc(name, data) {
   const row = { ...data, createdAt: new Date().toISOString() };
 
@@ -204,6 +221,33 @@ const readAsDataUrl = (file) =>
  * 첨부파일 업로드.
  * @returns {{name, size, type, url, path}} url 이 null 이면 내려받을 수 없는 상태(데모 모드의 대용량 파일).
  */
+/**
+ * 완성된 증명서를 올린다.
+ *
+ * 직인이 찍힌 그림 한 장이다. 파일 이름을 신청서의 문서 id 로 삼아, 주소를
+ * 받은 본인만 찾아갈 수 있게 한다. 다시 발급하면 같은 자리에 덮어쓴다.
+ *
+ * 여기서는 getDownloadURL 을 쓴다. 직인과 달리 이 파일은 신청한 분이 받아야
+ * 하고 그분은 로그인하지 않기 때문이다. 나가는 것은 완성된 문서 한 장이고,
+ * 직인 그림 자체는 여전히 사무국 밖으로 나가지 않는다.
+ */
+export async function uploadCertificate(id, blob) {
+  if (DEMO_MODE) {
+    const asText = await new Promise((done, fail) => {
+      const reader = new FileReader();
+      reader.onload = () => done(reader.result);
+      reader.onerror = fail;
+      reader.readAsDataURL(blob);
+    });
+    window.localStorage.setItem(`kwa:cert:${id}`, asText);
+    return asText;
+  }
+
+  const target = storageRef(storage, `certificates/${id}.png`);
+  await uploadBytes(target, blob, { contentType: "image/png" });
+  return getDownloadURL(target);
+}
+
 /* ─────────────────────────── 협회 직인 ─────────────────────────── */
 
 /**

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertCircle, CheckCircle2, FileText } from "lucide-react";
+import { AlertCircle, CheckCircle2, FileText, Link2 as LinkIcon } from "lucide-react";
 import { Link } from "../lib/router";
 import { createDoc } from "../lib/store";
 import {
@@ -26,7 +26,20 @@ const EMPTY = {
 
 const onlyDigits = (value) => String(value || "").replace(/\D/g, "");
 
-function Done({ form }) {
+/** 신청한 분이 자기 증명서를 확인하는 주소. */
+const statusUrl = (id) =>
+  `${org.siteUrl || window.location.origin}/members/certificate/${id}`;
+
+async function copy(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    window.alert("주소를 복사했습니다.");
+  } catch {
+    window.prompt("아래 주소를 복사해 두세요.", text);
+  }
+}
+
+function Done({ form, id }) {
   return (
     <div className="mx-auto max-w-xl">
       <div className="text-center">
@@ -53,6 +66,37 @@ function Done({ form }) {
           <dd className="text-slate-700">{form.phone}</dd>
         </div>
       </dl>
+
+      {/* 이 주소가 유일한 길이다. 로그인이 없으니 잃어버리면 사무국에 물어야
+          한다. 눈에 띄게 두고 복사할 수 있게 한다. */}
+      {id ? (
+        <div className="mt-6 rounded-xl border border-accent-300 bg-slate-50 p-5">
+          <h3 className="flex items-center gap-2 font-serif text-base font-bold text-brand-900">
+            <LinkIcon size={16} className="text-accent-600" />
+            증명서 받는 주소
+          </h3>
+          <p className="mt-2 text-sm leading-relaxed text-slate-700">
+            발급이 끝나면 아래 주소에서 내려받으실 수 있습니다.{" "}
+            <strong className="font-semibold text-brand-900">
+              이 주소를 저장해 두세요.
+            </strong>
+          </p>
+          <p className="mt-3 select-all break-all rounded-lg bg-white px-3 py-2.5 text-sm text-brand-900">
+            {statusUrl(id)}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={() => copy(statusUrl(id))}>
+              주소 복사
+            </Button>
+            <Link
+              to={`/members/certificate/${id}`}
+              className="inline-flex items-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-brand-800 hover:bg-slate-50"
+            >
+              지금 열어 보기
+            </Link>
+          </div>
+        </div>
+      ) : null}
 
       {/* 회원이 아니면 발급되지 않는다는 것을 미리 알린다. 기다리다 거절당하는
           것보다 지금 아는 편이 낫다. */}
@@ -108,7 +152,7 @@ export default function MembersCertificate() {
     setError(null);
     setSaving(true);
     try {
-      await createDoc("certificateRequests", {
+      const id = await createDoc("certificateRequests", {
         name: form.name.trim(),
         phone: form.phone.trim(),
         type: form.type,
@@ -121,7 +165,7 @@ export default function MembersCertificate() {
         ),
         status: "접수",
       });
-      setDone({ ...form });
+      setDone({ form: { ...form }, id });
     } catch (err) {
       console.error(err);
       setError("신청 접수에 실패했습니다. 잠시 후 다시 시도해 주세요.");
@@ -137,7 +181,7 @@ export default function MembersCertificate() {
       subtitle="회원 자격이 확인되는 분께 발급해 드립니다."
     >
       {done ? (
-        <Done form={done} />
+        <Done form={done.form} id={done.id} />
       ) : (
         <div className="mx-auto max-w-xl">
           <div className="grid gap-3 sm:grid-cols-2">

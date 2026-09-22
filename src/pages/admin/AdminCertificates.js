@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, CircleAlert, CircleHelp, Printer, Stamp, Trash2 } from "lucide-react";
+import { Check, CircleAlert, CircleHelp, Download, Link2, Printer, Stamp, Trash2 } from "lucide-react";
 import { useCollection } from "../../lib/useCollection";
 import { issueCheck, matchMember, rolesOf } from "../../lib/members";
-import { loadSeal, removeDoc, saveDoc, uploadSeal } from "../../lib/store";
+import { loadSeal, removeDoc, saveDoc, uploadCertificate, uploadSeal } from "../../lib/store";
 import CertificateSheet from "./CertificateSheet";
-import { branchList, chapterList, executives } from "../../data/site";
+import { branchList, chapterList, executives, org } from "../../data/site";
 import { Badge, Button, EmptyState, Loading, Select, formatDate } from "../../components/ui";
 
 /** 신청 처리 상태. 접수 → 발급 완료, 또는 반려. */
@@ -83,6 +83,10 @@ export default function AdminCertificates() {
   const [seal, setSeal] = useState(null);
   const [sealBusy, setSealBusy] = useState(false);
   const [sheet, setSheet] = useState(null);
+  const [issuing, setIssuing] = useState(null);
+  /* 그림으로 뜰 때 쓰는 자리. 화면 밖에 두어 사무국 눈에 띄지 않게 한다. */
+  const shotRef = useRef(null);
+  const [shot, setShot] = useState(null);
   const sealInput = useRef(null);
 
   /* 직인은 화면을 열 때 한 번만 받아 온다. 인쇄할 때마다 받으면 느리다. */
@@ -161,6 +165,63 @@ export default function AdminCertificates() {
       await saveDoc("certificateRequests", row.id, { docNo });
     }
     setSheet({ row, docNo, issuedAt: new Date() });
+  };
+
+  /**
+   * 발급한다. 증명서를 그림 한 장으로 떠서 올리고, 그 주소를 신청 줄에 남긴다.
+   *
+   * 직인은 이 순간 사무국 브라우저 안에서만 쓰인다. 신청한 분에게 나가는 것은
+   * 완성된 문서 한 장이고 직인 그림 자체가 아니다.
+   *
+   * html2canvas 는 이때만 불러온다. 관리자 화면에서 증명서를 만들 때 말고는
+   * 쓸 일이 없어, 늘 담아 두면 보는 사람 모두가 헛되이 내려받는다.
+   */
+  const issue = async (row) => {
+    let docNo = row.docNo;
+    if (!docNo) docNo = nextDocNo(rows, new Date().getFullYear());
+    const issuedAt = new Date();
+
+    setIssuing(row.id);
+    try {
+      setShot({ row, docNo, issuedAt });
+      // 그려질 때까지 한 번 쉬어 간다. 그리기 전에 찍으면 빈 종이가 나온다.
+      await new Promise((done) => setTimeout(done, 120));
+
+      const { default: html2canvas } = await import("html2canvas");
+      const canvas = await html2canvas(shotRef.current.firstChild, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+      });
+      const blob = await new Promise((done) => canvas.toBlob(done, "image/png"));
+      if (!blob) throw new Error("그림으로 뜨지 못했습니다");
+
+      const url = await uploadCertificate(row.id, blob);
+      await saveDoc("certificateRequests", row.id, {
+        docNo,
+        fileUrl: url,
+        issuedAt: issuedAt.toISOString(),
+        status: "발급 완료",
+      });
+    } catch (err) {
+      console.error(err);
+      window.alert("증명서를 만들지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setShot(null);
+      setIssuing(null);
+    }
+  };
+
+  /** 신청한 분에게 문자로 보낼 주소. */
+  const linkFor = (row) => `${org.siteUrl || window.location.origin}/members/certificate/${row.id}`;
+
+  const copyLink = async (row) => {
+    try {
+      await navigator.clipboard.writeText(linkFor(row));
+      window.alert("주소를 복사했습니다. 문자로 보내 주세요.");
+    } catch {
+      window.prompt("아래 주소를 복사해 문자로 보내 주세요.", linkFor(row));
+    }
   };
 
   const remove = async (row) => {
@@ -311,6 +372,21 @@ export default function AdminCertificates() {
                   </dl>
                 ) : null}
 
+                {row.fileUrl ? (
+                  <p className="mt-3 flex flex-wrap items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+                    <Download size={13} className="shrink-0" aria-hidden="true" />
+                    제 {row.docNo} 호 발급됨 · {formatDate(row.issuedAt)}
+                    <a
+                      href={row.fileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline hover:text-emerald-700"
+                    >
+                      파일 보기
+                    </a>
+                  </p>
+                ) : null}
+
                 {row.note ? (
                   <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
                     {row.note}
@@ -320,8 +396,8 @@ export default function AdminCertificates() {
                 <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
                   <Button
                     variant="gold"
-                    onClick={() => openSheet(row)}
-                    disabled={!row.issue.ok || !seal}
+                    onClick={() => issue(row)}
+                    disabled={!row.issue.ok || !seal || issuing === row.id}
                     title={
                       !seal
                         ? "직인을 먼저 올려 주세요"
@@ -330,9 +406,27 @@ export default function AdminCertificates() {
                           : ""
                     }
                   >
-                    <Printer size={15} />
-                    증명서 만들기
+                    <Check size={15} />
+                    {issuing === row.id
+                      ? "만드는 중..."
+                      : row.fileUrl
+                        ? "다시 발급"
+                        : "발급하기"}
                   </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => openSheet(row)}
+                    disabled={!row.issue.ok || !seal}
+                  >
+                    <Printer size={15} />
+                    미리 보기
+                  </Button>
+                  {row.fileUrl ? (
+                    <Button variant="secondary" onClick={() => copyLink(row)}>
+                      <Link2 size={15} />
+                      받는 주소 복사
+                    </Button>
+                  ) : null}
                   {STATUSES.filter((item) => item !== row.status).map((item) => (
                     <Button
                       key={item}
@@ -356,6 +450,25 @@ export default function AdminCertificates() {
           })}
         </div>
       )}
+
+      {/* 그림으로 뜰 종이. 화면 밖에 두어 보이지 않지만 실제로 그려져 있어야
+          html2canvas 가 찍을 수 있다. display:none 이면 아무것도 안 나온다. */}
+      {shot ? (
+        <div
+          ref={shotRef}
+          aria-hidden="true"
+          style={{ position: "fixed", left: "-9999px", top: 0 }}
+        >
+          <CertificateSheet
+            request={shot.row}
+            member={shot.row.match.member || {}}
+            roles={shot.row.roles}
+            docNo={shot.docNo}
+            issuedAt={shot.issuedAt}
+            seal={seal}
+          />
+        </div>
+      ) : null}
 
       {/* 증명서를 화면 위에 띄운다. 인쇄하면 이 종이만 남는다(index.css). */}
       {sheet ? (
