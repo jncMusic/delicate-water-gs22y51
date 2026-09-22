@@ -264,6 +264,20 @@ service firebase.storage {
         && folder in ['resources', 'banners']
         && request.resource.size < 20 * 1024 * 1024;
     }
+
+    // 협회 직인. 증명서를 만들 때만 쓴다.
+    //
+    // 위 칸과 달리 읽기도 로그인한 계정만 된다. 직인 그림이 밖으로 나가면
+    // 협회 공문서를 위조할 수 있다. 지금 이 홈페이지에 로그인하는 계정은
+    // 사무국(관리자)뿐이다.
+    //
+    // 쓰는 쪽에서 getDownloadURL 을 부르면 안 된다. 그것은 토큰만 있으면
+    // 로그인 없이 열리는 주소를 만들어 이 규칙을 우회한다. 증명서를 만들
+    // 때마다 SDK 로 내용을 직접 받아 쓴다.
+    match /seal/{file} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.resource.size < 2 * 1024 * 1024;
+    }
   }
 }
 ```

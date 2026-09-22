@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
-import { Check, CircleAlert, CircleHelp, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Check, CircleAlert, CircleHelp, Printer, Stamp, Trash2 } from "lucide-react";
 import { useCollection } from "../../lib/useCollection";
-import { issueCheck, matchMember } from "../../lib/members";
-import { removeDoc, saveDoc } from "../../lib/store";
+import { issueCheck, matchMember, rolesOf } from "../../lib/members";
+import { loadSeal, removeDoc, saveDoc, uploadSeal } from "../../lib/store";
+import CertificateSheet from "./CertificateSheet";
+import { branchList, chapterList, executives } from "../../data/site";
 import { Badge, Button, EmptyState, Loading, Select, formatDate } from "../../components/ui";
 
 /** 신청 처리 상태. 접수 → 발급 완료, 또는 반려. */
@@ -45,6 +47,26 @@ const MATCH = {
   },
 };
 
+/**
+ * 문서번호. KBA-2026-0001 꼴.
+ *
+ * 한 번 붙은 번호는 바뀌지 않는다. 발급한 문서에 찍혀 나가기 때문이다.
+ * 그래서 신청 줄에 적어 두고, 없을 때만 새로 만든다.
+ *
+ * 그해에 이미 붙은 번호 중 가장 큰 것 다음을 쓴다. 지운 신청이 있어도
+ * 번호가 되쓰이지 않는다.
+ */
+function nextDocNo(rows, year) {
+  const head = `KBA-${year}-`;
+  const used = rows
+    .map((row) => row.docNo)
+    .filter((no) => typeof no === "string" && no.startsWith(head))
+    .map((no) => Number(no.slice(head.length)))
+    .filter((n) => Number.isFinite(n));
+  const next = (used.length ? Math.max(...used) : 0) + 1;
+  return `${head}${String(next).padStart(4, "0")}`;
+}
+
 function Stat({ label, value, tone = "" }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white px-4 py-3">
@@ -58,13 +80,39 @@ export default function AdminCertificates() {
   const { rows, loading } = useCollection("certificateRequests");
   const { rows: members } = useCollection("members");
   const [status, setStatus] = useState("전체");
+  const [seal, setSeal] = useState(null);
+  const [sealBusy, setSealBusy] = useState(false);
+  const [sheet, setSheet] = useState(null);
+  const sealInput = useRef(null);
+
+  /* 직인은 화면을 열 때 한 번만 받아 온다. 인쇄할 때마다 받으면 느리다. */
+  const refreshSeal = useCallback(async () => {
+    setSeal(await loadSeal());
+  }, []);
+
+  useEffect(() => {
+    refreshSeal();
+  }, [refreshSeal]);
+
+  /* 인쇄할 때 증명서만 남기려면 body 에 표시를 걸어야 한다. */
+  useEffect(() => {
+    document.body.classList.toggle("printing-cert", Boolean(sheet));
+    return () => document.body.classList.remove("printing-cert");
+  }, [sheet]);
 
   /* 신청마다 명부를 한 번씩 맞춰 본다. 명부가 바뀌면 다시 센다. */
   const checked = useMemo(
     () =>
       rows.map((row) => {
         const match = matchMember(row, members);
-        return { ...row, match, issue: issueCheck(row, match.member) };
+        // 이름은 명부에서 확인된 쪽을 쓴다. 신청서에 적힌 이름이 아니라
+        // 협회가 아는 이름으로 자리를 찾아야 한다.
+        const roles = rolesOf(match.member ? match.member.name : row.name, {
+          branches: branchList,
+          chapters: chapterList,
+          executives,
+        });
+        return { ...row, match, roles, issue: issueCheck(row, match.member, roles) };
       }),
     [rows, members]
   );
@@ -86,6 +134,35 @@ export default function AdminCertificates() {
 
   const setStatusOf = (id, next) => saveDoc("certificateRequests", id, { status: next });
 
+  const pickSeal = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setSealBusy(true);
+    try {
+      await uploadSeal(file);
+      await refreshSeal();
+    } catch (err) {
+      console.error(err);
+      window.alert("직인을 올리지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setSealBusy(false);
+      if (sealInput.current) sealInput.current.value = "";
+    }
+  };
+
+  /**
+   * 증명서를 연다. 번호가 없으면 이때 붙이고 신청 줄에 적어 둔다.
+   * 한 번 붙은 번호는 문서에 찍혀 나가므로 바뀌면 안 된다.
+   */
+  const openSheet = async (row) => {
+    let docNo = row.docNo;
+    if (!docNo) {
+      docNo = nextDocNo(rows, new Date().getFullYear());
+      await saveDoc("certificateRequests", row.id, { docNo });
+    }
+    setSheet({ row, docNo, issuedAt: new Date() });
+  };
+
   const remove = async (row) => {
     if (!window.confirm(`'${row.name}' 님의 ${row.type} 신청을 지울까요? 되돌릴 수 없습니다.`)) return;
     await removeDoc("certificateRequests", row.id);
@@ -102,6 +179,42 @@ export default function AdminCertificates() {
           합니다. 연락처가 열쇠이고, 이름까지 같은지 함께 봅니다.{" "}
           <strong className="font-semibold text-brand-900">확인됨</strong> 으로 뜬 분께만 발급해
           주세요.
+        </span>
+      </div>
+
+      <div className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3">
+        <Stamp size={17} className="shrink-0 text-slate-400" aria-hidden="true" />
+        <span className="text-sm text-slate-700">
+          협회 직인{" "}
+          {seal ? (
+            <strong className="font-semibold text-emerald-700">올라와 있습니다</strong>
+          ) : (
+            <strong className="font-semibold text-rose-700">아직 없습니다</strong>
+          )}
+        </span>
+        {seal ? (
+          <img
+            src={seal}
+            alt="직인 미리보기"
+            className="h-9 w-9 rounded border border-slate-200 object-contain"
+          />
+        ) : null}
+        <input
+          ref={sealInput}
+          type="file"
+          accept="image/png,image/jpeg"
+          onChange={pickSeal}
+          className="hidden"
+        />
+        <Button
+          variant="secondary"
+          onClick={() => sealInput.current?.click()}
+          disabled={sealBusy}
+        >
+          {sealBusy ? "올리는 중..." : seal ? "바꾸기" : "직인 올리기"}
+        </Button>
+        <span className="text-xs text-slate-500">
+          배경이 비치는 PNG 가 좋습니다. 사무국만 볼 수 있고 홈페이지에 나가지 않습니다.
         </span>
       </div>
 
@@ -205,6 +318,21 @@ export default function AdminCertificates() {
                 ) : null}
 
                 <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+                  <Button
+                    variant="gold"
+                    onClick={() => openSheet(row)}
+                    disabled={!row.issue.ok || !seal}
+                    title={
+                      !seal
+                        ? "직인을 먼저 올려 주세요"
+                        : !row.issue.ok
+                          ? row.issue.reason
+                          : ""
+                    }
+                  >
+                    <Printer size={15} />
+                    증명서 만들기
+                  </Button>
                   {STATUSES.filter((item) => item !== row.status).map((item) => (
                     <Button
                       key={item}
@@ -228,6 +356,36 @@ export default function AdminCertificates() {
           })}
         </div>
       )}
+
+      {/* 증명서를 화면 위에 띄운다. 인쇄하면 이 종이만 남는다(index.css). */}
+      {sheet ? (
+        <div className="cert-print-root fixed inset-0 z-50 overflow-auto bg-slate-700/60 p-6">
+          <div className="mx-auto w-fit">
+            <div className="mb-3 flex flex-wrap items-center gap-2 print:hidden">
+              <Button onClick={() => window.print()}>
+                <Printer size={15} />
+                인쇄 · PDF 로 저장
+              </Button>
+              <Button variant="secondary" onClick={() => setSheet(null)}>
+                닫기
+              </Button>
+              <span className="text-sm text-white">
+                제 {sheet.docNo} 호 · 인쇄 창에서 「PDF 로 저장」을 고르시면 파일이 됩니다.
+              </span>
+            </div>
+            <div className="shadow-2xl">
+              <CertificateSheet
+                request={sheet.row}
+                member={sheet.row.match.member || {}}
+                roles={sheet.row.roles}
+                docNo={sheet.docNo}
+                issuedAt={sheet.issuedAt}
+                seal={seal}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

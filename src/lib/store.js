@@ -14,6 +14,7 @@ import {
   ref as storageRef,
   uploadBytes,
   getDownloadURL,
+  getBytes,
   deleteObject,
 } from "firebase/storage";
 import { db, storage, firebaseEnabled } from "./firebase";
@@ -203,6 +204,72 @@ const readAsDataUrl = (file) =>
  * 첨부파일 업로드.
  * @returns {{name, size, type, url, path}} url 이 null 이면 내려받을 수 없는 상태(데모 모드의 대용량 파일).
  */
+/* ─────────────────────────── 협회 직인 ─────────────────────────── */
+
+/**
+ * 직인은 다른 파일과 다르게 다룬다.
+ *
+ * getDownloadURL 을 부르지 않는다. 그것은 토큰만 있으면 로그인 없이 열리는
+ * 주소를 만들어 Storage 규칙을 우회한다. 한 번 새면 막을 수 없다.
+ *
+ * 대신 쓸 때마다 내용을 직접 받아 화면 안에서만 쓴다. 그러면 로그인 검사가
+ * 걸리고 밖으로 나갈 주소가 생기지 않는다.
+ */
+const SEAL_PATH = "seal/kba-seal";
+
+/** 직인을 올린다. 늘 같은 자리에 덮어써서 여러 장이 남지 않게 한다. */
+export async function uploadSeal(file) {
+  if (DEMO_MODE) {
+    const asText = await new Promise((done, fail) => {
+      const reader = new FileReader();
+      reader.onload = () => done(reader.result);
+      reader.onerror = fail;
+      reader.readAsDataURL(file);
+    });
+    window.localStorage.setItem("kwa:seal", asText);
+    return true;
+  }
+
+  await uploadBytes(storageRef(storage, SEAL_PATH), file, {
+    contentType: file.type || "image/png",
+    cacheControl: "private, max-age=0",
+  });
+  return true;
+}
+
+/**
+ * 직인을 화면에서 쓸 수 있는 모양으로 받아 온다.
+ * 올린 적이 없으면 null 을 준다. 없다고 해서 오류는 아니다.
+ */
+export async function loadSeal() {
+  if (DEMO_MODE) return window.localStorage.getItem("kwa:seal");
+
+  try {
+    const bytes = await getBytes(storageRef(storage, SEAL_PATH));
+    const blob = new Blob([bytes]);
+    return await new Promise((done, fail) => {
+      const reader = new FileReader();
+      reader.onload = () => done(reader.result);
+      reader.onerror = fail;
+      reader.readAsDataURL(blob);
+    });
+  } catch (err) {
+    // 아직 올리지 않았으면 여기로 온다.
+    if (err && String(err.code || "").includes("not-found")) return null;
+    console.error("[store] 직인을 읽지 못했습니다", err);
+    return null;
+  }
+}
+
+/** 직인을 지운다. */
+export async function removeSeal() {
+  if (DEMO_MODE) {
+    window.localStorage.removeItem("kwa:seal");
+    return;
+  }
+  await deleteObject(storageRef(storage, SEAL_PATH));
+}
+
 export async function uploadFile(file, folder = "resources") {
   if (DEMO_MODE) {
     const tooBig = file.size > DEMO_FILE_LIMIT;

@@ -3,6 +3,7 @@ import { AlertCircle, CheckCircle2, FileText } from "lucide-react";
 import { Link } from "../lib/router";
 import { createDoc } from "../lib/store";
 import {
+  certificateFields,
   certificateProcess,
   certificateTypes,
   certificates,
@@ -17,16 +18,11 @@ const EMPTY = {
   type: certificateTypes[0] || "",
   purpose: "",
   note: "",
-  // 지도자 확인서에만 쓰는 칸. 다른 증명서를 고르면 보내지 않는다.
-  teachingPlace: "",
-  teachingPeriod: "",
-  teachingRole: "",
+  // 증명서마다 더 묻는 칸이 다르다. 자료(site.js)에 적힌 열쇠를 모두 비워 둔다.
+  ...Object.fromEntries(
+    certificates.flatMap((item) => (item.fields || []).map((f) => [f.key, ""]))
+  ),
 };
-
-/** 고른 증명서가 지도 활동을 적어야 하는 것인가. */
-function needsTeaching(type) {
-  return Boolean(certificates.find((item) => item.name === type)?.needsTeaching);
-}
 
 const onlyDigits = (value) => String(value || "").replace(/\D/g, "");
 
@@ -103,10 +99,10 @@ export default function MembersCertificate() {
     if (!form.name.trim()) return setError("성명을 입력해 주세요.");
     if (onlyDigits(form.phone).length < 9) return setError("연락처를 정확히 입력해 주세요.");
     if (!form.type) return setError("증명서 종류를 골라 주세요.");
-    if (needsTeaching(form.type)) {
-      if (!form.teachingPlace.trim()) return setError("지도 중인 단체나 학교를 적어 주세요.");
-      if (!form.teachingPeriod.trim()) return setError("지도 기간을 적어 주세요.");
-      if (!form.teachingRole.trim()) return setError("직위를 적어 주세요.");
+    for (const field of certificateFields(form.type)) {
+      if (!String(form[field.key] || "").trim()) {
+        return setError(`${field.label}을(를) 적어 주세요.`);
+      }
     }
 
     setError(null);
@@ -118,15 +114,11 @@ export default function MembersCertificate() {
         type: form.type,
         purpose: form.purpose.trim(),
         note: form.note.trim(),
-        // 지도자 확인서가 아니면 빈 칸을 담지 않는다. 관리자 화면에서
+        // 이 증명서가 묻지 않은 칸은 담지 않는다. 관리자 화면에서
         // "적혀 있는데 비었다" 와 "물어보지도 않았다" 가 구별되어야 한다.
-        ...(needsTeaching(form.type)
-          ? {
-              teachingPlace: form.teachingPlace.trim(),
-              teachingPeriod: form.teachingPeriod.trim(),
-              teachingRole: form.teachingRole.trim(),
-            }
-          : {}),
+        ...Object.fromEntries(
+          certificateFields(form.type).map((f) => [f.key, String(form[f.key] || "").trim()])
+        ),
         status: "접수",
       });
       setDone({ ...form });
@@ -181,36 +173,24 @@ export default function MembersCertificate() {
                 ))}
               </Select>
             </Field>
-            {needsTeaching(form.type) ? (
+            {certificateFields(form.type).length > 0 ? (
               <div className="space-y-4 rounded-lg border border-accent-300 bg-slate-50 p-4">
                 <p className="text-sm leading-relaxed text-slate-700">
-                  지도자 확인서는{" "}
+                  이 증명서는{" "}
                   <strong className="font-semibold text-brand-900">
-                    연회비를 납부한 정회원
+                    {certificates.find((item) => item.name === form.type)?.need || "회원"}
                   </strong>
-                  께만 발급합니다. 아래 내용을 협회가 확인한 뒤 확인서에 적습니다.
+                  께만 발급합니다. 아래 내용을 협회가 확인한 뒤 증명서에 적습니다.
                 </p>
-                <Field label="지도 중인 단체 / 학교" required>
-                  <Input
-                    value={form.teachingPlace}
-                    onChange={set("teachingPlace")}
-                    placeholder="예) ○○중학교 관악부"
-                  />
-                </Field>
-                <Field label="지도 기간" required>
-                  <Input
-                    value={form.teachingPeriod}
-                    onChange={set("teachingPeriod")}
-                    placeholder="예) 2023년 3월 ~ 현재"
-                  />
-                </Field>
-                <Field label="직위" required>
-                  <Input
-                    value={form.teachingRole}
-                    onChange={set("teachingRole")}
-                    placeholder="예) 지도교사 · 강사 · 지휘자"
-                  />
-                </Field>
+                {certificateFields(form.type).map((field) => (
+                  <Field key={field.key} label={field.label} required>
+                    <Input
+                      value={form[field.key] || ""}
+                      onChange={set(field.key)}
+                      placeholder={field.hint}
+                    />
+                  </Field>
+                ))}
               </div>
             ) : null}
 
