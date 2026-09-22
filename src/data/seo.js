@@ -9,7 +9,7 @@
  * 같은 내용의 쪽이 여럿이라고 보고 하나만 남긴다.
  */
 import { boardByPath } from "./boards";
-import { findMenu, org } from "./site";
+import { branchTotals, findMenu, org } from "./site";
 
 /** 화면별 설명. 여기에 없는 주소는 협회 기본 설명을 쓴다. */
 const DESCRIPTIONS = {
@@ -43,7 +43,11 @@ const DESCRIPTIONS = {
 
   "/members/guide": "한국관악협회 회원 안내. 회원 구분과 권리, 회비와 가입 절차를 안내합니다.",
   "/members/apply": "한국관악협회 정회원·준회원 가입 신청 안내입니다.",
-  "/members/branches": "한국관악협회 전국 지회 14곳과 지부 7곳의 현황입니다.",
+  // 숫자를 손으로 적어 두면 지회가 늘어도 여기만 옛말이 된다. 세어서 쓴다.
+  "/members/branches":
+    `한국관악협회 전국 지회 ${branchTotals.branches}곳과 지부 ${branchTotals.chapters}곳의 현황입니다.`,
+  "/members/certificate":
+    "한국관악협회 회원증·지도자 확인서 발급 신청. 회원 자격이 확인되는 분께 발급해 드립니다.",
 
   "/policy/terms": "한국관악협회 홈페이지 서비스 이용약관입니다.",
   "/policy/privacy": "한국관악협회 개인정보 처리방침입니다.",

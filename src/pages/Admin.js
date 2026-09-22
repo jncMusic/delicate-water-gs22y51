@@ -5,6 +5,7 @@ import {
   Image,
   LogOut,
   Megaphone,
+  FileText,
   MessageSquare,
   Users,
 } from "lucide-react";
@@ -14,6 +15,7 @@ import { Container, Loading, PageHeader } from "../components/ui";
 import AdminLogin from "./admin/AdminLogin";
 import AdminMembers from "./admin/AdminMembers";
 import AdminSms from "./admin/AdminSms";
+import AdminCertificates from "./admin/AdminCertificates";
 import AdminBoards from "./admin/AdminBoards";
 import AdminBanners from "./admin/AdminBanners";
 import AdminResources from "./admin/AdminResources";
@@ -22,6 +24,7 @@ import AdminEvents from "./admin/AdminEvents";
 const TABS = [
   { key: "members", label: "회원 관리", icon: Users, Panel: AdminMembers },
   { key: "sms", label: "문자 문구", icon: MessageSquare, Panel: AdminSms },
+  { key: "certs", label: "증명서 신청", icon: FileText, Panel: AdminCertificates },
   { key: "boards", label: "게시판 관리", icon: Megaphone, Panel: AdminBoards },
   { key: "resources", label: "자료실 관리", icon: FolderUp, Panel: AdminResources },
   { key: "events", label: "일정 관리", icon: CalendarDays, Panel: AdminEvents },

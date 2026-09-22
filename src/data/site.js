@@ -55,6 +55,7 @@ export const menus = [
       { label: "회원 안내", path: "/members/guide" },
       { label: "가입 신청", path: "/members/apply" },
       { label: "지회·지부", path: "/members/branches" },
+      { label: "증명서 발급", path: "/members/certificate" },
     ],
   },
   {
@@ -83,6 +84,7 @@ export const memberSideMenu = {
   label: "회원정보",
   children: [
     { label: "정/준회원 가입신청", path: "/members/apply" },
+    { label: "증명서 발급 신청", path: "/members/certificate" },
     { label: "서비스 이용약관", path: "/policy/terms" },
     { label: "개인정보 처리방침", path: "/policy/privacy" },
     { label: "이메일 무단수집 거부", path: "/policy/email" },
@@ -122,7 +124,7 @@ export const overview = {
   facts: [
     { label: "명칭", value: "한국관악협회 (KOREAN BAND ASSOCIATION, KBA)" },
     { label: "창설", value: "1973년" },
-    { label: "지회", value: "총 14개 (광역시 5 · 도 7 · 특별자치도 1 · 해외 1) — 서울특별시 지회는 본부가 겸합니다" },
+    { label: "지회", value: "총 15개 (광역시 5 · 도 8 · 특별자치도 1 · 해외 1) — 서울특별시 지회는 본부가 겸합니다" },
     { label: "지부", value: "시 단위 7개" },
     { label: "사업본부", value: "국내사업본부 · 국제사업본부" },
   ],
@@ -656,10 +658,58 @@ export const feeGuide = {
 
 /** 회원에게 발급하는 증명서 종류와 절차. */
 /** 발급 가능한 증명서. 확인된 목록이 없어 비워 둡니다. */
-export const certificates = [];
+export const certificates = [
+  {
+    name: "회원증",
+    use: "한국관악협회 회원임을 확인하는 증서입니다.",
+    need: "승인된 회원",
+  },
+  {
+    // 회원이라는 사실만으로 지도자임이 따라 나오지 않는다. 정관 제6조의
+    // 정회원은 '관악을 전공한 자' 도 포함하므로, 지도하지 않는 회원이 있다.
+    // 그래서 '자격증' 이 아니라 '확인서' 다. 협회가 자격을 주는 것이 아니라
+    // 신청인이 밝힌 활동을 확인해 주는 것이다.
+    name: "지도자 확인서",
+    use:
+      "신청인이 밝힌 관악 지도 활동을 협회가 확인해 드리는 문서입니다. " +
+      "연회비를 납부한 정회원에게만 발급합니다.",
+    need: "연회비를 납부한 정회원",
+    fields: [
+      { key: "teachingPlace", label: "지도 중인 단체 / 학교", hint: "예) ○○중학교 관악부" },
+      { key: "teachingPeriod", label: "지도 기간", hint: "예) 2023년 3월 ~ 현재" },
+      { key: "teachingRole", label: "직위", hint: "예) 지도교사 · 강사 · 지휘자" },
+    ],
+  },
+  {
+    // 지회·지부·임원 명단은 협회가 갖고 있다. 어느 지회인지 무슨 직위인지
+    // 신청인에게 묻지 않고 명단에서 끌어온다. 스스로 적게 하면 맡지도 않은
+    // 자리를 적어 낼 수 있다. 협회가 모르는 재임 기간만 받는다.
+    name: "지회·지부장 확인서",
+    use: "협회 지회장 또는 지부장으로 재임하고 있음을 확인하는 문서입니다.",
+    need: "협회 지회장 또는 지부장",
+    fields: [{ key: "termPeriod", label: "재임 기간", hint: "예) 2024년 1월 ~ 현재" }],
+  },
+  {
+    name: "이사 경력증명서",
+    use: "협회 임원으로 재임한 경력을 증명하는 문서입니다.",
+    need: "협회 임원",
+    fields: [{ key: "termPeriod", label: "재임 기간", hint: "예) 2022년 3월 ~ 2026년 2월" }],
+  },
+];
 
-/** 증명서 발급 절차. 확인된 내용이 없어 비워 둡니다. */
-export const certificateProcess = [];
+/** 이 증명서가 더 받아야 하는 칸. 없으면 빈 배열. */
+export function certificateFields(name) {
+  return certificates.find((item) => item.name === name)?.fields || [];
+}
+
+export const certificateTypes = certificates.map((item) => item.name);
+
+export const certificateProcess = [
+  "홈페이지에서 발급 신청서를 작성해 제출합니다.",
+  "사무국이 회원 명부와 대조해 회원 자격과 회비 납부를 확인합니다.",
+  "지회장·지부장·임원 여부는 협회 명단에서 자동으로 확인합니다.",
+  "승인되면 접수할 때 받으신 주소에서 증명서를 내려받으실 수 있습니다.",
+];
 
 /**
  * 홈페이지 운영에 쓰는 외부 서비스. 개인정보 처리방침의 위탁·국외 이전 항목에 씁니다.

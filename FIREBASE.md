@@ -207,6 +207,27 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    // 증명서 발급 신청.
+    //
+    // 누구나 낼 수 있다. 회원인지는 화면에서 가리지 않고, 사무국이 명부와
+    // 대조해 판단한다. 명부를 바깥에서 읽을 수 있게 열면 회원 연락처가 통째로
+    // 새므로, 문은 신청서가 아니라 발급에 단다.
+    //
+    // 읽는 것은 사무국뿐이다. 남이 낸 신청서에는 이름과 연락처가 들어 있다.
+    match /certificateRequests/{doc} {
+      allow create: if request.resource.data.status == '접수'
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() < 100
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() > 0
+        && request.resource.data.phone.size() < 30
+        && request.resource.data.type is string
+        && request.resource.data.type.size() < 100
+        && request.resource.data.keys().size() < 20;
+      allow read, update, delete: if isAdmin();
+    }
+
     match /admins/{uid} {
       allow read: if isAdmin();
       allow write: if false;   // 콘솔에서만 추가·삭제합니다
@@ -242,6 +263,20 @@ service firebase.storage {
       allow write: if request.auth != null
         && folder in ['resources', 'banners']
         && request.resource.size < 20 * 1024 * 1024;
+    }
+
+    // 협회 직인. 증명서를 만들 때만 쓴다.
+    //
+    // 위 칸과 달리 읽기도 로그인한 계정만 된다. 직인 그림이 밖으로 나가면
+    // 협회 공문서를 위조할 수 있다. 지금 이 홈페이지에 로그인하는 계정은
+    // 사무국(관리자)뿐이다.
+    //
+    // 쓰는 쪽에서 getDownloadURL 을 부르면 안 된다. 그것은 토큰만 있으면
+    // 로그인 없이 열리는 주소를 만들어 이 규칙을 우회한다. 증명서를 만들
+    // 때마다 SDK 로 내용을 직접 받아 쓴다.
+    match /seal/{file} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.resource.size < 2 * 1024 * 1024;
     }
   }
 }

@@ -32,3 +32,33 @@
     word-break: keep-all;
   }
 }
+
+/*
+ * 증명서 인쇄.
+ *
+ * 인쇄할 때는 증명서 종이만 남기고 화면의 나머지를 뺀다. 그러지 않으면
+ * 관리자 화면의 차림표와 단추가 종이에 같이 찍힌다.
+ *
+ * 서식 자체의 크기는 CertificateSheet 안에서 mm 로 잡아 두었다.
+ */
+@media print {
+  body.printing-cert > *:not(.cert-print-root) {
+    display: none !important;
+  }
+
+  body.printing-cert .cert-print-root {
+    position: static;
+    background: #fff;
+  }
+
+  body.printing-cert .cert-print-root .cert-sheet {
+    box-shadow: none;
+    margin: 0;
+  }
+
+  /* 종이 여백은 서식이 스스로 갖고 있으므로 브라우저 것은 없앤다. */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+}
