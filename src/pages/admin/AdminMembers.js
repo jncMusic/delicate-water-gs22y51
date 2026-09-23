@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import * as XLSX from "xlsx";
-import { Download, Pencil, Search, Trash2, Upload, UserCheck, Wallet } from "lucide-react";
+import { Download, Pencil, Search, Trash2, Upload, UserCheck, UserPlus, Wallet } from "lucide-react";
 import { useCollection } from "../../lib/useCollection";
-import { duplicateIds, isPaid } from "../../lib/members";
-import { removeDoc, saveDoc, saveMany } from "../../lib/store";
+import { digits, duplicateIds, isPaid } from "../../lib/members";
+import { createDoc, removeDoc, saveDoc, saveMany } from "../../lib/store";
 import { downloadBlob } from "../../lib/download";
 import RosterImport from "./RosterImport";
 import { instruments, memberStatuses, memberTypes, regions } from "../../data/site";
@@ -149,9 +149,49 @@ export default function AdminMembers() {
     setSelected(new Set());
   };
 
+  /*
+   * 한 명 직접 담기.
+   *
+   * 엑셀 명부 올리기와 같은 자리에 들어간다. 오프라인으로 이미 가입한 분을
+   * 한두 명 넣자고 엑셀을 만드는 것은 번거롭다. 그래서 상태도 명부 올리기와
+   * 똑같이 '승인' 으로 시작한다. 사무국이 이미 회원인 줄 알고 담는 것이기
+   * 때문이다. 아직 회비 전이면 아래 상태 칸에서 바꾸면 된다.
+   */
+  const addMember = () =>
+    setEditing({
+      name: "",
+      phone: "",
+      email: "",
+      memberType: memberTypes[0]?.type || "",
+      status: "승인",
+      source: "직접 입력",
+    });
+
   const saveEdit = async () => {
     const { id, ...patch } = editing;
-    await saveDoc("members", id, patch);
+
+    if (!String(patch.name || "").trim()) {
+      window.alert("성명을 적어 주세요.");
+      return;
+    }
+
+    // 새로 담을 때만 연락처가 겹치는지 본다. 고칠 때는 자기 자신과 겹친다.
+    if (!id && digits(patch.phone)) {
+      const already = rows.find(
+        (row) => digits(row.phone) === digits(patch.phone) && row.status !== "탈퇴"
+      );
+      if (
+        already &&
+        !window.confirm(
+          `같은 연락처의 회원이 이미 있습니다 — ${already.name}.\n그래도 새로 담을까요?`
+        )
+      ) {
+        return;
+      }
+    }
+
+    if (id) await saveDoc("members", id, patch);
+    else await createDoc("members", patch);
     setEditing(null);
   };
 
@@ -252,6 +292,10 @@ export default function AdminMembers() {
         </div>
 
         <div className="ml-auto flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={addMember}>
+            <UserPlus size={15} />
+            회원 추가
+          </Button>
           <Button variant="secondary" onClick={() => setImporting(true)}>
             <Upload size={15} />
             명부 올리기
@@ -402,7 +446,7 @@ export default function AdminMembers() {
 
       <Modal
         open={Boolean(editing)}
-        title="회원 정보 수정"
+        title={editing && editing.id ? "회원 정보 수정" : "회원 추가"}
         onClose={() => setEditing(null)}
         wide
         footer={
