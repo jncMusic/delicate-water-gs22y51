@@ -67,6 +67,7 @@ function Row({ label, children }) {
           padding: "4mm 6mm",
           borderBottom: `0.2mm solid #c9ced6`,
           borderLeft: `0.2mm solid #c9ced6`,
+          textAlign: "center",
         }}
       >
         {children}
