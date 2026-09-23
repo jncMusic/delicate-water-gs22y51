@@ -49,7 +49,7 @@ function Row({ label, children }) {
       <th
         scope="row"
         style={{
-          width: "34mm",
+          width: "36mm",
           padding: "4mm 5mm",
           borderBottom: `0.2mm solid #c9ced6`,
           color: LINE,
@@ -67,6 +67,7 @@ function Row({ label, children }) {
           padding: "4mm 6mm",
           borderBottom: `0.2mm solid #c9ced6`,
           borderLeft: `0.2mm solid #c9ced6`,
+          textAlign: "center",
         }}
       >
         {children}
@@ -173,8 +174,8 @@ export default function CertificateSheet({
 
           <table
             style={{
-              width: "100%",
-              marginTop: "12mm",
+              width: "122mm",
+              margin: "12mm auto 0",
               borderCollapse: "collapse",
               borderTop: `0.5mm solid ${LINE}`,
               borderBottom: `0.5mm solid ${LINE}`,
