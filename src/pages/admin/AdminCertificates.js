@@ -82,6 +82,7 @@ export default function AdminCertificates() {
   const [status, setStatus] = useState("전체");
   const [seal, setSeal] = useState(null);
   const [sealBusy, setSealBusy] = useState(false);
+  const [sealError, setSealError] = useState("");
   const [sheet, setSheet] = useState(null);
   const [issuing, setIssuing] = useState(null);
   /* 그림으로 뜰 때 쓰는 자리. 화면 밖에 두어 사무국 눈에 띄지 않게 한다. */
@@ -91,7 +92,14 @@ export default function AdminCertificates() {
 
   /* 직인은 화면을 열 때 한 번만 받아 온다. 인쇄할 때마다 받으면 느리다. */
   const refreshSeal = useCallback(async () => {
-    setSeal(await loadSeal());
+    try {
+      setSeal(await loadSeal());
+      setSealError("");
+    } catch (err) {
+      console.error(err);
+      setSeal(null);
+      setSealError("직인을 읽어 오지 못했습니다. 다시 올려 보시고, 그래도 안 되면 알려 주세요.");
+    }
   }, []);
 
   useEffect(() => {
@@ -143,8 +151,9 @@ export default function AdminCertificates() {
     if (!file) return;
     setSealBusy(true);
     try {
-      await uploadSeal(file);
-      await refreshSeal();
+      // 올린 그림을 그대로 받아 쓴다. 저장소에서 다시 내려받지 않는다.
+      setSeal(await uploadSeal(file));
+      setSealError("");
     } catch (err) {
       console.error(err);
       window.alert("직인을 올리지 못했습니다. 잠시 후 다시 시도해 주세요.");
@@ -277,6 +286,9 @@ export default function AdminCertificates() {
         <span className="text-xs text-slate-500">
           배경이 비치는 PNG 가 좋습니다. 사무국만 볼 수 있고 홈페이지에 나가지 않습니다.
         </span>
+        {sealError ? (
+          <span className="basis-full text-xs text-rose-700">{sealError}</span>
+        ) : null}
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">

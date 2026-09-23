@@ -23,6 +23,10 @@ if (firebaseEnabled) {
   const app = getApps().length ? getApps()[0] : initializeApp(config);
   db = getFirestore(app);
   storage = getStorage(app);
+  // 읽기·삭제가 막혔을 때 기본값은 2분이다. 그동안 화면은 「올리는 중」 인
+  // 채로 멈춰 있어 사무국은 고장인지 기다리는 중인지 알 수 없다. 짧게 줄여
+  // 빨리 실패를 알린다. 올리기는 파일이 커도 끝까지 가야 하므로 건드리지 않는다.
+  storage.maxOperationRetryTime = 15000;
   auth = getAuth(app);
 }
 
