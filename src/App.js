@@ -21,6 +21,7 @@ import ContestHistory from "./pages/ContestHistory";
 import MembersGuide from "./pages/MembersGuide";
 import MembersApply from "./pages/MembersApply";
 import MembersCertificate from "./pages/MembersCertificate";
+import CertificateStatus from "./pages/CertificateStatus";
 import Branches from "./pages/Branches";
 import Resources from "./pages/Resources";
 import Board, { BoardDetail } from "./pages/Board";
@@ -73,6 +74,13 @@ function resolve(path) {
 
   const Page = ROUTES[clean];
   if (Page) return <Page />;
+
+  // 증명서 확인은 /members/certificate/<신청 id> 다. 접수할 때 받은 주소로
+  // 본인이 자기 것을 확인하는 자리라, 주소가 그때그때 만들어진다.
+  if (clean.startsWith("/members/certificate/")) {
+    const id = clean.slice("/members/certificate/".length);
+    if (id) return <CertificateStatus id={decodeURIComponent(id)} />;
+  }
 
   // 게시글 상세는 <게시판 경로>/<문서 id> 형태의 동적 경로다.
   const board = boardByPath(clean);

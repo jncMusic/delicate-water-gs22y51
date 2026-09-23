@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Download, Search } from "lucide-react";
 import { useCollection } from "../lib/useCollection";
 import { bumpCounter, DEMO_MODE } from "../lib/store";
-import { triggerDownload } from "../lib/download";
+import { downloadFromUrl } from "../lib/download";
 import { fileKind, previewOf } from "../lib/fileType";
 import { resourceCategories } from "../data/site";
 import {
@@ -32,7 +32,8 @@ export function downloadResource(item) {
     return;
   }
 
-  triggerDownload(file.url, file.name);
+  // 저장소 파일은 우리 도메인 밖에 있어 앵커의 download 표시가 듣지 않는다.
+  downloadFromUrl(file.url, file.name);
   bumpCounter("resources", item.id, "downloads", item.downloads);
 }
 

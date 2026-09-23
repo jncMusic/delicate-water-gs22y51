@@ -213,7 +213,11 @@ service cloud.firestore {
     // 대조해 판단한다. 명부를 바깥에서 읽을 수 있게 열면 회원 연락처가 통째로
     // 새므로, 문은 신청서가 아니라 발급에 단다.
     //
-    // 읽는 것은 사무국뿐이다. 남이 낸 신청서에는 이름과 연락처가 들어 있다.
+    // 신청한 본인은 자기 신청서 한 건만 볼 수 있다. 접수할 때 받은 주소
+    // (문서 id 가 들어 있는 20자 남짓의 임의 문자열)를 아는 사람만 열 수 있다.
+    // get 만 열고 list 는 막는다. list 를 열면 남의 신청서까지 훑을 수 있다.
+    //
+    // 목록을 보고 고치고 지우는 것은 사무국뿐이다.
     match /certificateRequests/{doc} {
       allow create: if request.resource.data.status == '접수'
         && request.resource.data.name is string
@@ -225,7 +229,8 @@ service cloud.firestore {
         && request.resource.data.type is string
         && request.resource.data.type.size() < 100
         && request.resource.data.keys().size() < 20;
-      allow read, update, delete: if isAdmin();
+      allow get: if true;
+      allow list, update, delete: if isAdmin();
     }
 
     match /admins/{uid} {
@@ -246,6 +251,10 @@ service cloud.firestore {
 | 가입 신청 넣기 | O (대기 상태로만) | O |
 | **회원 명단 읽기** | **X** | O |
 | 회원 정보 수정·삭제 | X | O |
+| 증명서 발급 신청 넣기 | O (접수 상태로만) | O |
+| 증명서 신청 한 건 열기 | O (문서 주소를 아는 본인) | O |
+| **증명서 신청 목록 훑기** | **X** | O |
+| 증명서 발급 결과 적기 | X | O |
 
 ## Storage 보안 규칙
 
@@ -256,12 +265,16 @@ service cloud.firestore {
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    // 자료실 파일과 배너 이미지는 공개.
+    //
+    // certificates 는 완성된 증명서다. 신청한 분은 로그인하지 않으므로 읽기를
+    // 막을 수 없다. 대신 파일 이름이 신청서의 임의 문서 id 라 주소를 받은
+    // 본인만 찾아갈 수 있다. 만드는 것은 사무국뿐이다.
     match /{folder}/{file} {
-      // 자료실 파일과 배너 이미지는 공개
-      allow read: if folder in ['resources', 'banners'];
+      allow read: if folder in ['resources', 'banners', 'certificates'];
       // 올리기는 로그인한 계정만, 한 번에 20MB 까지
       allow write: if request.auth != null
-        && folder in ['resources', 'banners']
+        && folder in ['resources', 'banners', 'certificates']
         && request.resource.size < 20 * 1024 * 1024;
     }
 

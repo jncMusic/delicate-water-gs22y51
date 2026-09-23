@@ -47,7 +47,7 @@ const DESCRIPTIONS = {
   "/members/branches":
     `한국관악협회 전국 지회 ${branchTotals.branches}곳과 지부 ${branchTotals.chapters}곳의 현황입니다.`,
   "/members/certificate":
-    "한국관악협회 회원증·지도자 확인서 발급 신청. 회원 자격이 확인되는 분께 발급해 드립니다.",
+    "한국관악협회 회원증·지도자 확인서·지회지부장 확인서·이사 경력증명서 발급 신청입니다.",
 
   "/policy/terms": "한국관악협회 홈페이지 서비스 이용약관입니다.",
   "/policy/privacy": "한국관악협회 개인정보 처리방침입니다.",

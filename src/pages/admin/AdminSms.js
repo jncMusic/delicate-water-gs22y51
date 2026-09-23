@@ -8,6 +8,12 @@ import { Button, EmptyState, Loading } from "../../components/ui";
 /* 어느 문구가 어느 명단에 붙는지. 둘 다 id 로 맞춘다. */
 const GROUP_OF = { unpaid: "unpaid", done: "done", duplicate: "duplicate" };
 
+/*
+ * 증명서 문구는 받는 사람이 회원 명부에서 나오지 않는다. 그때그때 발급된
+ * 분에게 한 명씩 보내는 것이라, 명단과 번호는 증명서 신청 화면에서 가져온다.
+ */
+const NO_LIST = new Set(["certificate"]);
+
 /**
  * 눌러서 복사. 브라우저가 막으면(https 가 아니거나 권한이 없으면) 조용히
  * 실패하므로, 그때는 직접 긁어 가실 수 있게 원문을 그대로 두고 알림만 띄운다.
@@ -40,7 +46,7 @@ function Card({ template, people }) {
   // 문자 서비스에 붙여 넣을 번호 목록. 중복은 한 번만.
   const numbers = useMemo(() => {
     const seen = new Set();
-    for (const row of people) {
+    for (const row of people || []) {
       const phone = digits(row.phone);
       if (phone.length >= 9) seen.add(phone);
     }
@@ -75,18 +81,28 @@ function Card({ template, people }) {
       <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
         <span className="flex items-center gap-1.5 text-sm text-slate-600">
           <Users size={15} className="text-slate-400" />
-          받는 사람 <strong className="font-semibold text-brand-900">{people.length}명</strong>
-          {numbers.length !== people.length ? (
-            <span className="text-xs text-slate-500">(번호 있는 분 {numbers.length}명)</span>
-          ) : null}
+          {people ? (
+            <>
+              받는 사람 <strong className="font-semibold text-brand-900">{people.length}명</strong>
+              {numbers.length !== people.length ? (
+                <span className="text-xs text-slate-500">(번호 있는 분 {numbers.length}명)</span>
+              ) : null}
+            </>
+          ) : (
+            <span className="text-xs text-slate-500">
+              증명서 신청 화면에서 발급된 분에게 한 명씩 보냅니다
+            </span>
+          )}
         </span>
         <div className="ml-auto flex flex-wrap gap-2">
           <CopyButton text={template.body} label="문구 복사" />
-          <CopyButton
-            text={numbers.join("\n")}
-            label={`번호 복사 (${numbers.length})`}
-            disabled={numbers.length === 0}
-          />
+          {people ? (
+            <CopyButton
+              text={numbers.join("\n")}
+              label={`번호 복사 (${numbers.length})`}
+              disabled={numbers.length === 0}
+            />
+          ) : null}
         </div>
       </div>
 
@@ -126,7 +142,7 @@ export default function AdminSms() {
             <Card
               key={template.id}
               template={template}
-              people={groups[GROUP_OF[template.id]] || []}
+              people={NO_LIST.has(template.id) ? null : groups[GROUP_OF[template.id]] || []}
             />
           ))}
         </div>
