@@ -15,10 +15,10 @@ import {
   ref as storageRef,
   uploadBytes,
   getDownloadURL,
-  getBytes,
   deleteObject,
 } from "firebase/storage";
 import { db, storage, firebaseEnabled } from "./firebase";
+import { shrinkImage } from "./image";
 import { seedData } from "./seed";
 import { builtinRows, isBuiltinId } from "../data/posts";
 
@@ -49,21 +49,6 @@ function toDataUrl(blob) {
     reader.onerror = fail;
     reader.readAsDataURL(blob);
   });
-}
-
-/**
- * 받아 온 바이트가 어떤 그림인지 앞 두 글자로 가린다.
- *
- * 종류를 붙이지 않으면 data 주소가 application/octet-stream 이 된다.
- * 크롬은 그래도 알아서 그려 주지만 기대고 있을 일은 아니다. 브라우저마다
- * 다르고, 나중에 이 주소를 내려받기에 쓰면 확장자 없는 파일이 된다.
- */
-function imageType(bytes) {
-  // getBytes 는 ArrayBuffer 를 주지만, 혹시 이미 뷰로 와도 터지지 않게 한다.
-  const head = ArrayBuffer.isView(bytes) ? bytes : new Uint8Array(bytes, 0, 2);
-  if (head[0] === 0x89 && head[1] === 0x50) return "image/png";
-  if (head[0] === 0xff && head[1] === 0xd8) return "image/jpeg";
-  return "image/png";
 }
 
 /** 최신 글이 위로 오도록 정렬. */
@@ -271,55 +256,49 @@ export async function uploadCertificate(id, blob) {
 /* ─────────────────────────── 협회 직인 ─────────────────────────── */
 
 /**
- * 직인은 다른 파일과 다르게 다룬다.
+ * 협회 직인.
  *
- * getDownloadURL 을 부르지 않는다. 그것은 토큰만 있으면 로그인 없이 열리는
- * 주소를 만들어 Storage 규칙을 우회한다. 한 번 새면 막을 수 없다.
+ * 문서 한 칸에 그림을 통째로 담는다. 파일 저장소가 아니다.
  *
- * 대신 쓸 때마다 내용을 직접 받아 화면 안에서만 쓴다. 그러면 로그인 검사가
- * 걸리고 밖으로 나갈 주소가 생기지 않는다.
+ * 처음에는 저장소에 두고 쓸 때마다 받아 왔는데, 받아 오는 쪽이 실제 도메인
+ * 에서 막혔다. 올리기는 되는데 읽기가 안 되니 사무국은 발급할 때마다 직인을
+ * 다시 올려야 했다. 저장소에서 브라우저로 내용을 직접 받으려면 버킷에 따로
+ * 설정이 필요한데, 그림 한 장 때문에 사무국이 명령줄 도구를 잡을 일은 아니다.
+ *
+ * 데이터베이스는 이미 이 홈페이지가 온종일 쓰고 있는 길이라 확실하다. 규칙도
+ * 더 좁다 — 저장소 쪽은 '로그인한 계정' 이면 됐지만 이쪽은 관리자만 열린다.
+ *
+ * 그림은 담기 전에 줄인다. 문서 한 칸은 1MB 를 넘길 수 없다.
  */
-const SEAL_PATH = "seal/kba-seal";
+const SEAL = { name: "settings", id: "seal" };
 
-/**
- * 직인을 올린다. 늘 같은 자리에 덮어써서 여러 장이 남지 않게 한다.
- *
- * 올린 그림을 그대로 돌려준다. 방금 고른 파일이 손에 있으니 저장소에서
- * 다시 내려받을 이유가 없다. 내려받기는 한 번 더 오가야 하고 막히면
- * 한참 기다리게 되므로, 올리기는 올리기로 끝낸다.
- */
+/** 직인을 담는다. 늘 같은 자리에 덮어써서 여러 장이 남지 않게 한다. */
 export async function uploadSeal(file) {
-  const asText = await toDataUrl(file);
+  const image = await shrinkImage(file);
 
   if (DEMO_MODE) {
-    window.localStorage.setItem("kwa:seal", asText);
-    return asText;
+    window.localStorage.setItem("kwa:seal", image);
+    return image;
   }
 
-  await uploadBytes(storageRef(storage, SEAL_PATH), file, {
-    contentType: file.type || "image/png",
-    cacheControl: "private, max-age=0",
+  await setDoc(doc(db, SEAL.name, SEAL.id), {
+    image,
+    updatedAt: new Date().toISOString(),
   });
-  return asText;
+  return image;
 }
 
 /**
- * 직인을 화면에서 쓸 수 있는 모양으로 받아 온다.
- * 올린 적이 없으면 null 을 준다. 없다고 해서 오류는 아니다.
+ * 직인을 가져온다. 담은 적이 없으면 null 을 준다. 없다고 해서 오류는 아니다.
+ *
+ * 읽지 못한 것은 삼키지 않는다. 삼키면 담아 둔 직인이 없는 것처럼 보여
+ * 사무국이 같은 파일을 몇 번이고 다시 올리게 된다.
  */
 export async function loadSeal() {
   if (DEMO_MODE) return window.localStorage.getItem("kwa:seal");
 
-  try {
-    const bytes = await getBytes(storageRef(storage, SEAL_PATH));
-    return await toDataUrl(new Blob([bytes], { type: imageType(bytes) }));
-  } catch (err) {
-    // 아직 올리지 않았으면 여기로 온다. 이것은 오류가 아니다.
-    if (err && String(err.code || "").includes("not-found")) return null;
-    // 그 밖의 오류는 삼키지 않는다. 삼키면 올린 직인이 없는 것처럼 보여
-    // 사무국이 같은 파일을 몇 번이고 다시 올리게 된다.
-    throw err;
-  }
+  const snap = await getDoc(doc(db, SEAL.name, SEAL.id));
+  return snap.exists() ? snap.data().image || null : null;
 }
 
 /** 직인을 지운다. */
@@ -328,7 +307,7 @@ export async function removeSeal() {
     window.localStorage.removeItem("kwa:seal");
     return;
   }
-  await deleteObject(storageRef(storage, SEAL_PATH));
+  await deleteDoc(doc(db, SEAL.name, SEAL.id));
 }
 
 export async function uploadFile(file, folder = "resources") {

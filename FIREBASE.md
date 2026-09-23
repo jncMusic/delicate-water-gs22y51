@@ -233,6 +233,17 @@ service cloud.firestore {
       allow list, update, delete: if isAdmin();
     }
 
+    // 협회 직인과 그 밖의 사무국 설정.
+    //
+    // 직인 그림이 밖으로 나가면 협회 공문서를 위조할 수 있다. 관리자만
+    // 열린다. 방문자는 물론이고 로그인만 한 계정도 열지 못한다.
+    //
+    // 증명서에 도장이 찍혀 나가는 것은 괜찮다. 나가는 것은 다 만들어진
+    // 문서 한 장이고, 도장 그림 자체는 사무국 화면 밖으로 나가지 않는다.
+    match /settings/{doc} {
+      allow read, write: if isAdmin();
+    }
+
     match /admins/{uid} {
       allow read: if isAdmin();
       allow write: if false;   // 콘솔에서만 추가·삭제합니다
@@ -255,6 +266,7 @@ service cloud.firestore {
 | 증명서 신청 한 건 열기 | O (문서 주소를 아는 본인) | O |
 | **증명서 신청 목록 훑기** | **X** | O |
 | 증명서 발급 결과 적기 | X | O |
+| **협회 직인 열기** | **X** | O |
 
 ## Storage 보안 규칙
 
