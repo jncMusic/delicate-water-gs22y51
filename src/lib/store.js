@@ -41,6 +41,31 @@ const listeners = new Map(); // 컬렉션명 -> Set<callback>
 const newId = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
+/** 파일이나 blob 을 화면에서 바로 쓸 수 있는 data 주소로 바꾼다. */
+function toDataUrl(blob) {
+  return new Promise((done, fail) => {
+    const reader = new FileReader();
+    reader.onload = () => done(reader.result);
+    reader.onerror = fail;
+    reader.readAsDataURL(blob);
+  });
+}
+
+/**
+ * 받아 온 바이트가 어떤 그림인지 앞 두 글자로 가린다.
+ *
+ * 종류를 붙이지 않으면 data 주소가 application/octet-stream 이 된다.
+ * 크롬은 그래도 알아서 그려 주지만 기대고 있을 일은 아니다. 브라우저마다
+ * 다르고, 나중에 이 주소를 내려받기에 쓰면 확장자 없는 파일이 된다.
+ */
+function imageType(bytes) {
+  // getBytes 는 ArrayBuffer 를 주지만, 혹시 이미 뷰로 와도 터지지 않게 한다.
+  const head = ArrayBuffer.isView(bytes) ? bytes : new Uint8Array(bytes, 0, 2);
+  if (head[0] === 0x89 && head[1] === 0x50) return "image/png";
+  if (head[0] === 0xff && head[1] === 0xd8) return "image/jpeg";
+  return "image/png";
+}
+
 /** 최신 글이 위로 오도록 정렬. */
 const byNewest = (rows) =>
   [...rows].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
@@ -233,12 +258,7 @@ const readAsDataUrl = (file) =>
  */
 export async function uploadCertificate(id, blob) {
   if (DEMO_MODE) {
-    const asText = await new Promise((done, fail) => {
-      const reader = new FileReader();
-      reader.onload = () => done(reader.result);
-      reader.onerror = fail;
-      reader.readAsDataURL(blob);
-    });
+    const asText = await toDataUrl(blob);
     window.localStorage.setItem(`kwa:cert:${id}`, asText);
     return asText;
   }
@@ -261,24 +281,26 @@ export async function uploadCertificate(id, blob) {
  */
 const SEAL_PATH = "seal/kba-seal";
 
-/** 직인을 올린다. 늘 같은 자리에 덮어써서 여러 장이 남지 않게 한다. */
+/**
+ * 직인을 올린다. 늘 같은 자리에 덮어써서 여러 장이 남지 않게 한다.
+ *
+ * 올린 그림을 그대로 돌려준다. 방금 고른 파일이 손에 있으니 저장소에서
+ * 다시 내려받을 이유가 없다. 내려받기는 한 번 더 오가야 하고 막히면
+ * 한참 기다리게 되므로, 올리기는 올리기로 끝낸다.
+ */
 export async function uploadSeal(file) {
+  const asText = await toDataUrl(file);
+
   if (DEMO_MODE) {
-    const asText = await new Promise((done, fail) => {
-      const reader = new FileReader();
-      reader.onload = () => done(reader.result);
-      reader.onerror = fail;
-      reader.readAsDataURL(file);
-    });
     window.localStorage.setItem("kwa:seal", asText);
-    return true;
+    return asText;
   }
 
   await uploadBytes(storageRef(storage, SEAL_PATH), file, {
     contentType: file.type || "image/png",
     cacheControl: "private, max-age=0",
   });
-  return true;
+  return asText;
 }
 
 /**
@@ -290,18 +312,13 @@ export async function loadSeal() {
 
   try {
     const bytes = await getBytes(storageRef(storage, SEAL_PATH));
-    const blob = new Blob([bytes]);
-    return await new Promise((done, fail) => {
-      const reader = new FileReader();
-      reader.onload = () => done(reader.result);
-      reader.onerror = fail;
-      reader.readAsDataURL(blob);
-    });
+    return await toDataUrl(new Blob([bytes], { type: imageType(bytes) }));
   } catch (err) {
-    // 아직 올리지 않았으면 여기로 온다.
+    // 아직 올리지 않았으면 여기로 온다. 이것은 오류가 아니다.
     if (err && String(err.code || "").includes("not-found")) return null;
-    console.error("[store] 직인을 읽지 못했습니다", err);
-    return null;
+    // 그 밖의 오류는 삼키지 않는다. 삼키면 올린 직인이 없는 것처럼 보여
+    // 사무국이 같은 파일을 몇 번이고 다시 올리게 된다.
+    throw err;
   }
 }
 
