@@ -9,8 +9,9 @@
  * (sceneNews), 문화예술 전반은 예술계 소식(artsNews)으로 간다. 연주회 소식과
  * 회원동향은 회원·단체의 소식이라 사무국이 직접 올린다.
  *
- * 저작권 때문에 본문은 담지 않는다. 제목·날짜·한 줄 요약·원문 링크·출처만
- * 담고, 읽는 사람은 원문으로 보내 준다.
+ * 저작권 때문에 기사를 통째로 담지 않는다. 제목·날짜·첫머리 발췌·원문 링크·
+ * 출처만 담고, 읽는 사람은 원문으로 보내 준다. 발췌는 LEAD_LIMIT 글자에서
+ * 끊는다.
  *
  * 넣을 때는 hidden: true 로 넣는다. 그래서 홈페이지에는 바로 나오지 않고,
  * 사무국이 관리자 화면에서 보고 「공개」로 바꾼 것만 나온다. 남의 기사 제목이
@@ -486,6 +487,115 @@ function pickDescription(html) {
   return decodeEntities(found || "").replace(/\s+/g, " ").trim();
 }
 
+/**
+ * 기사 첫머리를 조금 더 가져온다.
+ *
+ * og:description 은 한두 문장뿐이라, 제목만 보고 들어갈지 말지 가늠하기에
+ * 모자랐다. 그래서 기사 첫 문단들을 LEAD_LIMIT 글자까지만 받아 온다.
+ *
+ * 여기서도 기사를 통째로 옮기지 않는다. 앞머리만 끊어 싣고 출처를 밝힌 뒤
+ * 원문으로 보내는, 인용의 선을 지킨다. 그래서 글자 수에 못을 박아 두고
+ * 문장이 끝나는 자리에서 자른다.
+ */
+const LEAD_LIMIT = 400;
+
+/** 기사 본문이 담기는 자리. 언론사마다 이름이 달라 여러 모양을 본다. */
+const BODY_TAGS = [
+  /<[^>]+itemprop=["']articleBody["'][^>]*>([\s\S]*?)<\/(?:div|article|section)>/i,
+  /<article[^>]*>([\s\S]*?)<\/article>/i,
+  /<div[^>]+(?:id|class)=["'][^"']*(?:article|news)[-_]?(?:body|content|txt|view)[^"']*["'][^>]*>([\s\S]*?)<\/div>/i,
+];
+
+/**
+ * 본문에 섞여 있지만 기사가 아닌 줄. 사진 설명·기자 서명·저작권 문구다.
+ * 앞머리에 이런 것이 끼면 읽는 사람에게 도움이 되지 않는다.
+ */
+const NOT_ARTICLE =
+  /^(?:\[[^\]]*\]\s*)?(?:사진|이미지|그래픽|자료|영상)\s*[=＝:]|기자\s*$|^[\w.+-]+@[\w.-]+|저작권자|무단\s*전재|재배포\s*금지|^\S+\s*기자\s*=|ⓒ/;
+
+/**
+ * JSON-LD 의 articleBody. 뉴스 사이트가 검색 엔진에 주려고 넣어 둔 것이라
+ * 태그가 섞이지 않은 깨끗한 글이다. 있으면 이것을 가장 먼저 쓴다.
+ */
+function ldArticleBody(html) {
+  const blocks = html.match(
+    /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
+  );
+  for (const block of blocks || []) {
+    const json = block.replace(/^<script[^>]*>/i, "").replace(/<\/script>$/i, "");
+    let data;
+    try {
+      data = JSON.parse(json);
+    } catch {
+      continue; // 깨진 JSON-LD 를 넣어 두는 곳이 있다. 다음 것을 본다.
+    }
+    // @graph 로 여러 개를 묶어 두기도 한다. 평평하게 펴서 훑는다.
+    const list = [].concat(data, data?.["@graph"] || []).filter(Boolean);
+    for (const item of list) {
+      if (typeof item?.articleBody === "string" && item.articleBody.trim()) {
+        return item.articleBody;
+      }
+    }
+  }
+  return "";
+}
+
+/** 본문 자리에서 문단만 골라 잇는다. */
+function paragraphs(inner) {
+  const found = inner.match(/<p\b[^>]*>([\s\S]*?)<\/p>/gi) || [];
+  return joinLines(found.length ? found.map((one) => plain(one)) : plain(inner).split(/(?<=다\.)\s+/));
+}
+
+/**
+ * 끊긴 문장으로 끝나지 않게, 마지막 마침표까지만 남긴다.
+ * 자를 곳이 없으면 말줄임표를 붙여 더 있다는 것을 알린다.
+ */
+function trimToSentence(text, limit) {
+  if (text.length <= limit) return text;
+  const cut = text.slice(0, limit);
+  const end = Math.max(cut.lastIndexOf("다."), cut.lastIndexOf(". "), cut.lastIndexOf("? "), cut.lastIndexOf("! "));
+  // 너무 앞에서 끊기면 차라리 글자 수대로 자르고 말줄임표를 붙인다.
+  if (end > limit * 0.5) return cut.slice(0, end + 1).trim();
+  return `${cut.replace(/\s+\S*$/, "")}…`;
+}
+
+/** 줄을 골라 잇는다. 사진 설명·기자 서명·저작권 문구는 뺀다. */
+function joinLines(lines) {
+  return lines
+    .map((line) => line.trim())
+    .filter((line) => line.length >= 10 && !NOT_ARTICLE.test(line))
+    .join(" ");
+}
+
+/**
+ * 첫 문장 앞의 발신지와 기자 서명을 떼어 낸다.
+ *
+ * 「[서울=뉴시스] 홍길동 기자 = 문화체육관광부는…」 처럼, 국내 기사는 첫
+ * 문장 머리에 이것이 붙어 온다. 줄째로 버리면 기사 첫 문장까지 같이 날아가니
+ * 앞머리만 잘라 낸다.
+ */
+function stripByline(text) {
+  return text
+    .replace(/^\s*\[[^\]]{1,40}\]\s*/, "")
+    .replace(/^\s*[가-힣]{2,5}\s*(?:기자|특파원|객원기자)\s*[=＝]\s*/, "")
+    .trim();
+}
+
+function pickLead(html) {
+  const ld = ldArticleBody(html);
+  // JSON-LD 는 태그가 없는 한 덩어리라 문장 끝으로 나눈다.
+  // 본문 자리에서 긁은 것은 <p> 가 살아 있으므로 문단으로 나눈다.
+  const text = ld
+    ? joinLines(plain(ld).split(/(?<=다\.)\s+/))
+    : paragraphs(BODY_TAGS.map((re) => html.match(re)?.[1]).find(Boolean) || "");
+
+  const lead = stripByline(text);
+
+  // 너무 짧으면 본문을 제대로 집지 못한 것이다. og:description 쪽에 맡긴다.
+  if (lead.length < 40) return "";
+  return trimToSentence(lead, LEAD_LIMIT);
+}
+
 const IMAGE_TAGS = [
   /<meta[^>]+property=["']og:image["'][^>]*content=["']([^"']+)["']/i,
   /<meta[^>]+content=["']([^"']+)["'][^>]*property=["']og:image["']/i,
@@ -613,10 +723,15 @@ async function enrich(post) {
       if (isGoogleNews(link)) return post;
     }
 
+    // 본문 첫머리와 공유용 설명 가운데 긴 쪽을 쓴다. 본문을 집지 못하는
+    // 언론사가 있어, 그럴 때는 og:description 이 남는다.
+    const lead = usefulSummary(pickLead(html), post.title);
+    const meta = usefulSummary(pickDescription(html), post.title);
+
     return {
       ...post,
       link,
-      summary: usefulSummary(pickDescription(html), post.title) || post.summary,
+      summary: (lead.length > meta.length ? lead : meta) || post.summary,
       image: pickImage(html, link),
       // 네이버로 받은 것은 언론사 이름이 비어 있다. 원문에서 채운다.
       publisher: post.publisher || pickSiteName(html) || hostLabel(link),
@@ -643,10 +758,10 @@ function withBody(post) {
     images: post.image
       ? [{ url: post.image, alt: post.title, linked: true, credit: publisher || post.source }]
       : [],
-    body:
-      (post.summary ? `${post.summary}\n\n` : "") +
-      `원문 보기: ${post.link}` +
-      (publisher ? `\n출처: ${publisher}` : ""),
+    // 주소를 글자로 적지 않는다. link 를 따로 담아 두었으니 화면이 그것으로
+    // 「원문 보기」 를 건다. 예전에는 여기에 주소를 그대로 적었는데, 구글 뉴스
+    // 주소는 한 줄이 넘도록 길어 글이 지저분해졌고 누를 수도 없었다.
+    body: post.summary || "",
   };
 }
 
@@ -927,4 +1042,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { parseFeed, splitPublisher, toPost, toFields, classify, excluded, dropSimilar, similarity, sameStory, usefulSummary, withBody, pickDescription, pickImage, pickSiteName, hostLabel, toValue, findRealUrl, isGoogleNews, plain, withinAge, matches, decode, idFor, sourceEnabled, feedUrl, fetchNaverNews, unhighlight };
+module.exports = { parseFeed, pickLead, trimToSentence, splitPublisher, toPost, toFields, classify, excluded, dropSimilar, similarity, sameStory, usefulSummary, withBody, pickDescription, pickImage, pickSiteName, hostLabel, toValue, findRealUrl, isGoogleNews, plain, withinAge, matches, decode, idFor, sourceEnabled, feedUrl, fetchNaverNews, unhighlight };

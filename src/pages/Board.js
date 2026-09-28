@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, Search } from "lucide-react";
+import { Download, ExternalLink, Search } from "lucide-react";
 import { Link, navigate } from "../lib/router";
 import { usePublicCollection } from "../lib/useCollection";
 import { pinnedFirst } from "../data/boards";
 import { bumpCounter } from "../lib/store";
+import { splitLinks, stripSourceFooter } from "../lib/text";
 import {
   Badge,
   Container,
@@ -17,6 +18,30 @@ import {
 } from "../components/ui";
 
 const PER_PAGE = 10;
+
+/**
+ * 본문을 그린다. 글 속에 주소가 있으면 눌러 갈 수 있게 건다.
+ *
+ * dangerouslySetInnerHTML 을 쓰지 않는다. 사무국이 적은 글이든 자동 수집한
+ * 글이든, 태그가 섞여 있으면 글자로 보이는 편이 안전하다.
+ */
+function PostBody({ text }) {
+  return splitLinks(text).map((part, index) =>
+    part.url ? (
+      <a
+        key={index}
+        href={part.url}
+        target="_blank"
+        rel="noreferrer nofollow"
+        className="break-all text-brand-700 underline underline-offset-2 hover:text-brand-900"
+      >
+        {part.url}
+      </a>
+    ) : (
+      <span key={index}>{part.text}</span>
+    )
+  );
+}
 
 /** 글에 붙은 첫 그림을 목록에서 작게 보여 준다. 포스터 공지를 알아보기 쉽게. */
 function PostThumb({ post, className = "" }) {
@@ -251,9 +276,31 @@ export function BoardDetail({ board, id }) {
             </p>
           </header>
 
-          <div className="whitespace-pre-line py-10 text-[15px] leading-8 text-slate-700">
-            {post.body}
+          <div className="whitespace-pre-line pt-10 text-[15px] leading-8 text-slate-700">
+            <PostBody text={post.link ? stripSourceFooter(post.body) : post.body} />
           </div>
+
+          {/*
+            자동 수집한 소식은 협회가 쓴 글이 아니라 남의 기사다. 첫머리만
+            싣고 나머지는 원문에서 읽도록 보낸다. 주소를 글자로 적어 두면
+            구글 뉴스 주소처럼 긴 것은 한 줄을 넘기고 누를 수도 없어서,
+            여기서 단추로 건다.
+          */}
+          {post.link && (
+            <p className="mt-6">
+              <a
+                href={post.link}
+                target="_blank"
+                rel="noreferrer nofollow"
+                className="inline-flex items-center gap-1.5 rounded-md border border-brand-200 bg-brand-50/60 px-3.5 py-2 text-sm font-medium text-brand-800 hover:bg-brand-50"
+              >
+                <ExternalLink size={15} />
+                {post.author ? `${post.author}에서 원문 보기` : "원문 보기"}
+              </a>
+            </p>
+          )}
+
+          <div className="pb-10" />
 
           {post.images?.length > 0 && (
             <div className="space-y-6 pb-10">
