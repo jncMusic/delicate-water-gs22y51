@@ -30,7 +30,9 @@
     "사무국이 직접 아는 내용이고, 기사로 긁어올 수 있는 것이 아닙니다.",
     "",
     "주의: 기관 RSS 주소는 바뀌는 일이 잦습니다. 실패해도 나머지는 그대로",
-    "돌아가고, 어디가 실패했는지는 GitHub Actions 실행 기록에 남습니다."
+    "돌아가고, 어디가 실패했는지는 GitHub Actions 실행 기록에 남습니다.",
+    "",
+    "기관·언론사 RSS 를 쓰는 이유: 구글 뉴스가 주는 주소는 구글 중간 쪽으로 가서 원문에 닿지 못한다(실행 기록에서 요약 0/7건). 기관이 직접 내는 RSS 는 진짜 기사 주소를 주므로 본문 첫머리와 사진이 채워진다."
   ],
   "sources": [
     {
@@ -185,6 +187,61 @@
         "연주회"
       ],
       "enabled": true
+    },
+    {
+      "id": "korea-mcst",
+      "label": "정책브리핑 · 문체부",
+      "kind": "rss",
+      "board": "artsNews",
+      "url": "https://www.korea.kr/rss/dept_mcst.xml",
+      "category": "정책",
+      "keywords": [
+        "예술",
+        "공연",
+        "음악",
+        "문화",
+        "공모",
+        "지원"
+      ],
+      "enabled": true,
+      "_메모": "정책브리핑이 부처별로 내는 RSS. 주소가 진짜 기사 주소라 본문과 사진을 받을 수 있다. 주소는 아직 실제로 열어 확인하지 못했다 — 실행 기록에서 404 가 나면 고치거나 꺼야 한다."
+    },
+    {
+      "id": "korea-culture",
+      "label": "정책브리핑 · 문화",
+      "kind": "rss",
+      "board": "artsNews",
+      "url": "https://www.korea.kr/rss/policy_culture.xml",
+      "category": "정책",
+      "keywords": [
+        "예술",
+        "공연",
+        "음악",
+        "공모",
+        "지원사업"
+      ],
+      "enabled": true,
+      "_메모": "위와 같은 곳의 문화 분야 묶음. 주소 미확인."
+    },
+    {
+      "id": "yna-culture",
+      "label": "연합뉴스 · 문화",
+      "kind": "rss",
+      "board": "artsNews",
+      "url": "https://www.yna.co.kr/rss/culture.xml",
+      "category": "정책",
+      "keywords": [
+        "관악",
+        "윈드",
+        "브라스",
+        "취주",
+        "공연",
+        "음악",
+        "예술",
+        "공모"
+      ],
+      "enabled": true,
+      "_메모": "연합뉴스 문화 RSS. 주소 미확인."
     },
     {
       "id": "mcst-press",

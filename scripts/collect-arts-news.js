@@ -990,7 +990,12 @@ async function main() {
     console.log(
       `  ${post.summary ? "요약" : "  "}${post.images.length ? "사진" : "  "} ${post.title.slice(0, 32)}`
     );
-    if (post.summary) console.log(`        ${post.summary.slice(0, 78)}`);
+    // 받아 보기만 할 때는 요약을 통째로 보여 준다. 첫머리를 제대로 긁었는지
+    // 78자만 봐서는 알 수 없고, 이 판을 보려고 돌리는 것이기 때문이다.
+    if (post.summary) {
+      console.log(`        ${DRY_RUN ? post.summary : post.summary.slice(0, 78)}`);
+      if (DRY_RUN) console.log(`        ↳ ${post.link}`);
+    }
   });
 
   if (DRY_RUN || enriched.length === 0) {
