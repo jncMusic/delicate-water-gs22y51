@@ -77,7 +77,16 @@ export default function Branches() {
                 <tbody className="divide-y divide-slate-100">
                   {chapterList.map((chapter) => (
                     <tr key={chapter.region} className="hover:bg-slate-50">
-                      <td className="py-3.5 font-medium text-brand-900">{chapter.region}</td>
+                      <td className="py-3.5 font-medium text-brand-900">
+                        {chapter.region}
+                        {/* 원주와 삼척처럼 같은 지회에 지부가 둘인 곳이 있다.
+                            어느 지회 소속인지 함께 적어 둔다. */}
+                        {chapter.branch ? (
+                          <span className="ml-1.5 text-xs font-normal text-slate-500">
+                            {chapter.branch}지회
+                          </span>
+                        ) : null}
+                      </td>
                       <td className="py-3.5 text-center text-slate-700">
                         {chapter.head || <span className="text-slate-400">공석</span>}
                         {chapter.note ? (

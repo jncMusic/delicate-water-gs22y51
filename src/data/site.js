@@ -608,12 +608,16 @@ export const branchList = [
  *
  * 협회 집계로는 7곳인데 아래는 이름이 확인된 곳만 두었다. 나머지가 확인되면
  * 여기에 줄을 더하면 화면과 숫자가 같이 따라간다.
+ *
+ * branch 는 소속 지회다. 원주와 삼척처럼 한 지회에 지부가 둘인 곳이 있어,
+ * 화면과 지부장 확인서에 어느 지회인지 함께 적는다.
  */
 export const chapterList = [
-  { region: "용인", head: "하윤희" },
-  { region: "화성", head: "김기범", note: "전문이사 겸직" },
-  { region: "원주", head: "권오문" },
-  { region: "안동", head: "김승언" },
+  { region: "용인", branch: "경기도", head: "하윤희" },
+  { region: "화성", branch: "경기도", head: "김기범", note: "전문이사 겸직" },
+  { region: "원주", branch: "강원도", head: "권오문" },
+  { region: "삼척", branch: "강원도", head: "김진철" },
+  { region: "안동", branch: "경상북도", head: "김승언" },
 ];
 
 export const branchTotals = { branches: branchList.length, chapters: 7 };

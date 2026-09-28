@@ -189,7 +189,10 @@ export function rolesOf(name, { branches = [], chapters = [], executives = {} } 
     branch: branch
       ? { where: branch.region, role: "지회장" }
       : chapter
-        ? { where: chapter.region, role: "지부장" }
+        ? {
+            where: chapter.branch ? `${chapter.branch}지회 ${chapter.region}` : chapter.region,
+            role: "지부장",
+          }
         : null,
     officer: titles.length ? titles.join(" · ") : null,
   };
