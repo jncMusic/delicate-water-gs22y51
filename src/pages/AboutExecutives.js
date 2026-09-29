@@ -1,4 +1,4 @@
-import { executives } from "../data/site";
+import { useExecutives } from "../lib/siteContent";
 import { Card, Container, PageHeader, SectionTitle } from "../components/ui";
 
 /** 직위와 성명이 하나씩 붙는 임원 카드. */
@@ -14,20 +14,23 @@ function OfficerCard({ role, name }) {
 }
 
 export default function AboutExecutives() {
+  // 명단은 사무국이 관리자 화면에서 고친다.
+  const executives = useExecutives();
+
   return (
     <>
       <PageHeader subtitle="협회 임원 명단입니다." />
       <Container className="pt-10">
         <SectionTitle>임원</SectionTitle>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {executives.officers.map((person) => (
+          {(executives.officers || []).map((person) => (
             <OfficerCard key={person.role} {...person} />
           ))}
         </div>
 
         {/* 인원이 많은 직위는 카드 대신 이름만 나열한다. */}
         <div className="mt-14 space-y-8">
-          {executives.groups.map((group) => (
+          {(executives.groups || []).map((group) => (
             <Card key={group.name}>
               <div className="flex items-baseline gap-3">
                 <h3 className="font-serif text-lg font-bold text-brand-900">{group.name}</h3>
@@ -50,7 +53,7 @@ export default function AboutExecutives() {
         <div className="mt-14">
           <SectionTitle>사무국</SectionTitle>
           <div className="grid gap-4 sm:grid-cols-3">
-            {executives.office.map((person) => (
+            {(executives.office || []).map((person) => (
               <OfficerCard key={person.role} {...person} />
             ))}
           </div>

@@ -5,7 +5,6 @@ import { createDoc } from "../lib/store";
 import { useCollection } from "../lib/useCollection";
 import {
   applyDone,
-  generalFee,
   instruments,
   joinSteps,
   memberBenefits,
@@ -14,6 +13,7 @@ import {
   org,
   regions,
 } from "../data/site";
+import { generalFeeOf, useFees } from "../lib/siteContent";
 import {
   Button,
   Field,
@@ -402,6 +402,9 @@ const PROGRESS = [
 ];
 
 function StepDone() {
+  // 연회비는 사무국이 관리자 화면에서 고친다.
+  const generalFee = generalFeeOf(useFees());
+
   return (
     <div className="mx-auto max-w-xl">
       <div className="text-center">

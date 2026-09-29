@@ -4,7 +4,8 @@ import { useCollection } from "../../lib/useCollection";
 import { issueCheck, matchMember, rolesOf } from "../../lib/members";
 import { loadSeal, removeDoc, saveDoc, uploadCertificate, uploadSeal } from "../../lib/store";
 import CertificateSheet from "./CertificateSheet";
-import { branchList, chapterList, executives, org } from "../../data/site";
+import { org } from "../../data/site";
+import { useBranches, useExecutives } from "../../lib/siteContent";
 import { Badge, Button, EmptyState, Loading, Select, formatDate } from "../../components/ui";
 
 /** 신청 처리 상태. 접수 → 발급 완료, 또는 반려. */
@@ -79,6 +80,9 @@ function Stat({ label, value, tone = "" }) {
 export default function AdminCertificates() {
   const { rows, loading } = useCollection("certificateRequests");
   const { rows: members } = useCollection("members");
+  // 지회·지부·임원 명단은 사무국이 「명단·회비」 화면에서 고친다.
+  const { branches, chapters } = useBranches();
+  const executives = useExecutives();
   const [status, setStatus] = useState("전체");
   const [seal, setSeal] = useState(null);
   const [sealBusy, setSealBusy] = useState(false);
@@ -120,13 +124,13 @@ export default function AdminCertificates() {
         // 이름은 명부에서 확인된 쪽을 쓴다. 신청서에 적힌 이름이 아니라
         // 협회가 아는 이름으로 자리를 찾아야 한다.
         const roles = rolesOf(match.member ? match.member.name : row.name, {
-          branches: branchList,
-          chapters: chapterList,
+          branches,
+          chapters,
           executives,
         });
         return { ...row, match, roles, issue: issueCheck(row, match.member, roles) };
       }),
-    [rows, members]
+    [rows, members, branches, chapters, executives]
   );
 
   const filtered = useMemo(

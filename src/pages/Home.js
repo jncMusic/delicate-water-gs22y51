@@ -4,7 +4,8 @@ import { Link } from "../lib/router";
 import { useCollection, usePublicCollection } from "../lib/useCollection";
 import HeroSlider from "../components/HeroSlider";
 import { boards, pinnedFirst } from "../data/boards";
-import { branchSummary, branchTotals, missions, org, overview, programs } from "../data/site";
+import { missions, org, overview, programs } from "../data/site";
+import { useBranches } from "../lib/siteContent";
 import { previewOf } from "../lib/fileType";
 import { Badge, EmptyState, SectionTitle, formatDate } from "../components/ui";
 
@@ -226,6 +227,8 @@ function PosterHighlight({ board }) {
 }
 
 export default function Home() {
+  // 지회·지부 수는 사무국이 고치는 명단에서 나온다.
+  const { totals, summary } = useBranches();
   const { rows: banners } = useCollection("banners");
   const { rows: events } = useCollection("events");
   const [leftTab, setLeftTab] = useState("notice");
@@ -269,8 +272,8 @@ export default function Home() {
             <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-slate-200 bg-slate-200">
               {[
                 { label: "창설", value: org.founded.replace("년", ""), unit: "년" },
-                { label: "지회", value: branchTotals.branches, unit: "개" },
-                { label: "지부", value: branchTotals.chapters, unit: "개" },
+                { label: "지회", value: totals.branches, unit: "개" },
+                { label: "지부", value: totals.chapters, unit: "개" },
                 { label: "사업", value: programs.length, unit: "개" },
               ].map((stat) => (
                 <div key={stat.label} className="bg-white px-5 py-6 text-center">
@@ -310,16 +313,16 @@ export default function Home() {
           >
             <div className="flex items-center gap-5">
               <span className="flex h-24 w-24 shrink-0 flex-col items-center justify-center rounded-lg bg-brand-900 text-white">
-                <span className="font-serif text-3xl font-bold">{branchTotals.branches}</span>
+                <span className="font-serif text-3xl font-bold">{totals.branches}</span>
                 <span className="mt-0.5 text-[10px] tracking-widest text-brand-300">지회</span>
               </span>
               <div className="min-w-0">
                 <p className="text-sm leading-relaxed text-slate-600">
-                  국내외 {branchTotals.branches}개 지회와 {branchTotals.chapters}개 지부를 두고
+                  국내외 {totals.branches}개 지회와 {totals.chapters}개 지부를 두고
                   있습니다.
                 </p>
                 <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                  {branchSummary.map((row) => (
+                  {summary.map((row) => (
                     <li key={row.area}>
                       {row.area} <strong className="text-brand-800">{row.count}</strong>
                     </li>

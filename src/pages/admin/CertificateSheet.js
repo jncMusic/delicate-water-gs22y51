@@ -1,4 +1,5 @@
-import { executives, org } from "../../data/site";
+import { org } from "../../data/site";
+import { useExecutives } from "../../lib/siteContent";
 
 /**
  * 증명서 서식.
@@ -13,10 +14,6 @@ import { executives, org } from "../../data/site";
  * 종이 한 장을 끝까지 쓴다. 가운데 칸을 늘려 붙여, 적을 것이 적은 증명서도
  * 아래가 휑하지 않게 한다.
  */
-
-// 임원 명단은 executives.officers 에 있다. officers 라는 이름으로 내보내지
-// 않으므로 여기서 꺼내 쓴다.
-const 대표 = (executives.officers || []).find((item) => item.role === "이사장") || {};
 
 const INK = "#1a1d24";
 const LINE = "#2b303a";
@@ -84,6 +81,11 @@ export default function CertificateSheet({
   issuedAt,
   seal,
 }) {
+  // 이사장 이름은 사무국이 「명단·회비」 화면에서 고친다. 증명서에 찍혀 나가는
+  // 이름이라 바뀌면 바로 따라가야 한다.
+  const executives = useExecutives();
+  const 대표 = (executives.officers || []).find((item) => item.role === "이사장") || {};
+
   /*
    * 제목은 글자 수에 따라 크기를 줄인다.
    *
