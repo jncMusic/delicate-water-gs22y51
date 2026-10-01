@@ -922,7 +922,20 @@ async function main() {
   }
 
   const primary = sources.filter(sourceEnabled);
-  let failed = await collectFrom(primary);
+  /*
+   * 네이버 쪽과 나머지를 따로 돌린다.
+   *
+   * 아래 물러서기 판단은 「네이버가 다 떨어졌는가」 를 물어야 한다. 한 묶음으로
+   * 세면 기관 RSS 가 한 건이라도 답하는 순간 그 판단이 거짓이 되어, 네이버가
+   * 다 막혔는데도 구글 뉴스로 물러서지 않는다. 실제로 그렇게 되어 관악계
+   * 소식이 통째로 비었다(2026-09-28 05:04 실행, 합계 4건 전부 예술계 소식).
+   */
+  const viaNaver = primary.filter((source) => source.when === "naver");
+  const others = primary.filter((source) => source.when !== "naver");
+
+  let failed = await collectFrom(viaNaver);
+  const naverAllFailed = viaNaver.length > 0 && failed === viaNaver.length;
+  failed += await collectFrom(others);
 
   /*
    * 네이버가 한 곳도 답하지 않으면 구글 뉴스로 물러선다.
@@ -934,9 +947,12 @@ async function main() {
    *
    * 한두 곳만 실패한 것은 그 언론사 쪽 사정이므로 물러서지 않는다. 나머지가
    * 답했다면 구글 뉴스로 같은 소식을 한 번 더 받아 오는 셈이 된다.
+   *
+   * 기관 RSS 가 답했는지는 여기에 끼지 않는다. 그쪽은 문화예술 전반을 담을 뿐
+   * 관악 기사를 찾아 주지 않으므로, 네이버가 막힌 날의 관악 소식은 구글
+   * 뉴스에서 받아야 한다.
    */
-  const allFailed = primary.length > 0 && failed === primary.length;
-  if (hasNaver && allFailed) {
+  if (hasNaver && naverAllFailed) {
     const backup = sources.filter((source) => source.enabled && source.when === "no-naver");
     if (backup.length > 0) {
       console.log(

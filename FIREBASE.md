@@ -244,6 +244,19 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // 협회 명단과 회비.
+    //
+    // 임원·지회장·지부장·회비표는 사람이 바뀔 때마다 고쳐야 하는데, 그동안
+    // 코드(src/data/site.js)에 박혀 있어 개발자를 불러야 했다. 사무국이 직접
+    // 고칠 수 있도록 여기로 옮긴다.
+    //
+    // 홈페이지에 그대로 나가는 내용이라 누구나 읽는다. 고치는 것은 사무국뿐.
+    // 직인이 든 settings 와 섞지 않는다. 그쪽은 읽기까지 막혀 있어야 한다.
+    match /siteContent/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /admins/{uid} {
       allow read: if isAdmin();
       allow write: if false;   // 콘솔에서만 추가·삭제합니다

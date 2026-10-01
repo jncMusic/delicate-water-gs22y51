@@ -7,6 +7,7 @@ import {
   Megaphone,
   FileText,
   MessageSquare,
+  Network,
   Users,
 } from "lucide-react";
 import { useAdmin } from "../lib/auth";
@@ -20,6 +21,7 @@ import AdminBoards from "./admin/AdminBoards";
 import AdminBanners from "./admin/AdminBanners";
 import AdminResources from "./admin/AdminResources";
 import AdminEvents from "./admin/AdminEvents";
+import AdminOrg from "./admin/AdminOrg";
 
 const TABS = [
   { key: "members", label: "회원 관리", icon: Users, Panel: AdminMembers },
@@ -29,6 +31,7 @@ const TABS = [
   { key: "resources", label: "자료실 관리", icon: FolderUp, Panel: AdminResources },
   { key: "events", label: "일정 관리", icon: CalendarDays, Panel: AdminEvents },
   { key: "banners", label: "배너 관리", icon: Image, Panel: AdminBanners },
+  { key: "org", label: "명단·회비", icon: Network, Panel: AdminOrg },
 ];
 
 export default function Admin() {

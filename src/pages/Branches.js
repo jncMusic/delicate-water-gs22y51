@@ -1,7 +1,10 @@
-import { branchList, branchSummary, branchTotals, chapterList } from "../data/site";
+import { useBranches } from "../lib/siteContent";
 import { Card, Container, PageHeader, SectionTitle } from "../components/ui";
 
 export default function Branches() {
+  // 명단은 사무국이 관리자 화면에서 고친다. 담긴 것이 없으면 site.js 값이 온다.
+  const { branches, chapters, totals, summary } = useBranches();
+
   return (
     <>
       <PageHeader subtitle="협회는 국내외에 지회와 지부를 두고 있습니다." />
@@ -10,11 +13,11 @@ export default function Branches() {
           <Card className="bg-brand-900 text-white">
             <p className="text-sm text-brand-200">지회</p>
             <p className="mt-1 font-serif text-4xl font-bold">
-              {branchTotals.branches}
+              {totals.branches}
               <span className="ml-1 text-lg">개</span>
             </p>
             <ul className="mt-5 space-y-2 border-t border-white/15 pt-4 text-sm">
-              {branchSummary.map((row) => (
+              {summary.map((row) => (
                 <li key={row.area} className="flex justify-between">
                   <span className="text-brand-200">{row.area}</span>
                   <span className="font-medium">{row.count}개</span>
@@ -26,7 +29,7 @@ export default function Branches() {
           <Card>
             <p className="text-sm text-slate-500">지부</p>
             <p className="mt-1 font-serif text-4xl font-bold text-brand-900">
-              {branchTotals.chapters}
+              {totals.chapters}
               <span className="ml-1 text-lg">개</span>
             </p>
             <p className="mt-5 border-t border-slate-100 pt-4 text-sm leading-relaxed text-slate-600">
@@ -47,7 +50,7 @@ export default function Branches() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {branchList.map((branch) => (
+                {branches.map((branch) => (
                   <tr key={branch.region} className="hover:bg-slate-50">
                     <td className="py-3.5 font-medium text-brand-900">{branch.region}</td>
                     <td className="py-3.5 text-center text-slate-700">
@@ -63,7 +66,7 @@ export default function Branches() {
           </p>
         </div>
 
-        {chapterList.length > 0 && (
+        {chapters.length > 0 && (
           <div className="mt-14">
             <SectionTitle>지부장</SectionTitle>
             <div className="overflow-x-auto">
@@ -75,7 +78,7 @@ export default function Branches() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {chapterList.map((chapter) => (
+                  {chapters.map((chapter) => (
                     <tr key={chapter.region} className="hover:bg-slate-50">
                       <td className="py-3.5 font-medium text-brand-900">
                         {chapter.region}
@@ -100,9 +103,9 @@ export default function Branches() {
             </div>
             {/* 협회 집계(7곳)보다 적게 적혀 있으면 그렇다고 알린다. 표만 보고
                 지부가 네 곳뿐이라고 읽히지 않게 한다. */}
-            {chapterList.length < branchTotals.chapters ? (
+            {chapters.length < totals.chapters ? (
               <p className="mt-4 text-xs text-slate-500">
-                지부 {branchTotals.chapters}곳 가운데 {chapterList.length}곳을 싣고 있습니다. 나머지는
+                지부 {totals.chapters}곳 가운데 {chapters.length}곳을 싣고 있습니다. 나머지는
                 확인되는 대로 올리겠습니다.
               </p>
             ) : null}

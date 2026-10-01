@@ -5,15 +5,18 @@ import {
   certificateProcess,
   certificates,
   feeGuide,
-  officerFees,
   joinSteps,
   memberFaq,
   memberTypes,
   org,
 } from "../data/site";
+import { useFees } from "../lib/siteContent";
 import { Card, Container, PageHeader, SectionTitle } from "../components/ui";
 
 export default function MembersGuide() {
+  // 회비는 사무국이 관리자 화면에서 고친다.
+  const officerFees = useFees();
+
   return (
     <>
       <PageHeader subtitle="회원 구분과 가입 절차를 안내합니다." />
@@ -84,11 +87,11 @@ export default function MembersGuide() {
               <h3 className="font-serif text-base font-bold text-brand-900">임원 회비</h3>
               <p className="mt-1.5 text-xs text-slate-500">{officerFees.note}</p>
               <dl className="mt-4 divide-y divide-slate-100 border-y border-slate-100">
-                {officerFees.rows.map((row) => (
+                {(officerFees.rows || []).map((row) => (
                   <div key={row.role} className="flex justify-between gap-3 py-2.5 text-sm">
                     <dt className="text-slate-600">{row.role}</dt>
                     <dd className="font-medium tabular-nums text-brand-900">
-                      {row.amount.toLocaleString("ko-KR")}원
+                      {Number(row.amount || 0).toLocaleString("ko-KR")}원
                     </dd>
                   </div>
                 ))}

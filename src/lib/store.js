@@ -119,6 +119,34 @@ export function subscribe(name, callback) {
 }
 
 /**
+ * 문서 한 건을 실시간으로 지켜본다.
+ *
+ * subscribe 는 컬렉션 전체를 createdAt 순으로 훑고 기본 게시물까지 섞는다.
+ * 협회 명단처럼 문서 한 건이 통째로 한 덩어리인 것에는 맞지 않아 따로 둔다.
+ *
+ * 없으면 null 을 준다. 아직 사무국이 손대지 않았다는 뜻이고, 그때는 화면이
+ * 코드에 박아 둔 기본값을 쓴다.
+ */
+export function subscribeDoc(name, id, callback) {
+  if (DEMO_MODE) {
+    const key = `${name}/${id}`;
+    if (!listeners.has(key)) listeners.set(key, new Set());
+    listeners.get(key).add(callback);
+    callback(readLocal(name).find((row) => row.id === id) || null);
+    return () => listeners.get(key)?.delete(callback);
+  }
+
+  return onSnapshot(
+    doc(db, name, id),
+    (snap) => callback(snap.exists() ? { id: snap.id, ...snap.data() } : null),
+    (err) => {
+      console.error(`[store] ${name}/${id} 구독 오류`, err);
+      callback(null);
+    }
+  );
+}
+
+/**
  * 문서 한 건만 읽는다.
  *
  * 목록을 훑지 않고 id 를 아는 한 건만 가져온다. 증명서를 신청한 분이 접수할
@@ -359,6 +387,8 @@ export async function putDoc(name, id, data) {
       name,
       exists ? rows.map((r) => (r.id === id ? { ...r, ...data } : r)) : [{ id, ...data }, ...rows]
     );
+    // 문서 하나를 지켜보는 쪽에도 알린다. writeLocal 은 컬렉션 구독자만 깨운다.
+    listeners.get(`${name}/${id}`)?.forEach((fn) => fn({ id, ...data }));
     return;
   }
   await setDoc(doc(db, name, id), data, { merge: true });

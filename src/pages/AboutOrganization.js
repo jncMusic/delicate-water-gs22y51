@@ -1,5 +1,6 @@
 import { Link } from "../lib/router";
-import { branchList, branchSummary, branchTotals, executives, organization } from "../data/site";
+import { organization } from "../data/site";
+import { useBranches, useExecutives } from "../lib/siteContent";
 import { Card, Container, PageHeader, SectionTitle } from "../components/ui";
 
 /**
@@ -139,10 +140,13 @@ function Chart({ chart }) {
   );
 }
 
-const specialists =
-  executives.groups.find((group) => group.name === "전문이사")?.names || [];
-
 export default function AboutOrganization() {
+  // 명단은 사무국이 관리자 화면에서 고친다.
+  const executives = useExecutives();
+  const { branches, totals, summary } = useBranches();
+  const specialists =
+    (executives.groups || []).find((group) => group.name === "전문이사")?.names || [];
+
   return (
     <>
       <PageHeader subtitle="협회의 의사결정 구조와 부서별 담당 업무입니다." />
@@ -185,15 +189,15 @@ export default function AboutOrganization() {
 
           <div className="mb-6 flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl border border-slate-200 bg-slate-50 px-5 py-4">
             <span className="font-serif text-lg font-bold text-brand-900">
-              지회 <span className="tabular-nums text-accent-600">{branchTotals.branches}</span>개
+              지회 <span className="tabular-nums text-accent-600">{totals.branches}</span>개
             </span>
             <span aria-hidden="true" className="hidden h-4 w-px bg-slate-300 sm:block" />
             <span className="font-serif text-lg font-bold text-brand-900">
-              지부 <span className="tabular-nums text-accent-600">{branchTotals.chapters}</span>개
+              지부 <span className="tabular-nums text-accent-600">{totals.chapters}</span>개
             </span>
             <span aria-hidden="true" className="hidden h-4 w-px bg-slate-300 sm:block" />
             <span className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-              {branchSummary.map((row) => (
+              {summary.map((row) => (
                 <span key={row.area}>
                   {row.area} <strong className="text-slate-700">{row.count}</strong>
                 </span>
@@ -202,7 +206,7 @@ export default function AboutOrganization() {
           </div>
 
           <ul className="grid gap-px overflow-hidden rounded-xl border border-slate-200 bg-slate-200 sm:grid-cols-2 lg:grid-cols-3">
-            {branchList.map((branch) => (
+            {branches.map((branch) => (
               <li key={branch.region} className="flex items-baseline gap-3 bg-white px-5 py-3.5">
                 <span className="min-w-0 flex-1 truncate text-sm font-medium text-brand-900">
                   {branch.region}
