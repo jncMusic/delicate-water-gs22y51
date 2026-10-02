@@ -2,12 +2,15 @@
   "_설명": [
     "관악·예술계 소식을 긁어올 곳 목록입니다. 이 파일만 고치면 대상이 바뀝니다.",
     "",
-    "kind 는 세 가지입니다.",
+    "kind 는 네 가지입니다.",
     "  naverNews  - 네이버 뉴스 검색. 요약과 사진까지 얻을 수 있어 이쪽이 낫습니다.",
     "               NAVER_API_KEY_ID·NAVER_API_KEY 가 있어야 돌아갑니다.",
     "  googleNews - 구글 뉴스에서 query 로 검색한 결과를 RSS 로 받습니다.",
     "               키가 필요 없지만 제목·날짜·링크만 남습니다. 구글이 기사 주소를",
     "               자바스크립트로 넘겨서 원문에 닿지 못하기 때문입니다.",
+    "  htmlList   - RSS 를 안 내는 기관의 목록 화면에서 제목과 주소만 긁습니다.",
+    "               어느 링크가 글인지 linkPattern 으로 적습니다. 본문은 뒤에",
+    "               원문을 열어 채웁니다.",
     "  rss        - 기관이 직접 주는 RSS 주소를 그대로 읽습니다.",
     "",
     "when      언제 이 곳을 쓸지. 같은 주제를 두 곳에서 겹쳐 받지 않기 위한 것입니다.",
@@ -315,19 +318,12 @@
     {
       "id": "gokams-jobs",
       "label": "예술경영지원센터 · 채용정보",
-      "kind": "rss",
+      "kind": "htmlList",
       "board": "jobs",
-      "url": "https://www.gokams.or.kr/rss/rss.aspx?bbsCd=jobposting",
+      "url": "https://www.gokams.or.kr/01_news/jobposting_list.aspx",
+      "linkPattern": "jobposting_view\\.aspx",
       "category": "연주단체",
-      "keywords": [
-        "모집",
-        "채용",
-        "초빙",
-        "임용",
-        "공고",
-        "선발",
-        "구인"
-      ],
+      "keywords": [],
       "require": [
         "관악",
         "윈드",
@@ -343,40 +339,7 @@
         "음악"
       ],
       "enabled": true,
-      "_메모": "예술경영지원센터 채용정보. 사무국이 주소를 주셨는데 이 작업실에서 바깥으로 나가는 길이 막혀 RSS 가 있는지 확인하지 못했다. 흔히 쓰는 주소를 후보로 넣어 두고 실행 기록에서 가린다. 404 면 지우고, 목록 화면(jobposting_list.aspx)을 직접 긁는 쪽을 다시 본다."
-    },
-    {
-      "id": "gokams-jobs2",
-      "label": "예술경영지원센터 · 채용정보(다른 주소)",
-      "kind": "rss",
-      "board": "jobs",
-      "url": "https://www.gokams.or.kr/01_news/rss.aspx",
-      "category": "연주단체",
-      "keywords": [
-        "모집",
-        "채용",
-        "초빙",
-        "임용",
-        "공고",
-        "선발",
-        "구인"
-      ],
-      "require": [
-        "관악",
-        "윈드",
-        "브라스",
-        "취주",
-        "교향악단",
-        "오케스트라",
-        "필하모닉",
-        "밴드",
-        "관악부",
-        "합주",
-        "앙상블",
-        "음악"
-      ],
-      "enabled": true,
-      "_메모": "위와 같은 곳의 다른 후보 주소. 둘 중 하나만 살아도 다른 쪽은 지운다."
+      "_메모": "RSS 를 내지 않아 목록 화면에서 제목과 주소만 가져온다. 공고 주소가 jobposting_view.aspx?Idx=4568 꼴이라는 것은 사무국이 확인해 주었다. keywords 를 비운 것은 이미 채용 공고만 모인 자리여서 「모집」 같은 말을 다시 물을 필요가 없기 때문이다. 대신 require 로 음악 쪽 공고만 고른다. 홈페이지 구조가 바뀌면 받은 것이 0건으로 떨어진다. 그때는 linkPattern 을 맞추면 된다."
     },
     {
       "id": "korea-mcst",

@@ -883,8 +883,52 @@ function feedUrl(source) {
 }
 
 /** 출처 한 곳에서 기사 목록을 받는다. 어디서 받는지는 kind 가 정한다. */
+/**
+ * 기관 홈페이지의 목록 화면에서 글을 뽑는다.
+ *
+ * RSS 를 내지 않는 곳에 쓴다. 예술경영지원센터 채용정보가 그렇다. 관악 단원·
+ * 강사 모집은 기사로 나지 않고 그런 공고란에만 올라오는데, 거기가 RSS 를
+ * 내주지 않으면 달리 받을 길이 없다.
+ *
+ * 하는 일은 딱 하나다. 글 주소로 가는 링크를 찾아 제목과 주소만 가져온다.
+ * 본문을 긁지 않는다. 그것은 뒤에 enrich 가 원문을 열어 한다.
+ *
+ * 링크를 알아보는 방법은 출처마다 linkPattern 으로 적는다. 화면 구조를
+ * 코드에 박으면 그 기관이 홈페이지를 고칠 때마다 코드를 고쳐야 한다.
+ *
+ * 날짜는 받지 않는다. 목록마다 적는 자리가 달라 한 가지로 읽어낼 수 없다.
+ * 날짜가 없으면 withinAge 가 그냥 통과시키고, 목록은 새 글이 위에 오므로
+ * 앞에서 몇 건만 잘라 담으면 오래된 공고가 섞이지 않는다.
+ */
+function parseList(html, source) {
+  const re = new RegExp(`<a\\b[^>]*href=["']([^"']*${source.linkPattern}[^"']*)["'][^>]*>([\\s\\S]*?)</a>`, "gi");
+  const seen = new Set();
+  const items = [];
+
+  for (let m = re.exec(html); m; m = re.exec(html)) {
+    const title = plain(m[2]);
+    // 제목이 없는 링크가 있다. 그림만 걸어 둔 칸이나 「더 보기」 같은 것이다.
+    if (title.length < 5) continue;
+
+    let link;
+    try {
+      link = new URL(decodeEntities(m[1].trim()), source.url).href;
+    } catch {
+      continue; // 주소 모양이 아니면 건너뛴다
+    }
+    // 같은 글을 제목과 그림으로 두 번 거는 목록이 있다.
+    if (seen.has(link)) continue;
+    seen.add(link);
+
+    items.push({ title, link, published: "", summary: "" });
+  }
+
+  return items;
+}
+
 async function fetchItems(source) {
   if (source.kind === "naverNews") return fetchNaverNews(source);
+  if (source.kind === "htmlList") return parseList(await fetchFeed(source.url), source);
 
   const items = parseFeed(await fetchFeed(feedUrl(source)));
   // 제목 끝의 " - 언론사" 를 떼는 것은 구글 뉴스만 그렇게 주기 때문이다.
@@ -1088,4 +1132,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { parseFeed, pickLead, trimToSentence, splitPublisher, toPost, toFields, classify, excluded, dropSimilar, similarity, sameStory, usefulSummary, withBody, pickDescription, pickImage, pickSiteName, hostLabel, toValue, findRealUrl, isGoogleNews, plain, withinAge, matches, decode, idFor, sourceEnabled, feedUrl, fetchNaverNews, unhighlight };
+module.exports = { parseFeed, parseList, pickLead, trimToSentence, splitPublisher, toPost, toFields, classify, excluded, dropSimilar, similarity, sameStory, usefulSummary, withBody, pickDescription, pickImage, pickSiteName, hostLabel, toValue, findRealUrl, isGoogleNews, plain, withinAge, matches, decode, idFor, sourceEnabled, feedUrl, fetchNaverNews, unhighlight };
