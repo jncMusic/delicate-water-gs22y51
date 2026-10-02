@@ -65,7 +65,7 @@ export const boards = {
     collection: "jobs",
     label: "일자리 정보",
     path: "/info/jobs",
-    description: "음악 분야의 채용과 강사 모집 정보입니다.",
+    description: "음악·공연 분야의 채용과 강사 모집 정보입니다.",
     categories: ["연주단체", "학교", "강사", "기타"],
   },
 };
