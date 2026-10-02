@@ -910,8 +910,14 @@ function parseList(html, source) {
   const seen = new Set();
   const items = [];
 
+  // 목록 칸에 상태 딱지를 같이 넣어 두는 곳이 있다. 아트모아는 제목 앞에
+  // 「진행중」 이 붙어 「진행중 세종문화회관 공연장 안내원 51기 모집 공고」
+  // 로 들어온다. 딱지는 글 이름이 아니므로 떼어 낸다. 어떤 딱지를 쓰는지는
+  // 곳마다 다르니 출처에 적게 한다.
+  const badge = source.stripTitle ? new RegExp(source.stripTitle) : null;
+
   for (let m = re.exec(html); m; m = re.exec(html)) {
-    const title = plain(m[2]);
+    const title = badge ? plain(m[2]).replace(badge, "").trim() : plain(m[2]);
     // 제목이 없는 링크가 있다. 그림만 걸어 둔 칸이나 「더 보기」 같은 것이다.
     if (title.length < 5) continue;
 
