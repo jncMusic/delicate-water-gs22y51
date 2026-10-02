@@ -947,7 +947,25 @@ async function main() {
   );
 
   const collected = [];
-  const seen = new Set();
+
+  /*
+   * 이미 담은 글은 다시 담지 않는다. 다만 게시판마다 따로 센다.
+   *
+   * 한 묶음으로 세었더니, 먼저 도는 출처가 기사를 다 차지해 버렸다.
+   * 2026-10-02 04:21 실행에서 「구글뉴스 · 관악 공모·경연」 이 관악 기사를
+   * 먼저 훑어 가는 바람에, 뒤에 도는 「구글뉴스 · 관악 연주회」 는 45건을
+   * 받고도 0건만 담았다. 연주회 소식이 통째로 비었다.
+   *
+   * 아래에서 비슷한 기사를 걷어낼 때도 게시판이 다르면 합치지 않는다.
+   * 관악계 소식과 연주회 소식은 읽는 자리가 달라서, 한쪽에 있다고 다른
+   * 쪽에서 빼 버리면 그 게시판에는 그 소식이 아예 없는 셈이 된다.
+   * 여기도 같은 이치로 게시판마다 따로 센다.
+   */
+  const seenBy = new Map();
+  const seenOf = (board) => {
+    if (!seenBy.has(board)) seenBy.set(board, new Set());
+    return seenBy.get(board);
+  };
 
   /** 한 묶음을 차례로 돌며 collected 에 담는다. 답하지 않은 곳 수를 돌려준다. */
   async function collectFrom(list) {
@@ -979,7 +997,10 @@ async function main() {
           .filter((item) => matches(item, source.require))
           .filter((item) => !excluded(item, source))
           .map((item) => toPost(item, source))
-          .filter((post) => !seen.has(post.id) && seen.add(post.id))
+          .filter((post) => {
+            const seen = seenOf(post.board);
+            return !seen.has(post.id) && seen.add(post.id);
+          })
       ).slice(0, PER_SOURCE_LIMIT);
 
       console.log(`    받은 것 ${items.length}건 → 고른 것 ${picked.length}건`);
