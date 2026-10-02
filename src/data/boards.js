@@ -57,7 +57,7 @@ export const boards = {
     collection: "concertNews",
     label: "연주회 소식",
     path: "/info/concert",
-    description: "회원과 단체의 연주회 소식을 안내합니다.",
+    description: "관악 연주회 소식입니다. 회원·단체의 연주회는 사무국이 직접 올립니다.",
     categories: ["정기연주회", "초청공연", "학교연주회", "기타"],
   },
   jobs: {
