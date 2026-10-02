@@ -52,6 +52,11 @@ const DEFAULT_BOARD = "artsNews";
  * 한 곳에서 가져올 최대 개수.
  * 첫 수집 때 8로 두었더니 정책 한 곳에서만 8건이 들어와, 사무국이 볼 것이
  * 한꺼번에 쌓였다. 비슷한 기사를 걷어내고도 남는 것만 이만큼 담는다.
+ *
+ * 뉴스에는 이 수가 맞다. 같은 날 같은 소식을 여러 신문이 쓰기 때문에, 많이
+ * 담아도 사무국이 보는 것은 결국 한 건이다. 공고 목록은 다르다. 한 줄이 곧
+ * 한 기관의 공고라서 자르면 그 기관의 공고가 없어진다. 그런 곳은 출처에
+ * limit 를 적어 따로 둔다.
  */
 const PER_SOURCE_LIMIT = 4;
 /** 이보다 오래된 것은 담지 않는다(일). */
@@ -984,26 +989,57 @@ async function main() {
         continue;
       }
 
+      const sifted = items
+        .filter((item) => item.title && item.link)
+        .filter((item) => withinAge(item.published))
+        .filter((item) => matches(item, source.keywords))
+        // require 는 keywords 에 더해 한 번 더 걸러낸다. 일자리처럼 「채용」
+        // 만으로는 엉뚱한 것이 쏟아지는 자리에서, 음악 쪽 낱말이 하나는
+        // 있어야 담기게 한다. 적지 않은 출처에는 아무 영향이 없다.
+        .filter((item) => matches(item, source.require))
+        .filter((item) => !excluded(item, source))
+        .map((item) => toPost(item, source))
+        .filter((post) => {
+          const seen = seenOf(post.board);
+          return !seen.has(post.id) && seen.add(post.id);
+        });
+
       // 비슷한 기사를 걷어낸 뒤에 개수를 자른다. 먼저 자르면 같은 행사 기사로
       // 자리가 다 차 버린다.
-      const picked = dropSimilar(
-        items
-          .filter((item) => item.title && item.link)
-          .filter((item) => withinAge(item.published))
-          .filter((item) => matches(item, source.keywords))
-          // require 는 keywords 에 더해 한 번 더 걸러낸다. 일자리처럼 「채용」
-          // 만으로는 엉뚱한 것이 쏟아지는 자리에서, 음악 쪽 낱말이 하나는
-          // 있어야 담기게 한다. 적지 않은 출처에는 아무 영향이 없다.
-          .filter((item) => matches(item, source.require))
-          .filter((item) => !excluded(item, source))
-          .map((item) => toPost(item, source))
-          .filter((post) => {
-            const seen = seenOf(post.board);
-            return !seen.has(post.id) && seen.add(post.id);
-          })
-      ).slice(0, PER_SOURCE_LIMIT);
+      //
+      // 다만 공고 목록에서는 걷어내지 않는다. 이것은 「같은 소식을 여러 신문이
+      // 쓴 것」 을 하나로 합치려고 둔 것인데, 채용 공고는 제목이 하나같이
+      // 「○○ 2026년 제2차 직원 채용 공고」 꼴이라 서로 베껴 쓴 기사처럼 보인다.
+      // 기관 이름만 다른 두 공고가 0.46~0.59 로 나와 한쪽이 버려진다. 서로
+      // 다른 기관이 사람을 뽑는 것은 같은 소식이 아니다.
+      //
+      // 목록은 이미 parseList 가 주소로 겹침을 걸러 두었으므로, 같은 공고가
+      // 두 번 담길 일도 없다.
+      const collapse = source.similar !== false && source.kind !== "htmlList";
+      const kept = collapse ? dropSimilar(sifted) : sifted;
+      const picked = kept.slice(0, source.limit || PER_SOURCE_LIMIT);
 
       console.log(`    받은 것 ${items.length}건 → 고른 것 ${picked.length}건`);
+      // 어디서 떨어졌는지 적어 둔다. 받은 것은 많은데 담긴 것이 없을 때,
+      // 낱말이 좁은 것인지 겹침으로 버린 것인지 개수를 잘라서인지 실행
+      // 기록만 보고 알 수 있어야 한다.
+      if (items.length !== picked.length) {
+        const steps = [];
+        if (items.length > sifted.length) steps.push(`낱말·겹침주소에서 ${items.length - sifted.length}건`);
+        if (sifted.length > kept.length) steps.push(`비슷한 것으로 ${sifted.length - kept.length}건`);
+        if (kept.length > picked.length) steps.push(`개수를 잘라 ${kept.length - picked.length}건`);
+        if (steps.length) console.log(`      (떨어진 것: ${steps.join(" · ")})`);
+      }
+      // 받아 보기일 때는 떨어진 제목도 다 적는다. 예술경영지원센터를 넣었을
+      // 때 「10건 받아 2건」 만 적혀 있어, 그 10건이 무엇인지 알 수 없었다.
+      // 알고 보니 그곳은 예술계 채용이 아니라 그 센터가 자기 직원을 뽑는
+      // 게시판이었다. 제목이 보였으면 한눈에 알아봤을 것이다.
+      if (DRY_RUN && items.length > picked.length) {
+        const taken = new Set(picked.map((post) => post.title));
+        items
+          .filter((item) => !taken.has(item.title))
+          .forEach((item) => console.log(`      × ${item.title}`));
+      }
       picked.forEach((post) => console.log(`      · [${post.category}] ${post.title}`));
       collected.push(...picked);
     }
