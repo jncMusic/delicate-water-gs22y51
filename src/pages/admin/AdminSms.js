@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Check, Copy, MessageSquare, Users } from "lucide-react";
 import { useCollection } from "../../lib/useCollection";
 import { smsTemplates } from "../../data/site";
+import { useFees } from "../../lib/siteContent";
 import { SMS_LIMIT, digits, smsBytes, smsGroups } from "../../lib/members";
 import { Button, EmptyState, Loading } from "../../components/ui";
 
@@ -39,8 +40,13 @@ function CopyButton({ text, label, disabled }) {
   );
 }
 
-function Card({ template, people }) {
-  const bytes = smsBytes(template.body);
+function Card({ template, people, fees }) {
+  /*
+   * 회비가 든 문구는 그때그때 지어 낸다. 회비는 사무국이 「명단·회비」 에서
+   * 고치는 것이라, 적어 두면 금액을 올린 날 문자만 옛 금액으로 나간다.
+   */
+  const body = template.build ? template.build(fees) : template.body;
+  const bytes = smsBytes(body);
   const long = bytes > SMS_LIMIT;
 
   // 문자 서비스에 붙여 넣을 번호 목록. 중복은 한 번만.
@@ -68,7 +74,7 @@ function Card({ template, people }) {
       </div>
 
       <pre className="mt-3 select-all whitespace-pre-wrap break-words rounded-lg bg-slate-50 px-4 py-3 font-sans text-sm leading-relaxed text-brand-900">
-        {template.body}
+        {body}
       </pre>
 
       {long ? (
@@ -95,7 +101,7 @@ function Card({ template, people }) {
           )}
         </span>
         <div className="ml-auto flex flex-wrap gap-2">
-          <CopyButton text={template.body} label="문구 복사" />
+          <CopyButton text={body} label="문구 복사" />
           {people ? (
             <CopyButton
               text={numbers.join("\n")}
@@ -118,6 +124,7 @@ function Card({ template, people }) {
 
 export default function AdminSms() {
   const { rows, loading } = useCollection("members");
+  const fees = useFees();
   const groups = useMemo(() => smsGroups(rows), [rows]);
 
   if (loading) return <Loading label="회원 명단을 불러오는 중입니다..." />;
@@ -143,6 +150,7 @@ export default function AdminSms() {
               key={template.id}
               template={template}
               people={NO_LIST.has(template.id) ? null : groups[GROUP_OF[template.id]] || []}
+              fees={fees.rows}
             />
           ))}
         </div>
