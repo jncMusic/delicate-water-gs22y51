@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, ExternalLink, Search } from "lucide-react";
+import { Download, ExternalLink, Paperclip, Search } from "lucide-react";
 import { Link, navigate } from "../lib/router";
 import { usePublicCollection } from "../lib/useCollection";
 import { pinnedFirst } from "../data/boards";
 import { bumpCounter } from "../lib/store";
 import { splitLinks, stripSourceFooter } from "../lib/text";
+import { fileKind } from "../lib/fileType";
 import {
   Badge,
   Container,
@@ -14,6 +15,7 @@ import {
   PageHeader,
   Pagination,
   Select,
+  formatBytes,
   formatDate,
 } from "../components/ui";
 
@@ -60,6 +62,25 @@ function PostThumb({ post, className = "" }) {
       }}
       className={`h-11 w-8 shrink-0 rounded border border-slate-200 object-cover ${className}`}
     />
+  );
+}
+
+/**
+ * 첨부파일이 있다는 표시. 목록에서 눌러 보기 전에 알 수 있어야, 서식을
+ * 받으러 들어온 분이 글마다 열어 보지 않는다.
+ */
+function ClipMark({ post }) {
+  const count = post.files?.length || 0;
+  if (count === 0) return null;
+  return (
+    <span
+      title={`첨부파일 ${count}개`}
+      className="inline-flex shrink-0 items-center gap-0.5 text-xs text-slate-400"
+    >
+      <Paperclip size={13} aria-hidden="true" />
+      <span className="sr-only">첨부파일 </span>
+      {count}
+    </span>
   );
 }
 
@@ -168,6 +189,7 @@ export default function Board({ board }) {
                         <PostThumb post={post} />
                         {post.closed && <Badge tone="종료">종료</Badge>}
                         {post.title}
+                        <ClipMark post={post} />
                       </Link>
                     </td>
                     <td className="py-3.5 text-center text-slate-500">{post.author || "-"}</td>
@@ -194,7 +216,10 @@ export default function Board({ board }) {
                         {post.closed && <Badge tone="종료">종료</Badge>}
                         <span className="text-xs text-slate-400">{formatDate(post.createdAt)}</span>
                       </span>
-                      <span className="mt-1.5 block font-medium text-slate-800">{post.title}</span>
+                      <span className="mt-1.5 flex items-center gap-1.5 font-medium text-slate-800">
+                        <span className="min-w-0">{post.title}</span>
+                        <ClipMark post={post} />
+                      </span>
                     </span>
                   </Link>
                 </li>
@@ -298,6 +323,52 @@ export function BoardDetail({ board, id }) {
                 {post.author ? `${post.author}에서 원문 보기` : "원문 보기"}
               </a>
             </p>
+          )}
+
+          {/*
+            첨부파일은 본문 바로 아래, 그림보다 먼저 놓는다. 공문이나 신청서를
+            받으러 들어온 분이 사진을 다 지나칠 일이 없어야 한다.
+
+            내려받기는 <a download> 로 적지 않는다. 파일이 홈페이지와 다른
+            도메인에 있어 그 적음은 무시된다. 대신 올릴 때 파일 자체에
+            「열지 말고 저장하라」 고 적어 두었다(store.js 의 uploadFile).
+          */}
+          {post.files?.length > 0 && (
+            <section className="mb-8 rounded-lg border border-slate-200 bg-slate-50/70 p-4">
+              <h2 className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold text-brand-900">
+                <Paperclip size={15} className="text-slate-400" aria-hidden="true" />
+                첨부파일 {post.files.length}개
+              </h2>
+              <ul className="space-y-1.5">
+                {post.files.map((file) => {
+                  const { label, Icon } = fileKind(file.name);
+                  return (
+                    <li key={file.url}>
+                      <a
+                        href={file.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="group flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm hover:border-brand-300 hover:bg-brand-50/50"
+                      >
+                        <Icon size={16} className="shrink-0 text-slate-400" aria-hidden="true" />
+                        <span className="min-w-0 flex-1 truncate text-brand-900 group-hover:underline">
+                          {file.name}
+                        </span>
+                        <span className="shrink-0 text-xs text-slate-500">
+                          {label}
+                          {file.size ? ` · ${formatBytes(file.size)}` : ""}
+                        </span>
+                        <Download
+                          size={15}
+                          className="shrink-0 text-slate-400 group-hover:text-brand-700"
+                          aria-hidden="true"
+                        />
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
           )}
 
           <div className="pb-10" />

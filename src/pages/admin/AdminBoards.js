@@ -1,5 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertCircle, Eye, EyeOff, ImagePlus, Lock, Pencil, Pin, Plus, Trash2, X } from "lucide-react";
+import {
+  AlertCircle,
+  Eye,
+  EyeOff,
+  ImagePlus,
+  Lock,
+  Paperclip,
+  Pencil,
+  Pin,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useCollection } from "../../lib/useCollection";
 import {
   createDoc,
@@ -12,7 +24,7 @@ import {
 } from "../../lib/store";
 import { boardList, pinnedFirst } from "../../data/boards";
 import { postTemplates } from "../../data/postTemplates";
-import { isImageFile } from "../../lib/fileType";
+import { fileKind, isImageFile } from "../../lib/fileType";
 import {
   Badge,
   Button,
@@ -35,7 +47,26 @@ const emptyPost = (board) => ({
   pinned: false,
   closed: false,
   images: [],
+  files: [],
 });
+
+/**
+ * 첨부파일 한 개의 크기 한도.
+ *
+ * 종류는 가리지 않는다. 사무국이 공문을 한글(hwp)로 쓰고, 서식은 워드로,
+ * 안내문은 PDF 로 낸다. 받는 분이 열 수 있는지는 사무국이 아는 일이지,
+ * 홈페이지가 가로막을 일이 아니다.
+ *
+ * 다만 크기는 막는다. 공지사항은 아무나 읽는 자리라, 큰 파일이 걸려 있으면
+ * 눌러 본 분의 데이터가 그만큼 나간다. 20MB 면 사진이 여러 장 든 한글 공문도
+ * 들어간다.
+ *
+ * 저장소 규칙(storage.rules)도 20MB 미만만 받는다. 여기서 먼저 걸러 주지
+ * 않으면 사무국은 한참 올린 뒤에야 권한 오류를 본다. 그 규칙이 "미만" 이므로
+ * 여기서도 딱 20MB 는 막는다. 더 큰 것을 올리셔야 하면 양쪽을 같이 올려야
+ * 한다.
+ */
+const FILE_LIMIT = 20 * 1024 * 1024;
 
 /** 공지사항·보도자료 등 모든 게시판을 한 화면에서 관리한다. */
 export default function AdminBoards() {
@@ -48,6 +79,7 @@ export default function AdminBoards() {
   const [draft, setDraft] = useState(null);
   // 저장 버튼을 누를 때 한꺼번에 올린다. 작성을 취소하면 아무것도 남지 않는다.
   const [pending, setPending] = useState([]);
+  const [pendingFiles, setPendingFiles] = useState([]);
   // 수정하면서 뺀 그림. 저장에 성공한 뒤에 실제 파일을 지운다.
   const [dropped, setDropped] = useState([]);
   const [error, setError] = useState(null);
@@ -63,6 +95,7 @@ export default function AdminBoards() {
   function closeDraft() {
     setDraft(null);
     setPending([]);
+    setPendingFiles([]);
     setDropped([]);
     setError(null);
   }
@@ -83,6 +116,36 @@ export default function AdminBoards() {
     });
     if (picked.length > 0) setPending((prev) => [...prev, ...picked]);
     e.target.value = "";
+  };
+
+  /**
+   * 첨부파일을 고른다. 종류는 가리지 않는다. 한글·워드·PDF·압축 무엇이든
+   * 올라간다. 크기만 본다.
+   */
+  const addFiles = (e) => {
+    const picked = Array.from(e.target.files || []).filter((file) => {
+      if (file.size >= FILE_LIMIT) {
+        // 크기를 둘 다 적으면 「20MB 로 20MB 를 넘습니다」 처럼 읽혀 뜻이
+        // 흐려진다. 한도만 적고 어떻게 하라는 말을 붙인다.
+        setError(
+          `${file.name} 은 너무 큽니다. 한 개에 ${formatBytes(FILE_LIMIT)} 보다 작아야 합니다. ` +
+            "파일을 나누거나 줄여서 올려 주세요."
+        );
+        return false;
+      }
+      return true;
+    });
+    if (picked.length > 0) setPendingFiles((prev) => [...prev, ...picked]);
+    e.target.value = "";
+  };
+
+  /** 이미 올라가 있는 첨부파일을 뺀다. 그림과 같은 길을 쓴다. */
+  const dropAttachment = (file) => {
+    setDraft((prev) => ({
+      ...prev,
+      files: (prev.files || []).filter((item) => item.url !== file.url),
+    }));
+    if (file.path) setDropped((prev) => [...prev, file.path]);
   };
 
   /** 이미 올라가 있는 그림을 뺀다. 파일은 저장이 끝난 뒤에 지운다. */
@@ -109,11 +172,26 @@ export default function AdminBoards() {
       }
       const images = [...(draft.images || []), ...uploaded];
 
+      const attached = [];
+      for (const file of pendingFiles) {
+        // 폴더는 resources 를 쓴다. 저장소 규칙(storage.rules)이 열어 둔
+        // 폴더가 resources·banners·certificates 셋뿐이고, 글에 붙는 그림도
+        // 이미 거기로 간다. 새 폴더를 쓰면 규칙을 다시 올리셔야 한다.
+        const stored = await uploadFile(file, "resources");
+        attached.push({
+          url: stored.url,
+          name: stored.name,
+          size: stored.size,
+          path: stored.path,
+        });
+      }
+      const files = [...(draft.files || []), ...attached];
+
       if (draft.id) {
         const { id, createdAt, ...patch } = draft;
-        await saveDoc(board.collection, id, { ...patch, images });
+        await saveDoc(board.collection, id, { ...patch, images, files });
       } else {
-        await createDoc(board.collection, { ...draft, images, views: 0 });
+        await createDoc(board.collection, { ...draft, images, files, views: 0 });
       }
       await Promise.all(dropped.map((path) => deleteFile(path)));
       closeDraft();
@@ -127,7 +205,9 @@ export default function AdminBoards() {
 
   const remove = async (post) => {
     if (!window.confirm(`'${post.title}' 글을 삭제할까요?`)) return;
-    await Promise.all((post.images || []).map((image) => deleteFile(image.path)));
+    await Promise.all(
+      [...(post.images || []), ...(post.files || [])].map((item) => deleteFile(item.path))
+    );
     await removeDoc(board.collection, post.id);
   };
 
@@ -415,6 +495,76 @@ export default function AdminBoards() {
                   <ImagePlus size={15} />
                   그림 고르기
                   <input type="file" accept="image/*" multiple onChange={addImages} className="sr-only" />
+                </label>
+              </div>
+            </Field>
+
+            <Field
+              label="첨부파일"
+              hint={
+                DEMO_MODE
+                  ? `데모 모드에서는 ${formatBytes(DEMO_FILE_LIMIT)} 이하만 저장됩니다. Firebase를 연결하면 ${formatBytes(FILE_LIMIT)} 까지 올라갑니다.`
+                  : `한글(hwp)·워드·PDF 등 종류를 가리지 않습니다. 한 개 ${formatBytes(FILE_LIMIT)} 까지. 글 아래에 내려받기 줄로 붙습니다.`
+              }
+            >
+              <div className="rounded-lg border border-slate-300 p-3">
+                {(draft.files?.length > 0 || pendingFiles.length > 0) && (
+                  <ul className="mb-3 space-y-1.5">
+                    {(draft.files || []).map((file) => {
+                      const { label, Icon } = fileKind(file.name);
+                      return (
+                        <li
+                          key={file.url}
+                          className="flex items-center gap-2 rounded border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-sm"
+                        >
+                          <Icon size={15} className="shrink-0 text-slate-400" />
+                          <span className="min-w-0 flex-1 truncate text-brand-900">{file.name}</span>
+                          <span className="shrink-0 text-xs text-slate-500">
+                            {label}
+                            {file.size ? ` · ${formatBytes(file.size)}` : ""}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => dropAttachment(file)}
+                            aria-label={`${file.name} 빼기`}
+                            className="shrink-0 rounded p-0.5 text-slate-400 hover:text-rose-600"
+                          >
+                            <X size={14} />
+                          </button>
+                        </li>
+                      );
+                    })}
+                    {pendingFiles.map((file, i) => {
+                      const { label, Icon } = fileKind(file.name);
+                      return (
+                        <li
+                          key={`${file.name}-${file.lastModified}`}
+                          className="flex items-center gap-2 rounded border border-dashed border-accent-400 px-2.5 py-1.5 text-sm"
+                        >
+                          <Icon size={15} className="shrink-0 text-accent-500" />
+                          <span className="min-w-0 flex-1 truncate text-brand-900">{file.name}</span>
+                          <span className="shrink-0 text-xs text-accent-600">
+                            {label} · {formatBytes(file.size)} · 저장 시 올림
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPendingFiles((prev) => prev.filter((_, at) => at !== i))
+                            }
+                            aria-label={`${file.name} 빼기`}
+                            className="shrink-0 rounded p-0.5 text-slate-400 hover:text-rose-600"
+                          >
+                            <X size={14} />
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-brand-800 hover:bg-slate-50">
+                  <Paperclip size={15} />
+                  파일 고르기
+                  <input type="file" multiple onChange={addFiles} className="sr-only" />
                 </label>
               </div>
             </Field>
