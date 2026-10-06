@@ -59,7 +59,19 @@ const DEFAULT_BOARD = "artsNews";
  * limit 를 적어 따로 둔다.
  */
 const PER_SOURCE_LIMIT = 4;
-/** 이보다 오래된 것은 담지 않는다(일). */
+/**
+ * 이보다 오래된 것은 담지 않는다(일).
+ *
+ * 뉴스에는 2주가 맞다. 지난 소식을 올려 봐야 읽을 사람이 없다.
+ *
+ * 다만 기사가 드문 자리는 다르다. 관악 연주회는 한 해에 몇 건 나지 않아,
+ * 구글 뉴스에 「관악부 연주회」 를 물으면 50건쯤 돌려주는데 거의가 지난해
+ * 기사다. 2주로 자르면 한 건도 안 남는다. 2026-10-05 실행에서 연주회 쪽
+ * 두 출처가 105건을 받아 0건을 담았고, 떨어진 것을 낱말 거르개에 다시
+ * 걸어 보니 10건 가운데 9건이 통과했다. 날짜에서 떨어진 것이다.
+ *
+ * 그런 출처는 maxAgeDays 를 따로 적는다.
+ */
 const MAX_AGE_DAYS = 14;
 
 const sourcesFile = path.join(__dirname, "arts-sources.json");
@@ -302,11 +314,11 @@ function splitPublisher(item) {
   return { ...item, title: m[1], publisher: item.publisher || m[2] };
 }
 
-function withinAge(published) {
+function withinAge(published, days = MAX_AGE_DAYS) {
   if (!published) return true; // 날짜를 안 주는 곳도 있다. 그럴 땐 통과시킨다.
   const time = Date.parse(published);
   if (Number.isNaN(time)) return true;
-  return Date.now() - time <= MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+  return Date.now() - time <= days * 24 * 60 * 60 * 1000;
 }
 
 function matches(item, keywords) {
@@ -354,6 +366,9 @@ const CATEGORY_HINTS = {
   // 연주회는 누가 여는 무대인지로 나눈다. 학교를 먼저 보는 이유는 학교
   // 정기연주회가 「정기연주회」 보다 「학교연주회」 로 읽히는 편이 낫기 때문이다.
   concertNews: [
+    // 독주회를 먼저 본다. 「○○고 출신 김○○ 플루트 독주회」 처럼 학교 이름이
+    // 섞여 들어오는 일이 잦은데, 그것은 학교 연주회가 아니라 독주회다.
+    ["독주회", ["독주회", "리사이틀", "독주", "리싸이틀"]],
     ["학교연주회", ["초등", "중학교", "고등학교", "대학교", "학생", "관악부", "밴드부", "교육청"]],
     ["정기연주회", ["정기연주회", "정기연주", "정기공연", "정기 연주회"]],
     ["초청공연", ["초청", "내한", "협연", "합동연주", "교류음악회"]],
@@ -995,19 +1010,38 @@ async function main() {
         continue;
       }
 
+      // 어느 거르개에서 떨어졌는지 따로 센다. 뭉뚱그려 세면 받은 것이 많은데
+      // 담긴 것이 없을 때 날짜가 자른 것인지 낱말이 자른 것인지 알 수 없다.
+      // 연주회 소식이 비었을 때 그래서 한참 헤맸다.
+      const fell = { 날짜: 0, 낱말: 0, 겹침: 0 };
+      const ageDays = source.maxAgeDays || MAX_AGE_DAYS;
+
       const sifted = items
         .filter((item) => item.title && item.link)
-        .filter((item) => withinAge(item.published))
-        .filter((item) => matches(item, source.keywords))
+        .filter((item) => {
+          if (withinAge(item.published, ageDays)) return true;
+          fell.날짜 += 1;
+          return false;
+        })
         // require 는 keywords 에 더해 한 번 더 걸러낸다. 일자리처럼 「채용」
         // 만으로는 엉뚱한 것이 쏟아지는 자리에서, 음악 쪽 낱말이 하나는
         // 있어야 담기게 한다. 적지 않은 출처에는 아무 영향이 없다.
-        .filter((item) => matches(item, source.require))
-        .filter((item) => !excluded(item, source))
+        .filter((item) => {
+          const ok =
+            matches(item, source.keywords) &&
+            matches(item, source.require) &&
+            !excluded(item, source);
+          if (!ok) fell.낱말 += 1;
+          return ok;
+        })
         .map((item) => toPost(item, source))
         .filter((post) => {
           const seen = seenOf(post.board);
-          return !seen.has(post.id) && seen.add(post.id);
+          if (seen.has(post.id)) {
+            fell.겹침 += 1;
+            return false;
+          }
+          return seen.add(post.id);
         });
 
       // 비슷한 기사를 걷어낸 뒤에 개수를 자른다. 먼저 자르면 같은 행사 기사로
@@ -1031,7 +1065,9 @@ async function main() {
       // 기록만 보고 알 수 있어야 한다.
       if (items.length !== picked.length) {
         const steps = [];
-        if (items.length > sifted.length) steps.push(`낱말·겹침주소에서 ${items.length - sifted.length}건`);
+        if (fell.날짜) steps.push(`${ageDays}일보다 오래되어 ${fell.날짜}건`);
+        if (fell.낱말) steps.push(`낱말이 맞지 않아 ${fell.낱말}건`);
+        if (fell.겹침) steps.push(`같은 주소로 ${fell.겹침}건`);
         if (sifted.length > kept.length) steps.push(`비슷한 것으로 ${sifted.length - kept.length}건`);
         if (kept.length > picked.length) steps.push(`개수를 잘라 ${kept.length - picked.length}건`);
         if (steps.length) console.log(`      (떨어진 것: ${steps.join(" · ")})`);
