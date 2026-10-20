@@ -130,7 +130,7 @@ export default function Header({ path }) {
             <img
               src={`${process.env.PUBLIC_URL || ""}/logo-kba-wide.svg`}
               alt={org.name}
-              className="h-9 w-auto sm:h-10"
+              className="h-11 w-auto sm:h-12"
             />
           </Link>
 
@@ -147,7 +147,7 @@ export default function Header({ path }) {
               >
                 <Link
                   to={menuHome(menu)}
-                  className={`flex items-center border-b-2 px-3 text-sm font-medium transition-colors lg:px-6 lg:text-[15px] ${
+                  className={`flex items-center border-b-2 px-3 text-[15px] font-medium transition-colors lg:px-6 lg:text-base ${
                     isActive(menu)
                       ? "border-brand-700 text-brand-800"
                       : "border-transparent text-slate-700 hover:text-brand-700"

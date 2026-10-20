@@ -101,7 +101,7 @@ export function PageHeader({ title, subtitle }) {
             <span className="absolute inset-0 overflow-hidden">
               <StaffPattern />
             </span>
-            <h2 className="relative font-serif text-xl font-bold text-white sm:text-2xl">
+            <h2 className="relative font-serif text-2xl font-bold text-white sm:text-3xl">
               {group.label}
             </h2>
           </div>
@@ -141,7 +141,7 @@ export function PageHeader({ title, subtitle }) {
             {org.abbr}
           </p>
           <span aria-hidden="true" className="mx-auto my-4 block h-px w-8 bg-slate-300" />
-          <h1 className="font-serif text-2xl font-bold text-brand-900 sm:text-3xl">{heading}</h1>
+          <h1 className="font-serif text-3xl font-bold text-brand-900 sm:text-4xl">{heading}</h1>
           {subtitle && <p className="mt-3 text-sm text-slate-600">{subtitle}</p>}
         </div>
       </div>
@@ -166,7 +166,7 @@ export function SidebarPage({ menu, title, subtitle, children }) {
       <div className="grid gap-8 lg:grid-cols-[220px_1fr]">
         <aside className="relative overflow-hidden rounded-2xl bg-brand-900 px-5 py-8 text-white">
           <StaffPattern />
-          <h2 className="relative font-serif text-xl font-bold">{menu.label}</h2>
+          <h2 className="relative font-serif text-2xl font-bold">{menu.label}</h2>
           <nav aria-label={`${menu.label} 메뉴`} className="relative mt-8 space-y-1">
             {menu.children.map((item) => {
               const active = item.path === path;
@@ -190,7 +190,7 @@ export function SidebarPage({ menu, title, subtitle, children }) {
 
         <div>
           <div className="text-center">
-            <h1 className="font-serif text-2xl font-bold text-brand-900 sm:text-3xl">
+            <h1 className="font-serif text-3xl font-bold text-brand-900 sm:text-4xl">
               {title || child?.label}
             </h1>
             {subtitle && <p className="mt-3 text-sm text-slate-600">{subtitle}</p>}
@@ -246,7 +246,7 @@ export function Container({ children, className = "" }) {
 export function SectionTitle({ children, description }) {
   return (
     <div className="mb-6">
-      <h2 className="font-serif text-xl font-bold text-brand-900 sm:text-2xl">{children}</h2>
+      <h2 className="font-serif text-2xl font-bold text-brand-900 sm:text-3xl">{children}</h2>
       {description && <p className="mt-2 text-sm text-slate-600">{description}</p>}
       <div className="mt-3 h-0.5 w-10 bg-accent-500" />
     </div>
@@ -393,7 +393,7 @@ export function Modal({ open, title, onClose, children, footer, wide = false }) 
         className={`w-full rounded-xl bg-white shadow-xl ${wide ? "max-w-3xl" : "max-w-lg"}`}
       >
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-4">
-          <h3 className="font-serif text-lg font-bold text-brand-900">{title}</h3>
+          <h3 className="font-serif text-xl font-bold text-brand-900">{title}</h3>
           <button
             type="button"
             onClick={onClose}
