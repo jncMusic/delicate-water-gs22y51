@@ -130,7 +130,7 @@ export default function Header({ path }) {
             <img
               src={`${process.env.PUBLIC_URL || ""}/logo-kba-wide.svg`}
               alt={org.name}
-              className="h-9 w-auto sm:h-10"
+              className="h-11 w-auto sm:h-12"
             />
           </Link>
 
