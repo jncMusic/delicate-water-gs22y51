@@ -83,12 +83,21 @@ function Breadcrumb({ group, child }) {
  * 왼쪽 네이비 띠에 대메뉴 이름, 오른쪽에 소메뉴 타일을 늘어놓고
  * 그 아래에 경로 표시와 가운데 정렬한 페이지 제목을 둔다.
  */
-export function PageHeader({ title, subtitle }) {
+/**
+ * 쪽머리. 큰 제목은 보통 이 쪽의 h1 이다.
+ *
+ * headingTag 로 h1 을 내릴 수 있다. 게시글 상세처럼 진짜 제목이 아래에 따로
+ * 있는 쪽에서 쓴다. 거기서는 이 자리에 게시판 이름(「공지사항」)이 들어가는데,
+ * 그것을 h1 으로 두면 공지글 수십 개가 전부 같은 표식을 달게 된다.
+ * 글자 모양은 그대로이므로 보이는 것은 달라지지 않는다.
+ */
+export function PageHeader({ title, subtitle, headingTag = "h1" }) {
   const path = useRoute();
   const found = findMenu(path);
   const group = found?.group;
   const child = found?.child;
   const heading = title || child?.label || "";
+  const Heading = headingTag;
 
   return (
     <>
@@ -141,7 +150,9 @@ export function PageHeader({ title, subtitle }) {
             {org.abbr}
           </p>
           <span aria-hidden="true" className="mx-auto my-4 block h-px w-8 bg-slate-300" />
-          <h1 className="font-serif text-3xl font-bold text-brand-900 sm:text-4xl">{heading}</h1>
+          <Heading className="font-serif text-3xl font-bold text-brand-900 sm:text-4xl">
+            {heading}
+          </Heading>
           {subtitle && <p className="mt-3 text-sm text-slate-600">{subtitle}</p>}
         </div>
       </div>

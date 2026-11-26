@@ -1,0 +1,61 @@
+# 하루 한 번 저절로 다시 배포한다.
+#
+# 왜 필요한가.
+#
+# 사무국이 관리자 화면에서 올린 글은 사람 눈에는 즉시 보이지만, 검색엔진에는
+# 보이지 않는다. 글이 검색엔진에 닿으려면 배포가 한 번 돌아야 하기 때문이다.
+# 배포할 때 scripts/postbuild.js 가 저장소의 글을 읽어서 세 가지를 만든다.
+#
+#   1. 글마다 진짜 HTML 파일   (네이버 크롤러는 자바스크립트를 돌리지 않는다)
+#   2. sitemap.xml 의 글 주소
+#   3. rss.xml
+#
+# 그런데 배포는 누가 코드를 고쳐 main 에 올릴 때만 돌았다. 사무국이 글을
+# 올리는 것은 저장소를 건드리지 않으므로 배포를 일으키지 않는다. 그래서 어제
+# 올린 공지가 몇 달 뒤 누가 코드를 고칠 때까지 검색엔진에 없는 글로 남았다.
+#
+# 이 워크플로가 하루 한 번 배포를 걸어 주면, 오늘 올린 글이 늦어도 내일
+# 아침에는 제 HTML 과 사이트맵 자리와 RSS 항목을 갖는다.
+#
+# 준비물 하나.
+#
+# Cloudflare 대시보드에서 이 Worker 의 Deploy Hook(배포 신호 주소)을 만들어
+# 저장소 Secrets 에 CLOUDFLARE_DEPLOY_HOOK 으로 넣어야 한다. 넣기 전까지 이
+# 워크플로는 아무것도 하지 않고 조용히 끝난다 — indexnow.yml 이 키 파일이
+# 없을 때 그러는 것과 같다. 그래서 먼저 담아 두어도 아무것도 깨지지 않는다.
+name: 하루 한 번 다시 배포
+
+on:
+  schedule:
+    # 두 번 걸어 둔다. 하루 두 번 배포하려는 것이 아니라, GitHub 이 예약 실행을
+    # 자주 거르기 때문이다(arts-news.yml 에 같은 이유를 적어 두었다).
+    # 앞의 것이 돌면 뒤의 것은 같은 내용을 한 번 더 배포할 뿐이라 해가 없다.
+    - cron: "41 20 * * *" # 05:41 KST
+    - cron: "41 23 * * *" # 08:41 KST
+  workflow_dispatch:
+
+permissions:
+  contents: none
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 배포 신호 보내기
+        env:
+          HOOK: ${{ secrets.CLOUDFLARE_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "CLOUDFLARE_DEPLOY_HOOK 이 없습니다."
+            echo "Cloudflare 대시보드에서 Deploy Hook 을 만들어 저장소 Secrets 에 넣어 주세요."
+            echo "아무것도 하지 않고 끝냅니다."
+            exit 0
+          fi
+
+          CODE=$(curl -sS -o response.txt -w "%{http_code}" --max-time 30 -X POST "$HOOK") || CODE=000
+          echo "Cloudflare 응답: $CODE"
+          cat response.txt || true
+          case "$CODE" in
+            200|201|202) echo "배포를 걸었습니다." ;;
+            *) echo "::error::배포 신호가 실패했습니다($CODE). Deploy Hook 주소를 확인해 주세요."; exit 1 ;;
+          esac

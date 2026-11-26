@@ -3,8 +3,7 @@ import { useRoute } from "./lib/router";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { boardByPath, boards } from "./data/boards";
-import { org } from "./data/site";
-import { seoFor } from "./data/seo";
+import { applyMeta } from "./lib/meta";
 import Home from "./pages/Home";
 import AboutOverview from "./pages/AboutOverview";
 import AboutIntro from "./pages/AboutIntro";
@@ -92,39 +91,12 @@ function resolve(path) {
   return <NotFound />;
 }
 
-/**
- * 주소가 바뀔 때마다 검색엔진·공유 카드가 읽는 표식을 갈아 끼운다.
- *
- * 빌드할 때 만들어 두는 정적 HTML(scripts/prerender.js)은 메뉴에 있는 주소만
- * 다룬다. 게시글 상세처럼 주소가 그때그때 만들어지는 쪽은 서버가 홈 화면
- * HTML 을 대신 내주므로, 자바스크립트를 돌려 보는 검색엔진이 제 주소의
- * 제목·설명·대표 주소를 읽을 수 있도록 여기서 다시 써 준다.
- */
-function applyMeta(path) {
-  const { title, description } = seoFor(path);
-  document.title = title;
-
-  const set = (selector, attr, value) => {
-    const tag = document.head.querySelector(selector);
-    if (tag) tag.setAttribute(attr, value);
-  };
-
-  const url = org.siteUrl ? `${org.siteUrl}${path === "/" ? "/" : path}` : "";
-
-  set('meta[name="description"]', "content", description);
-  set('meta[property="og:title"]', "content", title);
-  set('meta[property="og:description"]', "content", description);
-  if (url) {
-    set('link[rel="canonical"]', "href", url);
-    set('meta[property="og:url"]', "content", url);
-  }
-}
-
 export default function App() {
   const path = useRoute();
 
   useEffect(() => {
-    applyMeta(path.length > 1 ? path.replace(/\/+$/, "") : path);
+    // 게시글 상세는 글을 읽어 온 Board.js 가 글을 쥐고 한 번 더 부른다.
+    applyMeta(path);
   }, [path]);
 
   return (

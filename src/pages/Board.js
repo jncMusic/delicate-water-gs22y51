@@ -6,6 +6,7 @@ import { pinnedFirst } from "../data/boards";
 import { bumpCounter } from "../lib/store";
 import { splitLinks, stripSourceFooter } from "../lib/text";
 import { fileKind } from "../lib/fileType";
+import { applyMeta } from "../lib/meta";
 import {
   Badge,
   Container,
@@ -249,10 +250,22 @@ export function BoardDetail({ board, id }) {
     bumpCounter(board.collection, id, "views", post.views);
   }, [board.collection, id, post]);
 
+  /*
+   * 글을 읽어 온 다음 제목·설명·공유 그림을 글의 것으로 다시 쓴다.
+   *
+   * App.js 는 주소가 바뀔 때 글 없이 한 번 쓰는데, 그때는 글을 아직 모르므로
+   * 제목이 게시판 이름으로 떨어진다. 그대로 두면 공지글 수십 개가 전부
+   * 「공지사항 | 한국관악협회」라는 같은 제목을 달고, 검색엔진이 같은 쪽이
+   * 여럿이라고 보아 하나만 남기고 버린다.
+   */
+  useEffect(() => {
+    if (post) applyMeta(`${board.path}/${id}`, post);
+  }, [board.path, id, post]);
+
   if (loading) {
     return (
       <>
-        <PageHeader title={board.label} />
+        <PageHeader title={board.label} headingTag="p" />
         <Container className="pt-10">
           <Loading />
         </Container>
@@ -263,7 +276,7 @@ export function BoardDetail({ board, id }) {
   if (!post) {
     return (
       <>
-        <PageHeader title={board.label} />
+        <PageHeader title={board.label} headingTag="p" />
         <Container className="pt-10">
           <EmptyState message="요청하신 글을 찾을 수 없습니다." />
           <div className="mt-6 text-center">
@@ -282,7 +295,7 @@ export function BoardDetail({ board, id }) {
 
   return (
     <>
-      <PageHeader title={board.label} />
+      <PageHeader title={board.label} headingTag="p" />
       <Container className="pt-10">
         <article>
           <header className="border-b border-slate-200 pb-5">
@@ -291,9 +304,15 @@ export function BoardDetail({ board, id }) {
               {post.pinned && <Badge>중요</Badge>}
               {post.closed && <Badge tone="종료">종료된 행사</Badge>}
             </div>
-            <h2 className="font-serif text-2xl font-bold leading-snug text-brand-900">
+            {/*
+              이 쪽의 h1 이다. 검색엔진은 h1 을 「이 쪽이 무엇에 관한 쪽인가」의
+              표식으로 읽는데, 예전에는 위쪽 PageHeader 의 「공지사항」이 h1 이라
+              모든 공지글이 같은 표식을 달고 있었다. PageHeader 쪽은 headingTag
+              로 글자로 내렸고 보이는 모양은 그대로다.
+            */}
+            <h1 className="font-serif text-2xl font-bold leading-snug text-brand-900">
               {post.title}
-            </h2>
+            </h1>
             <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-500">
               <span>작성 {post.author || "사무국"}</span>
               <span>등록일 {formatDate(post.createdAt)}</span>
