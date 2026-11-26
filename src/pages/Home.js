@@ -371,12 +371,30 @@ export default function Home() {
           </SectionTitle>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {missions.map((mission, index) => (
-              <div key={mission.title} className="rounded-xl border border-slate-200 bg-white p-6">
-                <span className="font-serif text-2xl font-bold text-accent-600">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <h3 className="mt-3 font-bold text-brand-900">{mission.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{mission.body}</p>
+              <div
+                key={mission.title}
+                className="overflow-hidden rounded-xl border border-slate-200 bg-white"
+              >
+                {/*
+                  사진은 꾸밈이라 alt 를 비운다. 바로 아래 제목과 설명이 같은
+                  것을 글로 말하고 있어, 읽어 주는 기기가 두 번 읽을 일이 없다.
+                  사진이 없는 항목은 이 자리가 통째로 빠지고 글자만 나온다.
+                */}
+                {mission.photo && (
+                  <img
+                    src={`${process.env.PUBLIC_URL || ""}/photos/${mission.photo}`}
+                    alt=""
+                    loading="lazy"
+                    className="h-28 w-full object-cover sm:h-36"
+                  />
+                )}
+                <div className="p-6">
+                  <span className="font-serif text-2xl font-bold text-accent-600">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <h3 className="mt-3 font-bold text-brand-900">{mission.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{mission.body}</p>
+                </div>
               </div>
             ))}
           </div>
