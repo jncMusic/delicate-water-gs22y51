@@ -385,7 +385,7 @@ export default function Home() {
                     src={`${process.env.PUBLIC_URL || ""}/photos/${mission.photo}`}
                     alt=""
                     loading="lazy"
-                    className="h-36 w-full object-cover"
+                    className="h-28 w-full object-cover sm:h-36"
                   />
                 )}
                 <div className="p-6">
