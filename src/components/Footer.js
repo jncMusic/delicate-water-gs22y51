@@ -71,12 +71,43 @@ export default function Footer() {
                     <dd className="text-brand-300">{org.hours}</dd>
                   </div>
                 )}
+                {/*
+                  협회 블로그. 그동안 index.html 의 JSON-LD 안에만 적혀 있었는데,
+                  그건 기계만 읽는 자리라 사람에게는 보이지 않았다. 네이버는 제
+                  블로그에서 바깥으로 나가는 링크를 잘 따라가므로, 양쪽을 서로
+                  이어 두는 편이 낫다.
+                */}
+                {org.blog && (
+                  <div>
+                    <dt className="sr-only">협회 블로그</dt>
+                    <dd>
+                      <a
+                        href={org.blog}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="hover:text-white"
+                      >
+                        협회 블로그
+                      </a>
+                    </dd>
+                  </div>
+                )}
               </dl>
             </div>
 
             <div>
               <h3 className="mb-3 text-sm font-bold text-white">바로가기</h3>
               <ul className="space-y-2 text-sm">
+                {/*
+                  가입 신청은 머리띠에도 없고 여기에도 없었다. 공지를 읽다가
+                  가입할 마음이 든 사람이 갈 데가 홈 화면 가운데 띠 하나뿐이라,
+                  모든 쪽 발치에 문을 하나 둔다. 맨 위에 두고 글자를 밝게 한다.
+                */}
+                <li>
+                  <Link to="/members/apply" className="font-bold text-white hover:text-accent-300">
+                    회원 가입 신청
+                  </Link>
+                </li>
                 {menus.map((menu) => (
                   <li key={menu.label}>
                     <Link to={menu.children[0].path} className="hover:text-white">

@@ -21,6 +21,9 @@ export const org = {
   // 아직 확인되지 않은 항목입니다. 빈 값이면 화면에 표시되지 않습니다.
   fax: "",
   email: "kbaoffice@naver.com",
+  // 협회 블로그. 꼬리말에 링크로 나가고, public/index.html 의 JSON-LD
+  // sameAs 에도 같은 주소가 적혀 있다. 운영하지 않게 되면 비워 두세요.
+  blog: "https://blog.naver.com/kbaoffice",
   hours: "",
   bank: "신한은행 140-014-592769 (예금주: 한국관악협회(K.B.A))",
   // 사단법인 등록 전이라 비워 둡니다. 등록 후 고유번호·주무관청을 넣어 주세요.
@@ -146,29 +149,39 @@ export const overview = {
  * 글자만 나오므로, 사무국이 쓸 사진이 없는 항목은 비워 두면 된다.
  *
  * 지금 걸려 있는 것은 Unsplash 사진이라 우리 행사가 아니다. 협회 대회·축제
- * 사진이 들어오면 public/photos 에서 같은 이름으로 덮어쓰면 된다.
+ * 사진이 들어오면 public/photos 에서 같은 이름으로 덮어쓰면 된다. 다만
+ * 가로로 찍은 사진이어야 한다 — 칸의 사진 자리가 가로로 넓어서, 세로로 긴
+ * 사진을 넣으면 한가운데만 얇게 잘려 무엇을 찍은 건지 알 수 없게 된다.
  * 출처와 라이선스는 public/photos/출처.md 에 적어 두었다.
+ *
+ * to 는 이 칸을 눌렀을 때 갈 곳이다. 검색엔진은 「홈에서 링크로 가리키는 쪽」을
+ * 중요한 쪽으로 본다. 그동안 「대한민국 관악경연대회」라는 말이 첫 쪽에 적혀만
+ * 있고 아무 데로도 이어지지 않았다.
  */
 export const missions = [
   {
     title: "연주 사업",
     body: "관악 페스티벌, 뮤직 페스티벌, 대한민국 관악제를 엽니다.",
     photo: "band-euphonium.jpg",
+    to: "/events/programs",
   },
   {
     title: "경연대회",
     body: "대한민국 관악경연대회와 대한민국 관악콩쿠르를 주최합니다.",
     photo: "band-trombone.jpg",
+    to: "/events/contest-history",
   },
   {
     title: "학술·출판",
     body: "학술제와 세미나를 열고, 창작 관악곡 악보와 도서·간행물을 펴냅니다.",
     photo: "sheet-music.jpg",
+    to: "/info/resources",
   },
   {
     title: "시상·국제교류",
     body: "대한민국관악상과 우수 관악지도자상을 시상하고, 아시아태평양·세계 관악협회와 교류합니다.",
     photo: "trumpet.jpg",
+    to: "/events/programs",
   },
 ];
 export const history = [

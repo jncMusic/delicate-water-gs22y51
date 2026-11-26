@@ -142,9 +142,14 @@ function PosterStrip() {
           {posters.map((poster) => (
             <Link key={poster.key} to={poster.to} className="group block">
               <span className="block overflow-hidden rounded-xl border border-slate-200 bg-white">
+                {/*
+                  포스터는 꾸밈이 아니라 정보다. alt 를 비워 두면 네이버·구글
+                  이미지 검색에 전혀 잡히지 않는데, 협회가 가진 거의 유일한
+                  그림이 포스터다. 사무국이 적은 글 제목을 그대로 쓴다.
+                */}
                 <img
                   src={poster.src}
-                  alt=""
+                  alt={poster.title}
                   loading="lazy"
                   className="aspect-[5/7] w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
@@ -182,7 +187,7 @@ function PosterHighlight({ board }) {
       <Link to={`${board.path}/${lead.id}`} className="group flex gap-4">
         <img
           src={image.thumb || image.url}
-          alt=""
+          alt={lead.title}
           loading="lazy"
           className="h-32 w-[90px] shrink-0 rounded-lg border border-slate-200 object-cover"
         />
@@ -256,9 +261,16 @@ export default function Home() {
               <p className="font-display text-xs font-semibold tracking-[0.2em] text-accent-600">
                 ABOUT KBA
               </p>
-              <h2 className="mt-3 font-serif text-2xl font-bold leading-snug text-brand-900 sm:text-3xl">
+              {/*
+                첫 쪽의 h1 이다. 검색엔진은 h1 을 「이 쪽이 무엇에 관한 쪽인가」의
+                표식으로 읽는데, 배너가 하나라도 등록되어 있으면 DefaultHero 가
+                나오지 않아 첫 쪽에 h1 이 아예 없었다. 배너 제목은 6초마다
+                바뀌므로 표식으로 삼을 수 없고, 협회 이름이 들어가면서 바뀌지
+                않는 이 줄이 제자리다. 글자 모양은 그대로다.
+              */}
+              <h1 className="mt-3 font-serif text-2xl font-bold leading-snug text-brand-900 sm:text-3xl">
                 {org.name}는 {org.founded}에 창설되었습니다
-              </h2>
+              </h1>
               <p className="mt-4 max-w-2xl leading-relaxed text-slate-600">{overview.purpose}</p>
               <Link
                 to="/about/overview"
@@ -371,20 +383,27 @@ export default function Home() {
           </SectionTitle>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {missions.map((mission, index) => (
-              <div
+              <Link
                 key={mission.title}
-                className="overflow-hidden rounded-xl border border-slate-200 bg-white"
+                to={mission.to}
+                className="group block overflow-hidden rounded-xl border border-slate-200 bg-white transition-colors hover:border-brand-300"
               >
                 {/*
                   사진은 꾸밈이라 alt 를 비운다. 바로 아래 제목과 설명이 같은
                   것을 글로 말하고 있어, 읽어 주는 기기가 두 번 읽을 일이 없다.
                   사진이 없는 항목은 이 자리가 통째로 빠지고 글자만 나온다.
+
+                  사진 자리는 가로로 넓다. 세로로 긴 사진을 넣으면 한가운데만
+                  얇게 잘려 무엇을 찍은 건지 알 수 없게 되므로, 넣을 사진은
+                  가로여야 한다(site.js 의 missions 주석에 적어 두었다).
                 */}
                 {mission.photo && (
                   <img
                     src={`${process.env.PUBLIC_URL || ""}/photos/${mission.photo}`}
                     alt=""
                     loading="lazy"
+                    width="1200"
+                    height="800"
                     className="h-28 w-full object-cover sm:h-36"
                   />
                 )}
@@ -392,10 +411,12 @@ export default function Home() {
                   <span className="font-serif text-2xl font-bold text-accent-600">
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  <h3 className="mt-3 font-bold text-brand-900">{mission.title}</h3>
+                  <h3 className="mt-3 font-bold text-brand-900 group-hover:text-brand-700">
+                    {mission.title}
+                  </h3>
                   <p className="mt-2 text-sm leading-relaxed text-slate-600">{mission.body}</p>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

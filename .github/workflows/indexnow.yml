@@ -19,6 +19,12 @@ on:
       - "src/**"
       - "public/**"
       - "scripts/**"
+  schedule:
+    # rebuild-daily.yml 이 하루 한 번 배포를 거는데, 그 배포는 push 가 아니라서
+    # 위의 on: push 로는 잡히지 않는다. 그래서 배포가 끝날 즈음에 따로 건다.
+    # (rebuild-daily 는 20:41 / 23:41 UTC 에 신호를 보낸다)
+    - cron: "11 21 * * *" # 06:11 KST
+    - cron: "11 0 * * *"  # 09:11 KST
   workflow_dispatch:
 
 permissions:
